@@ -38,7 +38,7 @@ jobs:
         with:
           name: 'service_account.json'
           json: ${{ secrets.SERVICE_ACCOUNT_JSON }}
-          dir: '/home/runner/.config/gspread/'
+          dir: '../../../.config/gspread/'
           
       - name: debug 1
         run: |-
