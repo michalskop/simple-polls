@@ -78,8 +78,9 @@ ws.update([df.columns.values.tolist()] + df.values.tolist())
 ws = sh.worksheet('polls')
 columns = ws.row_values(1)
 df = pd.DataFrame(columns=ws.row_values(1))
+day0 = '1899-12-30'
 
-raw.shape[0]
+# raw.shape[0]
 
 df['identifier'] = raw.shape[0] - raw.reset_index()['index']
 df['pollster:id'] = raw['Polling Firm']
@@ -92,17 +93,21 @@ df['done_by'] = 'Makabot - Michal Škop'
 df = df.sort_values('identifier')
 
 df = df.fillna('')
+
+df['start_date'] = df['start_date'].apply(lambda x: (datetime.datetime.fromisoformat(x) - datetime.datetime.fromisoformat(day0)).days)
+df['end_date'] = df['end_date'].apply(lambda x: (datetime.datetime.fromisoformat(x) - datetime.datetime.fromisoformat(day0)).days)
+
 ws.update([df.columns.values.tolist()] + df.values.tolist())
 
-# add average
 ws.format('D2:E' + str(raw.shape[0] + 1), {"numberFormat": {"type": "DATE", "pattern": "YYYY-MM-DD"}})
+
+# add average
 arrn = np.arange(2, raw.shape[0] + 2)
 arr = [(lambda x: ['=round(average(D' + str(x) + ',E' + str(x) + "))"])(x) for x in arrn]
 ws.update('P2', arr, raw=False)
 ws.format('P2:P' + str(raw.shape[0] + 1), {"numberFormat": {"type": "DATE", "pattern": "YYYY-MM-DD"}})
 # add days to elections
 election_day = '2021-09-26'
-day0 = '1899-12-30'
 election_value = (datetime.datetime.fromisoformat(election_day) - datetime.datetime.fromisoformat(day0)).days
 arr = [(lambda x: ['=' + str(election_value) + '-P' + str(x)])(x) for x in arrn]
 ws.update('Q2', arr, raw=False)
