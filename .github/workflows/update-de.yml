@@ -31,8 +31,8 @@ jobs:
 
       - name: gspread credentials 1
         run: |
-          mkdir ~/.config
-          mkdir ~/.config/gspread
+          mkdir -p ~/.config
+          mkdir -p ~/.config/gspread
       - name: gspread credentials 2
         uses: jsdaniell/create-json@1.1.2
         with:
