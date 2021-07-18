@@ -39,6 +39,12 @@ jobs:
           name: 'service_account.json'
           json: ${{ secrets.SERVICE_ACCOUNT_JSON }}
           dir: '.config/gspread/'
+          
+      - name: debug 1
+        run: |-
+          pwd
+          ls /home/runner/
+          ls /home/runner/.config/gspread/
       
       - name: Update DE
         run: python get_data_de.py
