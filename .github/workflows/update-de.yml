@@ -31,14 +31,14 @@ jobs:
 
       - name: gspread credentials 1
         run: |
-          mkdir -p ~/.config
-          mkdir -p ~/.config/gspread
+          mkdir -p /home/runner/.config
+          mkdir -p /home/runner/.config/gspread
       - name: gspread credentials 2
         uses: jsdaniell/create-json@1.1.2
         with:
           name: 'service_account.json'
           json: ${{ secrets.SERVICE_ACCOUNT_JSON }}
-          dir: '~/.config/gspread/'
+          dir: '/home/runner/.config/gspread/'
           
       - name: debug 1
         run: |-
@@ -51,7 +51,7 @@ jobs:
 
       - name: gspread credentials 3
         run: |
-          rm -r .config
+          rm -r /home/runner/.config
  
       - name: Commit and push if it changed
         run: |-
