@@ -95,6 +95,7 @@ df = df.fillna('')
 ws.update([df.columns.values.tolist()] + df.values.tolist())
 
 # add average
+ws.format('D2:E' + str(raw.shape[0] + 1), {"numberFormat": {"type": "DATE", "pattern": "YYYY-MM-DD"}})
 arrn = np.arange(2, raw.shape[0] + 2)
 arr = [(lambda x: ['=round(average(D' + str(x) + ',E' + str(x) + "))"])(x) for x in arrn]
 ws.update('P2', arr, raw=False)
