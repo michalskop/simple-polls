@@ -66,8 +66,8 @@ ranks_statistics = pd.DataFrame(index=ranks.columns)
 ranks_aging = simulations_aging.loc[0:sample,:].rank(axis=1, ascending=False)
 ranks_statistics_aging = pd.DataFrame(index=ranks_aging.columns)
 for i in range(1, len(ranks.columns)):
-    ranks_statistics['r' + str(i)] = pd.DataFrame((ranks <= i).sum() / sample).rename(columns={0: 'r' + str(i)})
-    ranks_statistics_aging['r' + str(i)] = pd.DataFrame((ranks_aging <= i).sum() / sample).rename(columns={0: 'r' + str(i)})
+    ranks_statistics[str(i)] = pd.DataFrame((ranks <= i).sum() / sample).rename(columns={0: str(i)})
+    ranks_statistics_aging[str(i)] = pd.DataFrame((ranks_aging <= i).sum() / sample).rename(columns={0: str(i)})
 
 # less than
 interval_statistics = pd.DataFrame(columns=dfpreference['party'].to_list())
@@ -76,6 +76,18 @@ for i in range(0, interval_max + 1):
     interval_statistics = interval_statistics.append((simulations > (i / 100)).sum() / sample, ignore_index=True)
     interval_statistics_aging = interval_statistics_aging.append((simulations_aging > (i / 100)).sum() / sample, ignore_index=True)
 
+# history
+ranks_statistics_hist = ranks_statistics.stack().reset_index()
+ranks_statistics_hist['now'] = datetime.datetime.now().isoformat()
+
+ranks_statistics_aging_hist = ranks_statistics_aging.stack().reset_index()
+ranks_statistics_aging_hist['now'] = datetime.datetime.now().isoformat()
+
+interval_statistics_hist = interval_statistics.stack().reset_index()
+interval_statistics_hist['now'] = datetime.datetime.now().isoformat()
+
+interval_statistics_aging_hist = interval_statistics_aging.stack().reset_index()
+interval_statistics_aging_hist['now'] = datetime.datetime.now().isoformat()
 
 # WRITE TO SHEET
 wsw = sh.worksheet('pořadí_aktuální')
@@ -90,7 +102,27 @@ wsw.update('B1', [interval_statistics.columns.values.tolist()] + interval_statis
 wsw = sh.worksheet('pravděpodobnosti_aktuální_aging')
 wsw.update('B1', [interval_statistics_aging.columns.values.tolist()] + interval_statistics_aging.values.tolist())
 
+wsw = sh.worksheet('pořadí_historie')
+existing = len(wsw.get_all_values())
+wsw.update('A' + str(existing + 1), ranks_statistics_hist.values.tolist())
+
+wsw = sh.worksheet('pořadí_historie_aging')
+existing = len(wsw.get_all_values())
+wsw.update('A' + str(existing + 1), ranks_statistics_aging_hist.values.tolist())
+
+wsw = sh.worksheet('pravděpodobnosti_historie')
+existing = len(wsw.get_all_values())
+wsw.update('A' + str(existing + 1), interval_statistics_hist.values.tolist())
+
+wsw = sh.worksheet('pravděpodobnosti_historie_aging')
+existing = len(wsw.get_all_values())
+wsw.update('A' + str(existing + 1), interval_statistics_aging_hist.values.tolist())
+
+
 # TESTS
+
+# ranks_statistics_hist = ranks_statistics.stack().reset_index()
+# ranks_statistics_hist['now'] = datetime.datetime.now().isoformat()
 
 # normal_error(dfpreference, sample_n)['value']
 # uniform_error(dfpreference, sample_n)
