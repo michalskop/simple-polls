@@ -1,0 +1,3 @@
+gspread
+numpy
+pandas
