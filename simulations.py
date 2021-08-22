@@ -10,11 +10,11 @@ import scipy.stats
 
 election_date = '2021-10-08'
 election_day = datetime.date.fromisoformat(election_date)
-today = datetime.date.today()
+today = datetime.date.today()   # it changes later !!!
 sample_n = 1000 # used in statistical error
 re_coef = 0.6 # random error coefficient
 sample = 2000 # number of simulation
-interval_max = 30 # highest gain to calc probability
+interval_max = 40 # highest gain to calc probability
 # source sheet
 sheetkey = "1gJ0fv56qEUPSX3yUwn_F0qszP6jDmd6C_xzTgGWaqIU"
 
@@ -26,6 +26,8 @@ sh = gc.open_by_key(sheetkey)
 ws = sh.worksheet('preference, ze kterých se to počítá')
 dfpreference = pd.DataFrame(ws.get_all_records())
 dfpreference['p'] = dfpreference['gain'] / 100
+# today
+today = datetime.date.fromisoformat(dfpreference['date'][0])
 
 # aging curve 
 def aging_coeff(day1, day2):
@@ -72,7 +74,7 @@ for i in range(1, len(ranks.columns)):
 # less than
 interval_statistics = pd.DataFrame(columns=dfpreference['party'].to_list())
 interval_statistics_aging = pd.DataFrame(columns=dfpreference['party'].to_list())
-for i in range(0, interval_max + 1):
+for i in np.arange(0, interval_max + 0.5, 0.5):
     interval_statistics = interval_statistics.append((simulations > (i / 100)).sum() / sample, ignore_index=True)
     interval_statistics_aging = interval_statistics_aging.append((simulations_aging > (i / 100)).sum() / sample, ignore_index=True)
 
