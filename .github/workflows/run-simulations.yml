@@ -1,4 +1,4 @@
-name: Get data tipsport
+name: Run simulations
 
 on:
   push:
