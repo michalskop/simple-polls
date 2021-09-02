@@ -48,7 +48,7 @@ jobs:
       #     ls /home/runner/.config/gspread/
       
       - name: Run simulations
-        run: python simulations.py
+        run: python simulations_de.py
 
       - name: gspread credentials 3
         run: |
