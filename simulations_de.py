@@ -79,17 +79,17 @@ for i in np.arange(0, interval_max + 0.5, 0.5):
     interval_statistics_aging = interval_statistics_aging.append((simulations_aging > (i / 100)).sum() / sample, ignore_index=True)
 
 # history
-ranks_statistics_hist = ranks_statistics.stack().reset_index()
-ranks_statistics_hist['now'] = datetime.datetime.now().isoformat()
+# ranks_statistics_hist = ranks_statistics.stack().reset_index()
+# ranks_statistics_hist['now'] = datetime.datetime.now().isoformat()
 
-ranks_statistics_aging_hist = ranks_statistics_aging.stack().reset_index()
-ranks_statistics_aging_hist['now'] = datetime.datetime.now().isoformat()
+# ranks_statistics_aging_hist = ranks_statistics_aging.stack().reset_index()
+# ranks_statistics_aging_hist['now'] = datetime.datetime.now().isoformat()
 
-interval_statistics_hist = interval_statistics.stack().reset_index()
-interval_statistics_hist['now'] = datetime.datetime.now().isoformat()
+# interval_statistics_hist = interval_statistics.stack().reset_index()
+# interval_statistics_hist['now'] = datetime.datetime.now().isoformat()
 
-interval_statistics_aging_hist = interval_statistics_aging.stack().reset_index()
-interval_statistics_aging_hist['now'] = datetime.datetime.now().isoformat()
+# interval_statistics_aging_hist = interval_statistics_aging.stack().reset_index()
+# interval_statistics_aging_hist['now'] = datetime.datetime.now().isoformat()
 
 # WRITE TO SHEET
 wsw = sh.worksheet('pořadí_aktuální')
@@ -104,21 +104,21 @@ wsw.update('B1', [interval_statistics.columns.values.tolist()] + interval_statis
 wsw = sh.worksheet('pravděpodobnosti_aktuální_aging')
 wsw.update('B1', [interval_statistics_aging.columns.values.tolist()] + interval_statistics_aging.values.tolist())
 
-wsw = sh.worksheet('pořadí_historie')
-existing = len(wsw.get_all_values())
-wsw.update('A' + str(existing + 1), ranks_statistics_hist.values.tolist())
+# wsw = sh.worksheet('pořadí_historie')
+# existing = len(wsw.get_all_values())
+# wsw.update('A' + str(existing + 1), ranks_statistics_hist.values.tolist())
 
-wsw = sh.worksheet('pořadí_historie_aging')
-existing = len(wsw.get_all_values())
-wsw.update('A' + str(existing + 1), ranks_statistics_aging_hist.values.tolist())
+# wsw = sh.worksheet('pořadí_historie_aging')
+# existing = len(wsw.get_all_values())
+# wsw.update('A' + str(existing + 1), ranks_statistics_aging_hist.values.tolist())
 
-wsw = sh.worksheet('pravděpodobnosti_historie')
-existing = len(wsw.get_all_values())
-wsw.update('A' + str(existing + 1), interval_statistics_hist.values.tolist())
+# wsw = sh.worksheet('pravděpodobnosti_historie')
+# existing = len(wsw.get_all_values())
+# wsw.update('A' + str(existing + 1), interval_statistics_hist.values.tolist())
 
-wsw = sh.worksheet('pravděpodobnosti_historie_aging')
-existing = len(wsw.get_all_values())
-wsw.update('A' + str(existing + 1), interval_statistics_aging_hist.values.tolist())
+# wsw = sh.worksheet('pravděpodobnosti_historie_aging')
+# existing = len(wsw.get_all_values())
+# wsw.update('A' + str(existing + 1), interval_statistics_aging_hist.values.tolist())
 
 
 # TESTS
