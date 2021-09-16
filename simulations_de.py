@@ -84,6 +84,11 @@ for i in ranks.columns:
     for j in ranks.columns:
         p = (sum(ranks[i] >= ranks[j])) / sample
         duels[i][j] = p
+duels_aging = pd.DataFrame(columns = ranks_aging.columns, index=ranks_aging.columns)
+for i in ranks_aging.columns:
+    for j in ranks_aging.columns:
+        p = (sum(ranks_aging[i] >= ranks_aging[j])) / sample
+        duels_aging[i][j] = p
 
 # history
 # ranks_statistics_hist = ranks_statistics.stack().reset_index()
@@ -129,6 +134,9 @@ wsw.update('B1', [interval_statistics_aging.columns.values.tolist()] + interval_
 
 wsw = sh.worksheet('duely')
 wsw.update('B2', [duels.columns.values.tolist()] + duels.values.tolist())
+
+wsw = sh.worksheet('duely_aging')
+wsw.update('B2', [duels_aging.columns.values.tolist()] + duels_aging.values.tolist())
 
 wsw = sh.worksheet('preference, ze kterých se to počítá')
 d = datetime.datetime.now().isoformat()
