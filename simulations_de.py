@@ -78,6 +78,13 @@ for i in np.arange(0, interval_max + 0.5, 0.5):
     interval_statistics = interval_statistics.append((simulations > (i / 100)).sum() / sample, ignore_index=True)
     interval_statistics_aging = interval_statistics_aging.append((simulations_aging > (i / 100)).sum() / sample, ignore_index=True)
 
+# duels
+duels = pd.DataFrame(columns = ranks.columns, index=ranks.columns)
+for i in ranks.columns:
+    for j in ranks.columns:
+        p = (sum(ranks[i] >= ranks[j])) / sample
+        duels[i][j] = p
+
 # history
 # ranks_statistics_hist = ranks_statistics.stack().reset_index()
 # ranks_statistics_hist['now'] = datetime.datetime.now().isoformat()
@@ -120,6 +127,12 @@ wsw.update('B1', [interval_statistics_aging.columns.values.tolist()] + interval_
 # existing = len(wsw.get_all_values())
 # wsw.update('A' + str(existing + 1), interval_statistics_aging_hist.values.tolist())
 
+wsw = sh.worksheet('duely')
+wsw.update('B2', [duels.columns.values.tolist()] + duels.values.tolist())
+
+wsw = sh.worksheet('preference, ze kterých se to počítá')
+d = datetime.datetime.now().isoformat()
+wsw.update('D2', d)
 
 # TESTS
 
