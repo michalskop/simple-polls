@@ -74,9 +74,16 @@ for i in range(1, len(ranks.columns)):
 # less than
 interval_statistics = pd.DataFrame(columns=dfpreference['party'].to_list())
 interval_statistics_aging = pd.DataFrame(columns=dfpreference['party'].to_list())
-for i in np.arange(0, interval_max + 0.5, 0.5):
+for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([3.8, 4.4, 4.7]))):
     interval_statistics = interval_statistics.append((simulations > (i / 100)).sum() / sample, ignore_index=True)
     interval_statistics_aging = interval_statistics_aging.append((simulations_aging > (i / 100)).sum() / sample, ignore_index=True)
+
+# duels
+duels = pd.DataFrame(columns = ranks.columns, index=ranks.columns)
+for i in ranks.columns:
+    for j in ranks.columns:
+        p = (sum(ranks[i] >= ranks[j])) / sample
+        duels[i][j] = p
 
 # history
 ranks_statistics_hist = ranks_statistics.stack().reset_index()
@@ -104,21 +111,30 @@ wsw.update('B1', [interval_statistics.columns.values.tolist()] + interval_statis
 wsw = sh.worksheet('pravděpodobnosti_aktuální_aging')
 wsw.update('B1', [interval_statistics_aging.columns.values.tolist()] + interval_statistics_aging.values.tolist())
 
-wsw = sh.worksheet('pořadí_historie')
-existing = len(wsw.get_all_values())
-wsw.update('A' + str(existing + 1), ranks_statistics_hist.values.tolist())
+# wsw = sh.worksheet('pořadí_historie')
+# existing = len(wsw.get_all_values())
+# wsw.update('A' + str(existing + 1), ranks_statistics_hist.values.tolist())
 
-wsw = sh.worksheet('pořadí_historie_aging')
-existing = len(wsw.get_all_values())
-wsw.update('A' + str(existing + 1), ranks_statistics_aging_hist.values.tolist())
+# wsw = sh.worksheet('pořadí_historie_aging')
+# existing = len(wsw.get_all_values())
+# wsw.update('A' + str(existing + 1), ranks_statistics_aging_hist.values.tolist())
 
-wsw = sh.worksheet('pravděpodobnosti_historie')
-existing = len(wsw.get_all_values())
-wsw.update('A' + str(existing + 1), interval_statistics_hist.values.tolist())
+# wsw = sh.worksheet('pravděpodobnosti_historie')
+# existing = len(wsw.get_all_values())
+# wsw.update('A' + str(existing + 1), interval_statistics_hist.values.tolist())
 
-wsw = sh.worksheet('pravděpodobnosti_historie_aging')
-existing = len(wsw.get_all_values())
-wsw.update('A' + str(existing + 1), interval_statistics_aging_hist.values.tolist())
+# wsw = sh.worksheet('pravděpodobnosti_historie_aging')
+# existing = len(wsw.get_all_values())
+# wsw.update('A' + str(existing + 1), interval_statistics_aging_hist.values.tolist())
+
+wsw = sh.worksheet('duely')
+wsw.update('B2', [duels.columns.values.tolist()] + duels.values.tolist())
+
+wsw = sh.worksheet('preference, ze kterých se to počítá')
+d = datetime.datetime.now().isoformat()
+wsw.update('D2', d)
+
+
 
 
 # TESTS
