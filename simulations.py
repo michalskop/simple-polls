@@ -90,6 +90,10 @@ for i in ranks_aging.columns:
         p = (sum(ranks_aging[i] >= ranks_aging[j])) / sample
         duels_aging[i][j] = p
 
+# number of parties in
+number_in = (((simulations > 0.05).sum(axis=1)).value_counts() / sample).sort_index().reset_index()
+number_in_aging = (((simulations_aging > 0.05).sum(axis=1)).value_counts() / sample).sort_index().reset_index()
+
 # history
 ranks_statistics_hist = ranks_statistics.stack().reset_index()
 ranks_statistics_hist['now'] = datetime.datetime.now().isoformat()
@@ -137,6 +141,11 @@ wsw.update('B2', [duels.columns.values.tolist()] + duels.values.tolist())
 
 wsw = sh.worksheet('duely_aging')
 wsw.update('B2', [duels_aging.columns.values.tolist()] + duels_aging.values.tolist())
+
+wsw = sh.worksheet('počet in')
+clearing = [['', '']] * 10
+wsw.update('C3', number_in.values.tolist() + clearing)
+wsw.update('A3', number_in_aging.values.tolist() + clearing)
 
 wsw = sh.worksheet('preference, ze kterých se to počítá')
 d = datetime.datetime.now().isoformat()
