@@ -1,4 +1,4 @@
-"""Simulations for CZ."""
+"""Simulations for DE."""
 
 import datetime
 import gspread
@@ -74,7 +74,7 @@ for i in range(1, len(ranks.columns)):
 # less than
 interval_statistics = pd.DataFrame(columns=dfpreference['party'].to_list())
 interval_statistics_aging = pd.DataFrame(columns=dfpreference['party'].to_list())
-for i in np.arange(0, interval_max + 0.5, 0.5):
+for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([2.55, 6.19, 10.97, 11.21, 16.13, 21.82, 24.91]))):
     interval_statistics = interval_statistics.append((simulations > (i / 100)).sum() / sample, ignore_index=True)
     interval_statistics_aging = interval_statistics_aging.append((simulations_aging > (i / 100)).sum() / sample, ignore_index=True)
 
