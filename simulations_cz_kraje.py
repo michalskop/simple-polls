@@ -19,6 +19,9 @@ sheetkey = "1gJ0fv56qEUPSX3yUwn_F0qszP6jDmd6C_xzTgGWaqIU"
 
 lastresultsfile = "kraje_weights.csv"
 
+values = 'W Average'
+values = 'value_2021_10_06'
+
 
 # load data from GSheet
 gc = gspread.service_account()
