@@ -70,6 +70,15 @@ ranks_statistics_aging = pd.DataFrame(index=ranks_aging.columns)
 for i in range(1, len(ranks.columns)):
     ranks_statistics[str(i)] = pd.DataFrame((ranks <= i).sum() / sample).rename(columns={0: str(i)})
     ranks_statistics_aging[str(i)] = pd.DataFrame((ranks_aging <= i).sum() / sample).rename(columns={0: str(i)})
+# top 2
+top2 = ranks.where(ranks <= 2).fillna(False).where(ranks > 2).fillna(True)
+top2_statistics = pd.DataFrame(index=ranks.columns, columns=ranks.columns)
+for i in range(0, len(ranks.columns)):
+    for j in range(0, len(ranks.columns)):
+        if i != j:
+            top2_statistics.iloc[i, j] = (top2.iloc[:, i] & top2.iloc[:, j]).sum() / sample
+        else:
+            top2_statistics.iloc[i, j] = ''
 
 # less than
 interval_statistics = pd.DataFrame(columns=dfpreference['party'].to_list())
@@ -138,6 +147,9 @@ wsw.update('B2', [duels.columns.values.tolist()] + duels.values.tolist())
 
 wsw = sh.worksheet('duely_aging')
 wsw.update('B2', [duels_aging.columns.values.tolist()] + duels_aging.values.tolist())
+
+wsw = sh.worksheet('top_2')
+wsw.update('B2', [top2_statistics.columns.values.tolist()] + top2_statistics.values.tolist())
 
 wsw = sh.worksheet('preference, ze kterých se to počítá')
 d = datetime.datetime.now().isoformat()
