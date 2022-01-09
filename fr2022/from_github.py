@@ -52,10 +52,15 @@ for row in data:
         }
         for tour in row['tours']:
             if tour['tour'] == "Premier tour":
+                i = 0
                 for hypothesis in tour['hypotheses']:
-                    if hypothesis['hypothese'] is None:
+                    if i == 0:
+                    # if hypothesis['hypothese'] is None:
                         item['candidates'] = hypothesis['candidats']
                         polls.append(item)
+                    else:
+                        print('hypothese: ', hypothesis['hypothese'])
+                    i += 1
 
 # get candidates
 polls = sorted(polls, key=lambda x: x['middle_date'], reverse=True)
@@ -63,9 +68,10 @@ candidate_names = []
 candidate_sorted = {}
 for poll in polls:
     for name in poll['candidates']:
-        if name['candidat'] not in candidate_names:
-            candidate_names.append(name['candidat'])
-            candidate_sorted[name['candidat']] = name['intentions']
+        candidate_name = ' '.join(name['candidat'].split(' ')[1:])
+        if candidate_name not in candidate_names:
+            candidate_names.append(candidate_name)
+            candidate_sorted[candidate_name] = name['intentions']
 
 candidates_sorted = sorted(candidate_sorted, key=candidate_sorted.get, reverse=True)
 
@@ -79,7 +85,8 @@ for poll in polls:
     ln = len(row)
     t = [0] * len(candidates_sorted)
     for c in poll['candidates']:
-        index = candidates_sorted.index(c['candidat'])
+        name = ' '.join(c['candidat'].split(' ')[1:])
+        index = candidates_sorted.index(name)
         t[index] = c['intentions']
     row = row + t
     rows.append(row)
