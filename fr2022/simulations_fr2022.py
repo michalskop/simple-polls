@@ -71,10 +71,10 @@ for i in range(1, len(ranks.columns)):
     ranks_statistics[str(i)] = pd.DataFrame((ranks <= i).sum() / sample).rename(columns={0: str(i)})
     ranks_statistics_aging[str(i)] = pd.DataFrame((ranks_aging <= i).sum() / sample).rename(columns={0: str(i)})
 # top 2
-top2 = ranks.where(ranks <= 2).fillna(False).where(ranks > 2).fillna(True)
-top2_statistics = pd.DataFrame(index=ranks.columns, columns=ranks.columns)
-for i in range(0, len(ranks.columns)):
-    for j in range(0, len(ranks.columns)):
+top2 = ranks_aging.where(ranks_aging <= 2).fillna(False).where(ranks_aging > 2).fillna(True)
+top2_statistics = pd.DataFrame(index=ranks_aging.columns, columns=ranks_aging.columns)
+for i in range(0, len(ranks_aging.columns)):
+    for j in range(0, len(ranks_aging.columns)):
         if i != j:
             top2_statistics.iloc[i, j] = (top2.iloc[:, i] & top2.iloc[:, j]).sum() / sample
         else:
