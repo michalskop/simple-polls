@@ -6,7 +6,7 @@ on:
       - main
   workflow_dispatch:
   schedule:
-    - cron: '0 0,3,6,9,12,15,18,21 * * *'
+    - cron: '0 0,6,12,18 * * *'
 
 jobs:
   update:
@@ -49,6 +49,9 @@ jobs:
       
       - name: Run simulations
         run: python fr2022/simulations_fr2022.py
+      
+      - name: Run simulations 2
+        run: python fr2022/simulations_fr2022_2.py
 
       - name: gspread credentials 3
         run: |
