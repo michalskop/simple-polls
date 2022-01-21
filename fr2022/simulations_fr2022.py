@@ -159,3 +159,43 @@ for col in cols:
     newly = newly.append(t, ignore_index=True)
 
 pd.concat([history, newly], ignore_index=True).to_csv(path + 'history_1_prob.csv', index=False)
+
+# top2
+history = pd.read_csv(path + 'history_1_top2.csv')
+newly = pd.DataFrame(columns=history.columns)
+cols = top2_statistics.columns
+for col in cols:
+    for row in cols:
+        if row > col:
+            t = {}
+            t['p'] = top2_statistics[col][row]
+            t['name1'] = col
+            t['name2'] = row
+            t['gain1'] = dfpreference[dfpreference['party'] == col]['gain'].values[0]
+            t['gain2'] = dfpreference[dfpreference['party'] == row]['gain'].values[0]
+            t['date'] = today.isoformat()
+            t['datetime'] = d
+            
+            newly = newly.append(t, ignore_index=True)
+
+pd.concat([history, newly], ignore_index=True).to_csv(path + 'history_1_top2.csv', index=False)
+
+# duels 1
+history = pd.read_csv(path + 'history_1_duel.csv')
+newly = pd.DataFrame(columns=history.columns)
+cols = duels_aging.columns
+for col in cols:
+    for row in cols:
+        if row > col:
+            t = {}
+            t['p'] = duels_aging[row][col]
+            t['name1'] = col
+            t['name2'] = row
+            t['gain1'] = dfpreference[dfpreference['party'] == col]['gain'].values[0]
+            t['gain2'] = dfpreference[dfpreference['party'] == row]['gain'].values[0]
+            t['date'] = today.isoformat()
+            t['datetime'] = d
+            
+            newly = newly.append(t, ignore_index=True)
+
+pd.concat([history, newly], ignore_index=True).to_csv(path + 'history_1_duel.csv', index=False)
