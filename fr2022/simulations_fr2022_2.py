@@ -1,5 +1,6 @@
 """Simulations for FR 2022. 2nd round"""
 
+from copy import copy
 import datetime
 import gspread
 import math
@@ -69,24 +70,38 @@ for i in range(0, sample):
 # rank
 winning = pd.DataFrame((simulations_aging >= 0.5).sum(axis=0) / sample).rename(columns={0: 'p1'})
 winning['p2'] = 1 - winning['p1']
+winning_now = pd.DataFrame((simulations >= 0.5).sum(axis=0) / sample).rename(columns={0: 'p1'})
+winning_now['p2'] = 1 - winning_now['p1']
 
 # write to GSheet
 wsw = sh.worksheet('pořadí_aktuální_aging')
 wsw.update('A1', [winning.reset_index().columns.values.tolist()] + winning.reset_index().values.tolist())
 wsw.update_acell('A1', 'Pr[duel winned]')
 
+wsw = sh.worksheet('pořadí_aktuální')
+wsw.update('A1', [winning_now.reset_index().columns.values.tolist()] + winning_now.reset_index().values.tolist())
+wsw.update_acell('A1', 'Pr[duel winned]')
+
 # less than
 interval_statistics_aging = pd.DataFrame(columns=dfpreference['party'].to_list())
+interval_statistics = pd.DataFrame(columns=dfpreference['party'].to_list())
 interval = pd.DataFrame(columns=['Pr[duel zisk > x %]'])
+interval_now = pd.DataFrame(columns=['Pr[duel zisk > x %]'])
 # for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([2.55, 6.19, 10.97, 11.21, 16.13, 21.82, 24.91]))):
 for i in np.concatenate((np.arange(interval_min, interval_max + 0.5, 0.5), np.array([]))):
     interval = interval.append({'Pr[duel zisk > x %]': i}, ignore_index=True)
+    interval_now = interval_now.append({'Pr[duel zisk > x %]': i}, ignore_index=True)
     interval_statistics_aging = interval_statistics_aging.append((simulations_aging > (i / 100)).sum() / sample, ignore_index=True)
+    interval_statistics = interval_statistics.append((simulations > (i / 100)).sum() / sample, ignore_index=True)
 
 # write to GSheet
 wsw = sh.worksheet('pravděpodobnosti_aktuální_aging')
 interval[interval_statistics_aging.columns] = interval_statistics_aging
 wsw.update('A1', [interval.columns.values.tolist()] + interval.values.tolist())
+
+wsw = sh.worksheet('pravděpodobnosti_aktuální')
+interval_now[interval_statistics.columns] = interval_statistics
+wsw.update('A1', [interval_now.columns.values.tolist()] + interval_now.values.tolist())
 
 # write datetime
 wsw = sh.worksheet('preference, ze kterých se to počítá')
@@ -121,5 +136,3 @@ for col in cols:
     newly = newly.append(t, ignore_index=True)
 
 pd.concat([history, newly], ignore_index=True).to_csv(path + 'history_2_prob.csv', index=False)
-
-t = interval.reset_index().rename(columns={'index': 'probability'})
