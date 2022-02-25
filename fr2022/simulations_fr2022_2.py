@@ -14,7 +14,7 @@ election_day = datetime.date.fromisoformat(election_date)
 today = datetime.date.today()   # it changes later !!!
 sample_n = 1000 # used in statistical error
 re_coef = 0.6 # random error coefficient
-sample = 2000 # number of simulation
+sample = 10000 # number of simulation
 interval_min = 30 # lowest gain to calc probability
 interval_max = 70 # highest gain to calc probability
 # source sheet
