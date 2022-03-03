@@ -63,6 +63,32 @@ for i in range(0, sample):
     simulations = simulations.append(simx, ignore_index=True)
     simulations_aging = simulations_aging.append(simxa, ignore_index=True)
 
+# simulations with correlations
+# note: correlation is used only for the normal distribution part
+wsc = sh.worksheet('median correlations')
+correlations = pd.DataFrame(wsc.get_all_records())
+# reorder to match p
+t = p.loc[:, ['party']].merge(correlations, left_on='party', right_on='Median')
+del t['party']
+tt = t.loc[:, ['Median']]
+for c in tt['Median']:
+    tt[c] = t.loc[:, c]
+del tt['Median']
+# simulations
+corr = tt.to_numpy()
+cov = p['sdx'].to_numpy() * corr * p['sdx'].to_numpy().T
+simulations_cov = np.random.multivariate_normal(mean=p['p'], cov=cov, size=sample)
+p['sdxage'] = p['sdx'] * aging
+covage = p['sdxage'].to_numpy() * corr * p['sdxage'].to_numpy().T
+simulation_aging_cov = np.random.multivariate_normal(mean=p['p'], cov=covage, size=sample)
+simulations_cov = pd.DataFrame(simulations_cov, columns=dfpreference['party'].to_list())
+simulations_aging_cov = pd.DataFrame(simulation_aging_cov, columns=dfpreference['party'].to_list())
+# add uniform error
+for c in simulations_cov.columns:
+    sx = p[p['party'] == c]['sdx'].values[0]
+    simulations_cov[c] = simulations_cov[c] + np.random.uniform(low=(-1 * sx * math.sqrt(3)), high=(sx * math.sqrt(3)), size=sample)
+    simulations_aging_cov[c] = simulations_aging_cov[c] + np.random.uniform(low=(-1 * sx * aging * math.sqrt(3)), high=(sx * aging * math.sqrt(3)), size=sample)
+
 # rank matrix (somehow did not work directly)
 ranks = simulations.loc[0:sample,:].rank(axis=1, ascending=False)
 ranks_statistics = pd.DataFrame(index=ranks.columns)
@@ -80,6 +106,24 @@ for i in range(0, len(ranks_aging.columns)):
             top2_statistics.iloc[i, j] = (top2.iloc[:, i] & top2.iloc[:, j]).sum() / sample
         else:
             top2_statistics.iloc[i, j] = ''
+
+# rank matrix (somehow did not work directly) - covariances
+ranks_cov = simulations_cov.loc[0:sample,:].rank(axis=1, ascending=False)
+ranks_statistics_cov = pd.DataFrame(index=ranks_cov.columns)
+ranks_aging_cov = simulations_aging_cov.loc[0:sample,:].rank(axis=1, ascending=False)
+ranks_statistics_aging_cov = pd.DataFrame(index=ranks_aging_cov.columns)
+for i in range(1, len(ranks_cov.columns)):
+    ranks_statistics_cov[str(i)] = pd.DataFrame((ranks_cov <= i).sum() / sample).rename(columns={0: str(i)})
+    ranks_statistics_aging_cov[str(i)] = pd.DataFrame((ranks_aging_cov <= i).sum() / sample).rename(columns={0: str(i)})
+# top 2
+top2_cov = ranks_aging_cov.where(ranks_aging_cov <= 2).fillna(False).where(ranks_aging_cov > 2).fillna(True)
+top2_statistics_cov = pd.DataFrame(index=ranks_aging_cov.columns, columns=ranks_aging_cov.columns)
+for i in range(0, len(ranks_aging_cov.columns)):
+    for j in range(0, len(ranks_aging_cov.columns)):
+        if i != j:
+            top2_statistics_cov.iloc[i, j] = (top2_cov.iloc[:, i] & top2_cov.iloc[:, j]).sum() / sample
+        else:
+            top2_statistics_cov.iloc[i, j] = ''
 
 # less than
 interval_statistics = pd.DataFrame(columns=dfpreference['party'].to_list())
@@ -110,6 +154,9 @@ wsw.update('B1', [ranks_statistics.transpose().columns.values.tolist()] + ranks_
 wsw = sh.worksheet('pořadí_aktuální_aging')
 wsw.update('B1', [ranks_statistics_aging.transpose().columns.values.tolist()] + ranks_statistics_aging.transpose().values.tolist())
 
+wsw = sh.worksheet('pořadí_aktuální_aging_cov')
+wsw.update('B1', [ranks_statistics_aging_cov.transpose().columns.values.tolist()] + ranks_statistics_aging_cov.transpose().values.tolist())
+
 wsw = sh.worksheet('pravděpodobnosti_aktuální')
 wsw.update('B1', [interval_statistics.columns.values.tolist()] + interval_statistics.values.tolist())
 
@@ -124,6 +171,9 @@ wsw.update('B2', [duels_aging.columns.values.tolist()] + duels_aging.values.toli
 
 wsw = sh.worksheet('top_2')
 wsw.update('B2', [top2_statistics.columns.values.tolist()] + top2_statistics.values.tolist())
+
+wsw = sh.worksheet('top_2_cov')
+wsw.update('B2', [top2_statistics_cov.columns.values.tolist()] + top2_statistics_cov.values.tolist())
 
 wsw = sh.worksheet('preference, ze kterých se to počítá')
 d = datetime.datetime.now().isoformat()
