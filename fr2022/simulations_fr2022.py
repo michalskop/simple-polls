@@ -54,8 +54,8 @@ simulations = pd.DataFrame(columns=dfpreference['party'].to_list())
 simulations_aging = pd.DataFrame(columns=dfpreference['party'].to_list())
 aging = aging_coeff(today, election_day)
 for i in range(0, sample):
-    p = normal_error(dfpreference, sample_n)
-    p = uniform_error(p, sample_n, 1.5 * 0.9)
+    p = normal_error(dfpreference, sample_n, 0.9)
+    p = uniform_error(p, sample_n, 1.5 * 0.9 * 0.9)
     p['estimate'] = p['normal_error'] + p['uniform_error'] + p['p']
     p['estimate_aging'] = aging * (p['normal_error'] + p['uniform_error']) + p['p']
     simx = dict(zip(dfpreference['party'].to_list(), p['estimate']))
@@ -135,6 +135,16 @@ for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([]))):
     interval_statistics = interval_statistics.append((simulations > (i / 100)).sum() / sample, ignore_index=True)
     interval_statistics_aging = interval_statistics_aging.append((simulations_aging > (i / 100)).sum() / sample, ignore_index=True)
 
+# less than covariance
+interval_statistics_cov = pd.DataFrame(columns=dfpreference['party'].to_list())
+interval_statistics_aging_cov = pd.DataFrame(columns=dfpreference['party'].to_list())
+interval_cov = pd.DataFrame(columns=['Pr'])
+# for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([2.55, 6.19, 10.97, 11.21, 16.13, 21.82, 24.91]))):
+for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([]))):    
+    interval_cov = interval_cov.append({'Pr': i}, ignore_index=True)
+    interval_statistics_cov = interval_statistics_cov.append((simulations_cov > (i / 100)).sum() / sample, ignore_index=True)
+    interval_statistics_aging_cov = interval_statistics_aging_cov.append((simulations_aging_cov > (i / 100)).sum() / sample, ignore_index=True)
+
 # duels
 duels = pd.DataFrame(columns = ranks.columns, index=ranks.columns)
 for i in ranks.columns:
@@ -162,6 +172,9 @@ wsw.update('B1', [interval_statistics.columns.values.tolist()] + interval_statis
 
 wsw = sh.worksheet('pravděpodobnosti_aktuální_aging')
 wsw.update('B1', [interval_statistics_aging.columns.values.tolist()] + interval_statistics_aging.values.tolist())
+
+wsw = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
+wsw.update('B1', [interval_statistics_aging_cov.columns.values.tolist()] + interval_statistics_aging_cov.values.tolist())
 
 wsw = sh.worksheet('duely')
 wsw.update('B2', [duels.columns.values.tolist()] + duels.values.tolist())
