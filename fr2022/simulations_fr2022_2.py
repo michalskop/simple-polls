@@ -41,14 +41,14 @@ def aging_coeff(day1, day2):
 # p = dfpreference
 # n = sample_n
 # normal error
-def normal_error(p, n, coef = 1):
-    p['sdx'] = (n * p['p'] * (1 - p['p'])).apply(math.sqrt) / n * coef
+def normal_error(p, n, volatility, coef = 1):
+    p['sdx'] = (n * p['p'] * (1 - p['p'])).apply(math.sqrt) / n * coef * volatility
     p['normal_error'] = scipy.stats.norm.rvs(loc=0, scale=p['sdx'])
     return p
 
 # uniform_error as function of normal error
-def uniform_error(p, n, coef = 1):
-    p['sdx'] = (n * p['p'] * (1 - p['p'])).apply(math.sqrt) / n * coef
+def uniform_error(p, n, volatility, coef = 1):
+    p['sdx'] = (n * p['p'] * (1 - p['p'])).apply(math.sqrt) / n * coef * volatility
     p['uniform_error'] = scipy.stats.uniform.rvs(loc=(-1 * p['sdx'] * math.sqrt(3)), scale=(2 * p['sdx'] * math.sqrt(3)))
     return p
 
@@ -58,8 +58,8 @@ simulations_aging = pd.DataFrame(columns=dfpreference['party'].to_list())
 aging = aging_coeff(today, election_day)
 
 for i in range(0, sample):
-    p = normal_error(dfpreference, sample_n)
-    p = uniform_error(p, sample_n, 1.5 * 0.9)
+    p = normal_error(dfpreference, sample_n, dfpreference['volatilita'], 1)
+    p = uniform_error(p, sample_n, dfpreference['volatilita'], 1.5 * 0.9)
     p['estimate'] = p['normal_error'] + p['uniform_error'] + p['p']
     p['estimate_aging'] = aging * (p['normal_error'] + p['uniform_error']) + p['p']
     simx = dict(zip(dfpreference['party'].to_list(), p['estimate']))

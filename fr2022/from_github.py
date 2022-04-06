@@ -11,7 +11,8 @@ url = "https://raw.githubusercontent.com/nsppolls/nsppolls/master/presidentielle
 
 key = "1JxLDU_mYDlcRbh45BA9wLByyPYMmGCPDbYXtRlPve8w"
 
-first_date = '2021-12-01'
+# first_date = '2021-12-01'
+first_date = '2000-12-01'
 now = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
 
 r = requests.get(url)
