@@ -68,10 +68,13 @@ candidate_names = []
 candidate_sorted = {}
 for poll in polls:
     for name in poll['candidates']:
-        candidate_name = ' '.join(name['candidat'].split(' ')[1:])
-        if candidate_name not in candidate_names:
-            candidate_names.append(candidate_name)
-            candidate_sorted[candidate_name] = name['intentions']
+        try:
+            candidate_name = ' '.join(name['candidat'].split(' ')[1:])
+            if candidate_name not in candidate_names:
+                candidate_names.append(candidate_name)
+                candidate_sorted[candidate_name] = name['intentions']
+        except:
+            print("exception:" + name)
 
 candidates_sorted = sorted(candidate_sorted, key=candidate_sorted.get, reverse=True)
 
