@@ -88,9 +88,12 @@ for poll in polls:
     ln = len(row)
     t = [0] * len(candidates_sorted)
     for c in poll['candidates']:
-        name = ' '.join(c['candidat'].split(' ')[1:])
-        index = candidates_sorted.index(name)
-        t[index] = c['intentions']
+        try:
+            name = ' '.join(c['candidat'].split(' ')[1:])
+            index = candidates_sorted.index(name)
+            t[index] = c['intentions']
+        except:
+            print("excepting:", poll['candidates'])
     row = row + t
     rows.append(row)
 
