@@ -74,7 +74,7 @@ for poll in polls:
                 candidate_names.append(candidate_name)
                 candidate_sorted[candidate_name] = name['intentions']
         except:
-            print("exception:" + name)
+            print("exception:", name)
 
 candidates_sorted = sorted(candidate_sorted, key=candidate_sorted.get, reverse=True)
 
