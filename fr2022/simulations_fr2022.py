@@ -129,8 +129,8 @@ for i in range(0, len(ranks_aging_cov.columns)):
 interval_statistics = pd.DataFrame(columns=dfpreference['party'].to_list())
 interval_statistics_aging = pd.DataFrame(columns=dfpreference['party'].to_list())
 interval = pd.DataFrame(columns=['Pr'])
-# for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([2.55, 6.19, 10.97, 11.21, 16.13, 21.82, 24.91]))):
-for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([]))):    
+for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([26.33, 22.79, 17.11, 9.13, 8.51]))):
+# for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([]))):    
     interval = interval.append({'Pr': i}, ignore_index=True)
     interval_statistics = interval_statistics.append((simulations > (i / 100)).sum() / sample, ignore_index=True)
     interval_statistics_aging = interval_statistics_aging.append((simulations_aging > (i / 100)).sum() / sample, ignore_index=True)
@@ -139,8 +139,8 @@ for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([]))):
 interval_statistics_cov = pd.DataFrame(columns=dfpreference['party'].to_list())
 interval_statistics_aging_cov = pd.DataFrame(columns=dfpreference['party'].to_list())
 interval_cov = pd.DataFrame(columns=['Pr'])
-# for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([2.55, 6.19, 10.97, 11.21, 16.13, 21.82, 24.91]))):
-for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([]))):    
+for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([26.33, 22.79, 17.11, 9.13, 8.51]))):
+# for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([]))):    
     interval_cov = interval_cov.append({'Pr': i}, ignore_index=True)
     interval_statistics_cov = interval_statistics_cov.append((simulations_cov > (i / 100)).sum() / sample, ignore_index=True)
     interval_statistics_aging_cov = interval_statistics_aging_cov.append((simulations_aging_cov > (i / 100)).sum() / sample, ignore_index=True)

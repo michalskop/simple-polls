@@ -87,7 +87,7 @@ interval_statistics_aging = pd.DataFrame(columns=dfpreference['party'].to_list()
 interval_statistics = pd.DataFrame(columns=dfpreference['party'].to_list())
 interval = pd.DataFrame(columns=['Pr[duel zisk > x %]'])
 interval_now = pd.DataFrame(columns=['Pr[duel zisk > x %]'])
-# for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([2.55, 6.19, 10.97, 11.21, 16.13, 21.82, 24.91]))):
+# for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([26.33, 22.79, 17.11, 9.13, 8.51]))):
 for i in np.concatenate((np.arange(interval_min, interval_max + 0.5, 0.5), np.array([]))):
     interval = interval.append({'Pr[duel zisk > x %]': i}, ignore_index=True)
     interval_now = interval_now.append({'Pr[duel zisk > x %]': i}, ignore_index=True)
