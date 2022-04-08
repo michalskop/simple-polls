@@ -55,8 +55,7 @@ for row in data:
             if tour['tour'] == "Premier tour":
                 i = 0
                 for hypothesis in tour['hypotheses']:
-                    if i == 0:
-                    # if hypothesis['hypothese'] is None:
+                    if (i == 0) or (hypothesis['hypothese'] is None):
                         item['candidates'] = hypothesis['candidats']
                         polls.append(item)
                     else:
