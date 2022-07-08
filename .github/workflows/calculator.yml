@@ -3,7 +3,7 @@ name: Run Calculator 2nd rounds
 on:
   push:
     branches:
-      - main
+      # - main
   workflow_dispatch:
   # schedule:
   #   - cron: '20 * * * *'
