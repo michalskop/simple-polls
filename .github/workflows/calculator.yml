@@ -48,7 +48,7 @@ jobs:
       #     ls /home/runner/.config/gspread/
       
       - name: Run simulations
-        run: python calculator/calculator.py
+        run: python calculator/round-2.py
 
       - name: gspread credentials 3
         run: |
