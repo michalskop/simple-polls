@@ -1,6 +1,6 @@
 """Simulations for FR 2022. 2nd round"""
 
-from copy import copy
+# from copy import copy
 import datetime
 import gspread
 import math
