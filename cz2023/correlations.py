@@ -4,32 +4,36 @@ import gspread
 import numpy as np
 import pandas as pd
 
-csvurl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTgg1x2P_SS-52MmixvFPtK1JdiEQOeWcvut1Xk65JJFq6KGs0sUxcNADY8LKgc_DK3PEd07S2piyri/pub?gid=0&single=true&output=csv"
-
 # write to GSheet
-sheetkey = "1xGJfKlN1UwzoMI71-UMAwlZMDQrKyx7aBgV5_Fn6x78"
+sheetkey = "1QCOLhcvmC04hiaFikqXGVFTtJ_dttsYxPfS-HQoK6FQ"
 gc = gspread.service_account()
 sh = gc.open_by_key(sheetkey)
 
+ws = sh.worksheet('data copy')
+data = pd.DataFrame(ws.get_all_records())
 
-data = pd.read_csv(csvurl)
+polls_min = 1
 
 selected = ['Petr Pavel', 'Andrej Babiš', 'Danuše Nerudová', 'Marek Hilšer', 'Josef Středula', 'Pavel Fischer']
 
 pollsters = data['pollster:id'].unique().tolist()
-pollsters.remove('volby')
+# pollsters.remove('volby')
 
 # correlations
 wsw = sh.worksheet('correlations')
 i = 1
 for pollster in pollsters:
-    data_pollster = data[data['pollster:id'] == pollster]
-    if len(data_pollster.index) > 3:
-        corr = data_pollster[selected].corr()
-        wsw.update_cell(i, 1,  pollster + ' (' + str(len(data_pollster.index)) + ')')
-        wsw.update('B' + str(i), [corr.columns.values.tolist()] + corr.values.tolist())
-        wsw.update('A' + str(i + 1), [[x] for x in corr.columns.values.tolist()])
-        i = i + len(selected) + 2
+  data_pollster = data[data['pollster:id'] == pollster]
+  if len(data_pollster.index) >= polls_min:
+    corr = data_pollster[selected].corr()
+    # fill NAs
+    corr.fillna(0, inplace=True)
+    corr.values[[np.arange(corr.shape[0])]*2] = 1
+    # write to GSheet
+    wsw.update_cell(i, 1,  pollster + ' (' + str(len(data_pollster.index)) + ')')
+    wsw.update('B' + str(i), [corr.columns.values.tolist()] + corr.values.tolist())
+    wsw.update('A' + str(i + 1), [[x] for x in corr.columns.values.tolist()])
+    i = i + len(selected) + 2
 
 
 
