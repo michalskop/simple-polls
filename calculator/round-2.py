@@ -3,7 +3,6 @@
 # Note: more than 2 candidates is supported: 2 main candidates + "others"
 
 import datetime
-import datetime
 import gspread
 import math
 import numpy as np
@@ -36,6 +35,8 @@ pos = dfpreference.columns.to_list().index('last successful calculation (GMT)')
 
 # aging curve
 def aging_coeff(day1, day2):
+  if diff <= 0:
+    return 1
   diff = abs((day2 - day1).days)
   return pow(diff, 1.15) / diff
 

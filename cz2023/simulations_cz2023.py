@@ -33,6 +33,8 @@ today = datetime.date.fromisoformat(dfpreference['date'][0])
 
 # aging curve 
 def aging_coeff(day1, day2):
+  if diff <= 0:
+    return 1
   diff = abs((day2 - day1).days)
   return pow(diff, 1.15) / diff
 
