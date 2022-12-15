@@ -15,7 +15,7 @@ polls_min = 1
 
 since = '2022-09-01'
 
-selected = ['Petr Pavel', 'Andrej Babiš', 'Danuše Nerudová', 'Marek Hilšer', 'Josef Středula', 'Pavel Fischer']
+selected = ['Petr Pavel', 'Andrej Babiš', 'Danuše Nerudová', 'Marek Hilšer', 'Josef Středula', 'Pavel Fischer', 'Jaroslav Bašta', 'Tomáš Zima', 'Karel Diviš']
 
 
 # GSheet
@@ -99,8 +99,8 @@ he = house_effect.pivot_table(values=['mean', 'sd'], index='choice:id', columns=
 
 wsw = sh.worksheet('house effect')
 wsw.update('A2', he['choice:id'].apply(lambda x: [x]).to_list())
-wsw.update('B1', [he['mean'].columns.values.tolist()] + he['mean'].values.tolist())
-wsw.update(chr(ord('B') + 2 + len(he['mean'].columns.values.tolist())) + "1", [he['sd'].columns.values.tolist()] + he['sd'].values.tolist())
+wsw.update('B1', [he['mean'].columns.values.tolist()] + he['mean'].fillna('').values.tolist())
+wsw.update(chr(ord('B') + 2 + len(he['mean'].fillna('').columns.values.tolist())) + "1", [he['sd'].columns.values.tolist()] + he['sd'].fillna('').values.tolist())
 
 # write to file
 he.to_csv(path + 'house_effect.csv', index=False)
@@ -108,4 +108,4 @@ he.to_csv(path + 'house_effect.csv', index=False)
 # write data to Gsheet
 wsw = sh.worksheet('data copy')
 data.pop('middle_day')
-wsw.update('A1', [data.columns.values.tolist()] + data.values.tolist())
+wsw.update('A1', [data.columns.values.tolist()] + data.fillna('').values.tolist())
