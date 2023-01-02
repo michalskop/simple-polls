@@ -35,9 +35,9 @@ pos = dfpreference.columns.to_list().index('last successful calculation (GMT)')
 
 # aging curve
 def aging_coeff(day1, day2):
+  diff = abs((day2 - day1).days)
   if diff <= 0:
     return 1
-  diff = abs((day2 - day1).days)
   return pow(diff, 1.15) / diff
 
 # normal error
