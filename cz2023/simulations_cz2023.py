@@ -19,7 +19,7 @@ interval_max = 40 # highest gain to calc probability
 sheetkey = "1QCOLhcvmC04hiaFikqXGVFTtJ_dttsYxPfS-HQoK6FQ"
 path = "cz2023/"
 
-additional_points = [26.33, 22.79, 17.11, 9.13, 8.51]
+additional_points = [0.55, 0.75, 1.85, 2.05, 3.35, 3.55, 5.35, 5.85, 7.05, 7.15, 10.05, 19.95, 20.95, 21.95, 22.95, 24.75, 26.35, 26.65, 27.25, 27.46, 28.09, 28.55, 28.95, 29.05, 29.35, 30.05, 30.25, 31.05, 31.15]
 
 # load data from GSheet
 gc = gspread.service_account()
