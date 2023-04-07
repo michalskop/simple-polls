@@ -42,7 +42,15 @@ def aging_coeff(day1, day2):
 
 # normal error
 def normal_error(p, i, n, volatility, coef = 1):
+  # p: a Pandas DataFrame containing data for a set of variables
+  # i: an integer specifying the index of the variable within the DataFrame for which the normal error is being calculated
+  # n: an integer specifying the sample size
+  # volatility: a float specifying the volatility or standard deviation of the variable being measured
+  # coef: an optional float specifying to multiply the standard deviation by
+
+  # calculates the standard error
   p['sdx'] = (n * p['p' + str(i)] * (1 - p['p' + str(i)])).apply(abs).apply(math.sqrt) / n * coef * volatility
+  # generates a column of normally distributed random values with mean 0 and standard deviation equal to the sdx value for each row
   p['normal_error'] = scipy.stats.norm.rvs(loc=0, scale=p['sdx'])
   return p
 
@@ -95,15 +103,16 @@ interval = {}
 for j in range(1, 4):
   interval_statistics_aging[j] = pd.DataFrame(columns=dfpreference['name'].to_list())
   interval[j] = pd.DataFrame(columns=['Pr[duel zisk > x %]'])
-# for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([26.33, 22.79, 17.11, 9.13, 8.51]))):
+  # for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([26.33, 22.79, 17.11, 9.13, 8.51]))):
   for i in np.concatenate((np.arange(interval_min, interval_max + step, step), np.array([]))):
     # interval[j] = interval[j].append([{'Pr[duel zisk > x %]': i}], ignore_index=True)
-    interval_j_new = pd.DataFrame({'Pr[duel zisk > x %]': [i]}, ignore_index=True)
-    interval[j] = pd.concat([interval[j], interval_j_new])
+    interval_j_new = pd.DataFrame({'Pr[duel zisk > x %]': [i]})
+    interval[j] = pd.concat([interval[j], interval_j_new], ignore_index=True)
     # interval_statistics_aging[j] = interval_statistics_aging[j].append((simulations_aging[j] > (i / 100)).sum() / sample, ignore_index=True)
-    interval_statistics_j_new = pd.DataFrame([(simulations_aging[j] > (i / 100)).sum() / sample], columns=['interval_statistics_aging'])
+    interval_statistics_j_new = pd.DataFrame((simulations_aging[j] > (i / 100)).sum() / sample, columns=['interval_statistics_aging'])
     interval_statistics_aging[j] = pd.concat([interval_statistics_aging[j], interval_statistics_j_new], ignore_index=True)
-    
+  interval_statistics_aging[j] = interval_statistics_aging[j].loc[:, ['interval_statistics_aging']]
+
 # write to GSheet
 for j in range(1, 3):
   wsw = sh.worksheet('pravděpodobnosti' + str(j))
