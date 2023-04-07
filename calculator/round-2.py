@@ -63,7 +63,7 @@ dfpreference['p3'] = 1 - dfpreference['p1'] - dfpreference['gain2'] / 100
 # simulations = pd.DataFrame(columns=fpreference['name'].to_list())
 simulations_aging = {}
 for i in range(1, 4):
-  simulations_aging[i] =pd.DataFrame(columns=dfpreference['name'].to_list())
+  simulations_aging[i] = pd.DataFrame(columns=dfpreference['name'].to_list())
 aging = aging_coeff(today, election_day)
 
 for j in range(0, sample):
@@ -97,9 +97,13 @@ for j in range(1, 4):
   interval[j] = pd.DataFrame(columns=['Pr[duel zisk > x %]'])
 # for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([26.33, 22.79, 17.11, 9.13, 8.51]))):
   for i in np.concatenate((np.arange(interval_min, interval_max + step, step), np.array([]))):
-    interval[j] = interval[j].append([{'Pr[duel zisk > x %]': i}], ignore_index=True)
-    interval_statistics_aging[j] = interval_statistics_aging[j].append((simulations_aging[j] > (i / 100)).sum() / sample, ignore_index=True)
-
+    # interval[j] = interval[j].append([{'Pr[duel zisk > x %]': i}], ignore_index=True)
+    interval_j_new = pd.DataFrame({'Pr[duel zisk > x %]': [i]}, ignore_index=True)
+    interval[j] = pd.concat([interval[j], interval_j_new])
+    # interval_statistics_aging[j] = interval_statistics_aging[j].append((simulations_aging[j] > (i / 100)).sum() / sample, ignore_index=True)
+    interval_statistics_j_new = pd.DataFrame([(simulations_aging[j] > (i / 100)).sum() / sample], columns=['interval_statistics_aging'])
+    interval_statistics_aging[j] = pd.concat([interval_statistics_aging[j], interval_statistics_j_new], ignore_index=True)
+    
 # write to GSheet
 for j in range(1, 3):
   wsw = sh.worksheet('pravděpodobnosti' + str(j))
