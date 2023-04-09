@@ -14,12 +14,13 @@ today = datetime.date.today()   # it changes later !!!
 sample_n = 1000 # used in statistical error
 re_coef = 0.6 # random error coefficient
 sample = 10000 # number of simulation
-interval_max = 40 # highest gain to calc probability
+interval_max = 60 # highest gain to calc probability
 # source sheet
-sheetkey = "1QCOLhcvmC04hiaFikqXGVFTtJ_dttsYxPfS-HQoK6FQ"
-path = "cz2023/"
+sheetkey = "1LwZPsva6ygOrt8SrhmbW6uME2EVqedROa4NPrqDntjk"
+path = "tr2023/"
 
 additional_points = [0.55, 0.75, 1.85, 2.05, 3.35, 3.55, 5.35, 5.85, 7.05, 7.15, 10.05, 19.95, 20.95, 21.95, 22.95, 24.75, 26.35, 26.65, 27.25, 27.46, 28.09, 28.55, 28.95, 29.05, 29.35, 30.05, 30.25, 31.05, 31.15]
+additional_points = []
 
 # load data from GSheet
 gc = gspread.service_account()
@@ -63,8 +64,10 @@ for i in range(0, sample):
   p['estimate_aging'] = aging * (p['normal_error'] + p['uniform_error']) + p['p']
   simx = dict(zip(dfpreference['party'].to_list(), p['estimate']))
   simxa = dict(zip(dfpreference['party'].to_list(), p['estimate_aging']))
-  simulations = simulations.append(simx, ignore_index=True)
-  simulations_aging = simulations_aging.append(simxa, ignore_index=True)
+  # simulations = simulations.append(simx, ignore_index=True)
+  simulations = pd.concat([simulations, pd.DataFrame([simx])], ignore_index=True)
+  # simulations_aging = simulations_aging.append(simxa, ignore_index=True)
+  simulations_aging = pd.concat([simulations_aging, pd.DataFrame([simxa])], ignore_index=True)
 
 # simulations with correlations
 # note: correlation is used only for the normal distribution part
@@ -138,9 +141,16 @@ interval_statistics_aging = pd.DataFrame(columns=dfpreference['party'].to_list()
 interval = pd.DataFrame(columns=['Pr'])
 for i in arr:
 # for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([]))):    
-  interval = interval.append({'Pr': i}, ignore_index=True)
-  interval_statistics = interval_statistics.append((simulations > (i / 100)).sum() / sample, ignore_index=True)
-  interval_statistics_aging = interval_statistics_aging.append((simulations_aging > (i / 100)).sum() / sample, ignore_index=True)
+  # interval = interval.append({'Pr': i}, ignore_index=True)
+  interval = pd.concat([interval, pd.DataFrame({'Pr': i}, index=[0])], ignore_index=True)
+  # interval_statistics = interval_statistics.append((simulations > (i / 100)).sum() / sample, ignore_index=True)
+  interval_statistics = pd.concat(
+    [interval_statistics, 
+    pd.DataFrame([(simulations > (i / 100)).sum() / sample], columns=dfpreference['party'].to_list())
+    ], ignore_index=True
+  )
+  # interval_statistics_aging = interval_statistics_aging.append((simulations_aging > (i / 100)).sum() / sample, ignore_index=True)
+  interval_statistics_aging = pd.concat([interval_statistics_aging, pd.DataFrame([(simulations_aging > (i / 100)).sum() / sample], columns=dfpreference['party'].to_list())], ignore_index=True)
 
 # less than covariance
 interval_statistics_cov = pd.DataFrame(columns=dfpreference['party'].to_list())
@@ -148,9 +158,12 @@ interval_statistics_aging_cov = pd.DataFrame(columns=dfpreference['party'].to_li
 interval_cov = pd.DataFrame(columns=['Pr'])
 for i in arr:
 # for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([]))):    
-  interval_cov = interval_cov.append({'Pr': i}, ignore_index=True)
-  interval_statistics_cov = interval_statistics_cov.append((simulations_cov > (i / 100)).sum() / sample, ignore_index=True)
-  interval_statistics_aging_cov = interval_statistics_aging_cov.append((simulations_aging_cov > (i / 100)).sum() / sample, ignore_index=True)
+  # interval_cov = interval_cov.append({'Pr': i}, ignore_index=True)
+  interval_cov = pd.concat([interval_cov, pd.DataFrame({'Pr': i}, index=[0])], ignore_index=True)
+  # interval_statistics_cov = interval_statistics_cov.append((simulations_cov > (i / 100)).sum() / sample, ignore_index=True)
+  interval_statistics_cov = pd.concat([interval_statistics_cov, pd.DataFrame([(simulations_cov > (i / 100)).sum() / sample], columns=dfpreference['party'].to_list())], ignore_index=True)
+  # interval_statistics_aging_cov = interval_statistics_aging_cov.append((simulations_aging_cov > (i / 100)).sum() / sample, ignore_index=True)
+  interval_statistics_aging_cov = pd.concat([interval_statistics_aging_cov, pd.DataFrame([(simulations_aging_cov > (i / 100)).sum() / sample], columns=dfpreference['party'].to_list())], ignore_index=True)
 
 # duels
 duels = pd.DataFrame(columns = ranks.columns, index=ranks.columns)
@@ -216,12 +229,13 @@ history = pd.read_csv(path + 'history_1_rank.csv')
 newly = pd.DataFrame(columns=history.columns)
 cols = ranks_statistics.T.columns
 for col in cols:
-    t = ranks_statistics.T[col].to_frame().reset_index().rename(columns={'index': 'rank', col: 'p'})
-    t['gain'] = dfpreference[dfpreference['party'] == col]['gain'].values[0]
-    t['name'] = col
-    t['datetime'] = d
-    t['date'] = today.isoformat()
-    newly = newly.append(t, ignore_index=True)
+  t = ranks_statistics.T[col].to_frame().reset_index().rename(columns={'index': 'rank', col: 'p'})
+  t['gain'] = dfpreference[dfpreference['party'] == col]['gain'].values[0]
+  t['name'] = col
+  t['datetime'] = d
+  t['date'] = today.isoformat()
+  # newly = newly.append(t, ignore_index=True)
+  newly = pd.concat([newly, pd.DataFrame(t, columns=history.columns)])
 
 pd.concat([history, newly], ignore_index=True).to_csv(path + 'history_1_rank.csv', index=False)
 
@@ -237,7 +251,8 @@ for col in cols:
     t['gain'] = dfpreference[dfpreference['party'] == col]['gain'].values[0]
     t['name'] = col
     t['date'] = today.isoformat()
-    newly = newly.append(t, ignore_index=True)
+    # newly = newly.append(t, ignore_index=True)
+    newly = pd.concat([newly, pd.DataFrame(t, columns=history.columns)])
 
 pd.concat([history, newly], ignore_index=True).to_csv(path + 'history_1_prob.csv', index=False)
 
@@ -246,18 +261,19 @@ history = pd.read_csv(path + 'history_1_top2.csv')
 newly = pd.DataFrame(columns=history.columns)
 cols = top2_statistics.columns
 for col in cols:
-    for row in cols:
-        if row > col:
-            t = {}
-            t['p'] = top2_statistics[col][row]
-            t['name1'] = col
-            t['name2'] = row
-            t['gain1'] = dfpreference[dfpreference['party'] == col]['gain'].values[0]
-            t['gain2'] = dfpreference[dfpreference['party'] == row]['gain'].values[0]
-            t['date'] = today.isoformat()
-            t['datetime'] = d
-            
-            newly = newly.append(t, ignore_index=True)
+  for row in cols:
+    if row > col:
+      t = {}
+      t['p'] = top2_statistics[col][row]
+      t['name1'] = col
+      t['name2'] = row
+      t['gain1'] = dfpreference[dfpreference['party'] == col]['gain'].values[0]
+      t['gain2'] = dfpreference[dfpreference['party'] == row]['gain'].values[0]
+      t['date'] = today.isoformat()
+      t['datetime'] = d
+      
+      # newly = newly.append(t, ignore_index=True)
+      newly = pd.concat([newly, pd.DataFrame(t, columns=history.columns, index=[0])])
 
 pd.concat([history, newly], ignore_index=True).to_csv(path + 'history_1_top2.csv', index=False)
 
@@ -266,17 +282,18 @@ history = pd.read_csv(path + 'history_1_duel.csv')
 newly = pd.DataFrame(columns=history.columns)
 cols = duels_aging.columns
 for col in cols:
-    for row in cols:
-        if row > col:
-            t = {}
-            t['p'] = duels_aging[row][col]
-            t['name1'] = col
-            t['name2'] = row
-            t['gain1'] = dfpreference[dfpreference['party'] == col]['gain'].values[0]
-            t['gain2'] = dfpreference[dfpreference['party'] == row]['gain'].values[0]
-            t['date'] = today.isoformat()
-            t['datetime'] = d
-            
-            newly = newly.append(t, ignore_index=True)
+  for row in cols:
+    if row > col:
+      t = {}
+      t['p'] = duels_aging[row][col]
+      t['name1'] = col
+      t['name2'] = row
+      t['gain1'] = dfpreference[dfpreference['party'] == col]['gain'].values[0]
+      t['gain2'] = dfpreference[dfpreference['party'] == row]['gain'].values[0]
+      t['date'] = today.isoformat()
+      t['datetime'] = d
+      
+      # newly = newly.append(t, ignore_index=True)
+      newly = pd.concat([newly, pd.DataFrame(t, columns=history.columns, index=[0])])
 
 pd.concat([history, newly], ignore_index=True).to_csv(path + 'history_1_duel.csv', index=False)
