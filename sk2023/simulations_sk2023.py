@@ -186,6 +186,11 @@ for i in ranks_aging.columns:
   for j in ranks_aging.columns:
     p = (sum(ranks_aging[i] >= ranks_aging[j])) / sample
     duels_aging[i][j] = p
+duels_aging_cov = pd.DataFrame(columns = ranks_aging_cov.columns, index=ranks_aging_cov.columns)
+for i in ranks_aging_cov.columns:
+  for j in ranks_aging_cov.columns:
+    p = (sum(ranks_aging_cov[i] >= ranks_aging_cov[j])) / sample
+    duels_aging_cov[i][j] = p
 
 # WRITE TO SHEET
 # wsw = sh.worksheet('pořadí_aktuální')
@@ -220,6 +225,13 @@ for item in duels_aging.columns:
   arrd.append([item])
 wsw.update('A3', arrd)
 wsw.update('B2', [duels_aging.columns.values.tolist()] + duels_aging.values.tolist())
+
+wsw = sh.worksheet('duely_aging_cov')
+arrd = []
+for item in duels_aging_cov.columns:
+  arrd.append([item])
+wsw.update('A3', arrd)
+wsw.update('B2', [duels_aging_cov.columns.values.tolist()] + duels_aging_cov.values.tolist())
 
 wsw = sh.worksheet('top_2')
 wsw.update('A3', arrd)
