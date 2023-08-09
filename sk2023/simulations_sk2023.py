@@ -192,6 +192,29 @@ for i in ranks_aging_cov.columns:
     p = (sum(ranks_aging_cov[i] >= ranks_aging_cov[j])) / sample
     duels_aging_cov[i][j] = p
 
+# number of parties in parliament
+needed = dfpreference.loc[:, ['party', 'needed']].set_index('party')
+
+number_in_sim = simulations.T.ge(needed['needed'], axis=0).sum().to_frame().rename(columns={0: 'number_in'})
+nic = number_in_sim.value_counts(sort=False, ascending=True)
+number_in = pd.DataFrame(index=range(0, number_in_sim['number_in'].max() + 1), columns=['p'])
+for i in range(0, nic.index.max()[0] + 1):
+  number_in['p'][i] = nic.loc[i:].sum() / sample
+
+# number of parties in parliament - aging
+number_in_sim_aging = simulations_aging.T.ge(needed['needed'], axis=0).sum().to_frame().rename(columns={0: 'number_in'})
+nic_aging = number_in_sim_aging.value_counts(sort=False, ascending=True)
+number_in_aging = pd.DataFrame(index=range(0, number_in_sim_aging['number_in'].max() + 1), columns=['p'])
+for i in range(0, nic_aging.index.max()[0] + 1):
+  number_in_aging['p'][i] = nic_aging.loc[i:].sum() / sample
+
+# number of parties in parliament - aging - cov
+number_in_sim_aging_cov = simulations_aging_cov.T.ge(needed['needed'], axis=0).sum().to_frame().rename(columns={0: 'number_in'})
+nic_aging_cov = number_in_sim_aging_cov.value_counts(sort=False, ascending=True)
+number_in_aging_cov = pd.DataFrame(index=range(0, number_in_sim_aging_cov['number_in'].max() + 1), columns=['p'])
+for i in range(0, nic_aging_cov.index.max()[0] + 1):
+  number_in_aging_cov['p'][i] = nic_aging_cov.loc[i:].sum() / sample
+
 # WRITE TO SHEET
 # wsw = sh.worksheet('pořadí_aktuální')
 # wsw.update('B1', [ranks_statistics.transpose().columns.values.tolist()] + ranks_statistics.transpose().values.tolist())
@@ -240,6 +263,18 @@ wsw.update('B2', [top2_statistics.columns.values.tolist()] + top2_statistics.val
 wsw = sh.worksheet('top_2_cov')
 wsw.update('A3', arrd)
 wsw.update('B2', [top2_statistics_cov.columns.values.tolist()] + top2_statistics_cov.values.tolist())
+
+wsw = sh.worksheet('number_in')
+number_in = number_in.reset_index(drop=False)
+wsw.update('A2', number_in.values.tolist())
+
+wsw = sh.worksheet('number_in_aging')
+number_in_aging = number_in_aging.reset_index(drop=False)
+wsw.update('A2', number_in_aging.values.tolist())
+
+wsw = sh.worksheet('number_in_aging_cov')
+number_in_aging_cov = number_in_aging_cov.reset_index(drop=False)
+wsw.update('A2', number_in_aging_cov.values.tolist())
 
 wsw = sh.worksheet('preference')
 d = datetime.datetime.now().isoformat()
