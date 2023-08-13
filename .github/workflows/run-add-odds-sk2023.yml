@@ -53,9 +53,9 @@ jobs:
       # - name: Run simulations 2
       #   run: python cz2023/simulations_fr2022_2.py
 
-      # - name: gspread credentials 3
-      #   run: |
-      #     rm -r /home/runner/.config
+      - name: gspread credentials 3
+        run: |
+          rm -r /home/runner/.config
  
       # - name: Commit and push if it changed
       #   run: |-
