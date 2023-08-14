@@ -254,6 +254,8 @@ ws.update('B70', dueln)
 ####################
 ws = sh.worksheet("pravděpodobnosti_aktuální_aging_cov")
 dfmore = ws.col_values(1)[1:]
+dfmore_end = dfmore.index('')
+dfmore = dfmore[:dfmore_end]
 
 # Tipsport
 dftf = dft[dft['hypername'] == 'Počet hlasů v procentech'].drop_duplicates(subset=['hypername', 'supername', 'name'], keep='last')

@@ -47,7 +47,7 @@ jobs:
       #     ls /home/runner/
       #     ls /home/runner/.config/gspread/
       
-      - name: Run simulations
+      - name: Run Add Odds
         run: python sk2023/add_odds.py
       
       # - name: Run simulations 2
