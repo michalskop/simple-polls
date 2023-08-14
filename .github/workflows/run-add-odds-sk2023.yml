@@ -34,12 +34,17 @@ jobs:
         run: |
           mkdir -p /home/runner/.config
           mkdir -p /home/runner/.config/gspread
+     
       - name: gspread credentials 2
         uses: jsdaniell/create-json@1.1.2
         with:
           name: 'service_account.json'
           json: ${{ secrets.SERVICE_ACCOUNT_JSON }}
           dir: '../../../.config/gspread/'
+        id: auth
+      
+      - name: Set up credentials
+        run: echo "${{ steps.auth.outputs.json }}" >> $GITHUB_ENV
           
       # - name: debug 1
       #   run: |-
@@ -53,9 +58,9 @@ jobs:
       # - name: Run simulations 2
       #   run: python cz2023/simulations_fr2022_2.py
 
-      - name: gspread credentials 3
-        run: |
-          rm -r /home/runner/.config
+      # - name: gspread credentials 3
+      #   run: |
+      #     rm -r /home/runner/.config
  
       # - name: Commit and push if it changed
       #   run: |-
