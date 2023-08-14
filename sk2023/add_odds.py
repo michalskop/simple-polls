@@ -225,7 +225,6 @@ ws = sh.worksheet('duely_aging_cov')
 ws.update('B54', duelf)
 
 
-
 # Nike
 dfnf = dfn[(dfn['header'] == 'Získa viac percent')].drop_duplicates(subset=['header', 'name', 'odds_name'], keep='last')
 dueln = []
@@ -249,3 +248,84 @@ ws.update('B70', dueln)
 
 ws = sh.worksheet('duely_aging_cov')
 ws.update('B70', dueln)
+
+
+# MORE THAN x%
+####################
+ws = sh.worksheet("pravděpodobnosti_aktuální_aging_cov")
+dfmore = ws.col_values(1)[1:]
+
+# Tipsport
+dftf = dft[dft['hypername'] == 'Počet hlasů v procentech'].drop_duplicates(subset=['hypername', 'supername', 'name'], keep='last')
+gcols = {
+  '{}% a více': 'Q',
+  'Méně než {}%': 'AD'
+}
+for s in ['{}% a více', 'Méně než {}%']:
+  moret = []
+  for n in dfmore:
+    item = []
+    for c in dfr.columns[1:]:
+      filtered = dftf[(dftf['name'].eq(s.format(float(n) + 0.01))) & (dftf['supername'].eq(mappingt[c]))]
+      if len(filtered) > 0:
+        item.append(filtered.iloc[0]['odd'])
+      else:
+        item.append('')
+    moret.append(item)
+
+  ws = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
+  ws.update(gcols[s] + '148', moret)
+
+# Fortuna
+urlf2 = "https://raw.githubusercontent.com/michalskop/ifortuna.cz/master/data/MCZ10070.v2-1.csv"
+dff2 = pd.read_csv(urlf2, encoding="utf-8")
+
+dfff = dff2.drop_duplicates(subset=['event_name', 'event_link'], keep='last')
+gcols = {
+  'header1': 'AD',
+  'header2': 'Q'
+}
+gstr = {
+  'header1': '- {}',
+  'header2': '+ {}'
+}
+i = 1
+for s in ['header1', 'header2']:
+  moref = []
+  for n in dfmore:
+    item = []
+    for c in dfr.columns[1:]:
+      filtered = dfff[(dfff['event_name'] == mappingf[c]) & (dfff[s].eq(
+        gstr[s].format(float(n) + 0.01)))]
+      if len(filtered) > 0:
+        item.append(filtered.iloc[0]['odd' + str(i)])
+      else:
+        item.append('')
+    moref.append(item)
+  i += 1
+  ws = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
+  ws.update(gcols[s] + '221', moref)
+
+# Nike
+gcols = {
+  'viac ako': 'Q',
+  'menej ako': 'AD'
+}
+dfnf = dfn[(dfn['header'] == 'Počet percent')].drop_duplicates(subset=['header', 'name', 'odds_name'], keep='last')
+for s in ['viac ako', 'menej ako']:
+  moren = []
+  for n in dfmore:
+    item = []
+    for c in dfr.columns[1:]:
+      # break
+      filtered = dfnf[(dfnf['name'] == mappingn[c]) & (dfnf['odds_name'].eq(s + ' ' + '{:.2f}'.format(float(n))))]
+      if len(filtered) > 0:
+        item.append(filtered.iloc[0]['odds'])
+      else:
+        item.append('')
+
+    moren.append(item)
+
+  ws = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
+  ws.update(gcols[s] + '75', moren)
+
