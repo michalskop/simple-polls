@@ -278,6 +278,9 @@ for s in ['{}% a více', 'Méně než {}%']:
   ws = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
   ws.update(gcols[s] + '148', moret)
 
+  ws = sh.worksheet('pravděpodobnosti_aktuální_aging')
+  ws.update(gcols[s] + '148', moret)
+
 # Fortuna
 urlf2 = "https://raw.githubusercontent.com/michalskop/ifortuna.cz/master/data/MCZ10070.v2-1.csv"
 dff2 = pd.read_csv(urlf2, encoding="utf-8")
@@ -308,6 +311,9 @@ for s in ['header1', 'header2']:
   ws = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
   ws.update(gcols[s] + '221', moref)
 
+  ws = sh.worksheet('pravděpodobnosti_aktuální_aging')
+  ws.update(gcols[s] + '221', moref)
+
 # Nike
 gcols = {
   'viac ako': 'Q',
@@ -329,5 +335,8 @@ for s in ['viac ako', 'menej ako']:
     moren.append(item)
 
   ws = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
+  ws.update(gcols[s] + '75', moren)
+
+  ws = sh.worksheet('pravděpodobnosti_aktuální_aging')
   ws.update(gcols[s] + '75', moren)
 
