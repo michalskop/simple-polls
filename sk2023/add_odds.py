@@ -259,10 +259,21 @@ dfmore = dfmore[:dfmore_end]
 
 # Tipsport
 dftf = dft[dft['hypername'] == 'Počet hlasů v procentech'].drop_duplicates(subset=['hypername', 'supername', 'name'], keep='last')
+last_date = dftf['date'].max()
+dftf = dftf[dftf['date'] == last_date]
 gcols = {
   '{}% a více': 'Q',
   'Méně než {}%': 'AD'
 }
+lastcol = 'AO'
+# clear
+ws = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
+start_row = 148
+range_to_clear = f'{gcols["{}% a více"]}{start_row}:{lastcol}{start_row + len(dfmore)}'
+ws.batch_clear([range_to_clear])
+ws = sh.worksheet('pravděpodobnosti_aktuální_aging')
+ws.batch_clear([range_to_clear])
+
 for s in ['{}% a více', 'Méně než {}%']:
   moret = []
   for n in dfmore:
@@ -286,6 +297,8 @@ urlf2 = "https://raw.githubusercontent.com/michalskop/ifortuna.cz/master/data/MC
 dff2 = pd.read_csv(urlf2, encoding="utf-8")
 
 dfff = dff2.drop_duplicates(subset=['event_name', 'event_link'], keep='last')
+last_date = dfff['date'].max()
+dfff = dfff[dfff['date'] == last_date]
 gcols = {
   'header1': 'AD',
   'header2': 'Q'
@@ -294,6 +307,14 @@ gstr = {
   'header1': '- {}',
   'header2': '+ {}'
 }
+# clear
+ws = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
+start_row = 221
+range_to_clear = f'{gcols["header2"]}{start_row}:{lastcol}{start_row + len(dfmore)}'
+ws.batch_clear([range_to_clear])
+ws = sh.worksheet('pravděpodobnosti_aktuální_aging')
+ws.batch_clear([range_to_clear])
+
 i = 1
 for s in ['header1', 'header2']:
   moref = []
@@ -320,6 +341,16 @@ gcols = {
   'menej ako': 'AD'
 }
 dfnf = dfn[(dfn['header'] == 'Počet percent')].drop_duplicates(subset=['header', 'name', 'odds_name'], keep='last')
+last_date = dfnf['date'].max()
+dfnf = dfnf[dfnf['date'] == last_date]
+# clear
+ws = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
+start_row = 75
+range_to_clear = f'{gcols["viac ako"]}{start_row}:{lastcol}{start_row + len(dfmore)}'
+ws.batch_clear([range_to_clear])
+ws = sh.worksheet('pravděpodobnosti_aktuální_aging')
+ws.batch_clear([range_to_clear])
+
 for s in ['viac ako', 'menej ako']:
   moren = []
   for n in dfmore:
