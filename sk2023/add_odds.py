@@ -39,7 +39,7 @@ mappingf = {
   'SNS': 'SNS',
   'Demokrati': 'Demokrati',
   'Aliancia': 'Aliancia',
-  'Kotleba-ĽSNS': 'ĽS Naše Slovensko'   
+  'Kotleba-ĽSNS': 'ĽS Naše Slovensko'
 }
 
 mappingn = {
@@ -54,7 +54,7 @@ mappingn = {
   'SNS': 'SNS',
   'Demokrati': 'Demokrati',
   'Aliancia': 'Aliancia',
-  'Kotleba-ĽSNS': 'ĽSNS'   
+  'Kotleba-ĽSNS': 'ĽSNS'
 }
 
 # RANK
@@ -194,7 +194,36 @@ ws.update('L26', ninn)
 # DUELS
 ####################
 # Tipsport
+urlt2 = "https://github.com/michalskop/tipsport.cz/raw/main/v3/data/5209621.csv"
+dft2 = pd.read_csv(urlt2, encoding="utf-8")
 
+dfft = dft2[dft2['hypername'] == 'Kdo získá více hlasů'].drop_duplicates(subset=['hypername', 'supername', 'name'], keep='last')
+
+duelt = []
+for c1 in dfr.columns[1:]:
+  item = []
+  for c2 in dfr.columns[1:]:
+    exist = False
+    filtered = dfft[(dfft['supername'] == (mappingt[c1] + ' x ' + mappingt[c2]))]
+    if len(filtered) > 0:
+      filtered2 = filtered[(filtered['name'] == mappingt[c1])]
+      item.append(filtered2.iloc[0]['odd'])
+      exist = True
+    filtered = dfft[(dfft['supername'] == (mappingt[c2] + ' x ' + mappingt[c1]))]
+    if len(filtered) > 0:
+      filtered2 = filtered[(filtered['name'] == mappingt[c1])]
+      item.append(filtered2.iloc[0]['odd'])
+      exist = True
+    if not exist:
+      item.append('')
+  duelt.append(item)
+duelt.append([dfft['date'].iloc[-1]])
+
+ws = sh.worksheet('duely_aging')
+ws.update('B38', duelt)
+
+ws = sh.worksheet('duely_aging_cov')
+ws.update('B38', duelt)
 
 # Fortuna
 urlf2 = "https://github.com/michalskop/ifortuna.cz/raw/master/data/MCZ7830.csv"
