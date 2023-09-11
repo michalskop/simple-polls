@@ -152,7 +152,7 @@ for s in ['áno', 'nie']:
   ws = sh.worksheet('pořadí_aktuální_aging')
   ws.update('A' + str(grows[s]), rn)
 
-# RANK
+# NUMBER of PARTIES
 ####################
 
 # Tipsport
