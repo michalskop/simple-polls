@@ -67,13 +67,17 @@ urlt = "https://github.com/michalskop/tipsport.cz/raw/main/v3/data/5209621.csv"
 dft = pd.read_csv(urlt, encoding="utf-8")
 grows = {
   'Ano': 37,
-  'Ne': 47
+  'Ne': 53
 }
 for s in ['Ano', 'Ne']:
   rankt = []
   rankt.append(dft[(dft['hypername'] == 'Nejvíc hlasů získá Ano/Ne') & (dft['name'] == s)].drop_duplicates(subset=['hypername', 'supername', 'name'], keep='last'))
   rankt.append(dft[(dft['hypername'] == 'Umístění do 2. místa podle počtu hlasů Ano/Ne') & (dft['name'] == s)].drop_duplicates(subset=['hypername', 'supername', 'name'], keep='last'))
-  rankt.append(dft[(dft['hypername'] == 'Umístění do 3. místa podle počtu hlasů Ano/Ne') & (dft['name'] == s)].drop_duplicates(subset=['hypername', 'supername', 'name'], keep='last'))
+  rankt.append(dft[(dft['hypername'] == 'Umístění do 3. místa podle počtu hlasů Ano/Ne') & (dft['name'] == s)].
+  drop_duplicates(subset=['hypername', 'supername', 'name'], keep='last'))
+  rankt.append(dft[(dft['hypername'] == 'Umístění do 4. místa podle počtu hlasů Ano/Ne') & (dft['name'] == s)].drop_duplicates(subset=['hypername', 'supername', 'name'], keep='last'))
+  rankt.append(dft[(dft['hypername'] == 'Umístění do 5. místa podle počtu hlasů Ano/Ne') & (dft['name'] == s)].drop_duplicates(subset=['hypername', 'supername', 'name'], keep='last'))
+  rankt.append(dft[(dft['hypername'] == 'Umístění do 6. místa podle počtu hlasů Ano/Ne') & (dft['name'] == s)].drop_duplicates(subset=['hypername', 'supername', 'name'], keep='last'))
 
   rt = [[dft['date'].iloc[-1], s]]
   for i, r in enumerate(rankt):
@@ -105,8 +109,8 @@ dff = pd.read_csv(urlf, encoding="utf-8")
 rankf.append(dff.drop_duplicates(subset=['event_name'], keep='last'))
 
 growf = {
-  'odds': 60,
-  'odds2': 72
+  'odds': 72,
+  'odds2': 84
 }
 for s in ['odds', 'odds2']:
 
@@ -128,8 +132,8 @@ urln = "https://raw.githubusercontent.com/michalskop/nike.sk/main/v0/data/428660
 dfn = pd.read_csv(urln, encoding="utf-8")
 
 grows = {
-  'áno': 87,
-  'nie': 99
+  'áno': 99,
+  'nie': 111
 }
 for s in ['áno', 'nie']:
 
