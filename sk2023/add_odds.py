@@ -133,7 +133,7 @@ dfn = pd.read_csv(urln, encoding="utf-8")
 
 grows = {
   'áno': 99,
-  'nie': 111
+  'nie': 115
 }
 for s in ['áno', 'nie']:
 
@@ -142,6 +142,8 @@ for s in ['áno', 'nie']:
   rankn.append(dfn[(dfn['header'] == 'Umiestnenie do 2. miesta') & (dfn['odds_name'] == s)].drop_duplicates(subset=['header', 'name'], keep='last'))
   rankn.append(dfn[(dfn['header'] == 'Umiestnenie do 3. miesta') & (dfn['odds_name'] == s)].drop_duplicates(subset=['header', 'name'], keep='last'))
   rankn.append(dfn[(dfn['header'] == 'Umiestnenie do 4. miesta') & (dfn['odds_name'] == s)].drop_duplicates(subset=['header', 'name'], keep='last'))
+  rankn.append(dfn[(dfn['header'] == 'Umiestnenie do 5. miesta') & (dfn['odds_name'] == s)].drop_duplicates(subset=['header', 'name'], keep='last'))
+  rankn.append(dfn[(dfn['header'] == 'Umiestnenie do 6. miesta') & (dfn['odds_name'] == s)].drop_duplicates(subset=['header', 'name'], keep='last'))
 
   rn = [[dfn['date'].iloc[-1], s]]
   for i, r in enumerate(rankn):
