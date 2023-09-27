@@ -315,7 +315,7 @@ for s in ['{}% a více', 'Méně než {}%']:
   for n in dfmore:
     item = []
     for c in dfr.columns[1:]:
-      filtered = dftf[(dftf['name'].eq(s.format(float(n) + 0.01))) & (dftf['supername'].eq(mappingt[c]))]
+      filtered = dftf[(dftf['name'].eq(s.format(round(float(n) + 0.01, 2)))) & (dftf['supername'].eq(mappingt[c]))]
       if len(filtered) > 0:
         item.append(filtered.iloc[0]['odd'])
       else:
