@@ -329,7 +329,7 @@ for s in ['{}% a více', 'Méně než {}%']:
   ws.update(gcols[s] + '148', moret)
 
 # Fortuna
-urlf2 = "https://raw.githubusercontent.com/michalskop/ifortuna.cz/master/data/MCZ10070.v2-1.csv"
+urlf2 = "https://raw.githubusercontent.com/michalskop/ifortuna.cz/master/data/MSK10070.v2-1.csv"
 dff2 = pd.read_csv(urlf2, encoding="utf-8")
 
 dfff = dff2.drop_duplicates(subset=['event_name', 'event_link'], keep='last')
@@ -357,8 +357,7 @@ for s in ['header1', 'header2']:
   for n in dfmore:
     item = []
     for c in dfr.columns[1:]:
-      filtered = dfff[(dfff['event_name'] == mappingf[c]) & (dfff[s].eq(
-        gstr[s].format(float(n) + 0.01)))]
+      filtered = dfff[(dfff['event_name'] == mappingf[c]) & (dfff[s].eq(gstr[s].format(float(n) + 0.01)))]
       if len(filtered) > 0:
         item.append(filtered.iloc[0]['odd' + str(i)])
       else:
