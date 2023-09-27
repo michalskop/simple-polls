@@ -15,13 +15,13 @@ today = datetime.date.today()   # it changes later !!!
 sample_n = 1000 # used in statistical error
 re_coef = 0.6 # random error coefficient
 sample = 10000 # number of simulation
-interval_max = 34.5 # highest gain to calc probability
+interval_max = 30 # highest gain to calc probability
 # source sheet
 sheetkey = "1bRgInxsjoW4N9LVu6Tu79T8bYGIXPg330HGATj9cO9c"
 path = "sk2023/"
 
 additional_points = [0.55, 1.11]
-additional_points = [10.94]
+additional_points = [2.9, 4.14, 6.34, 7.3, 10.94, 11.54, 12.74, 19.54, 20.54, 20.74] # + 0.01
 
 # load data from GSheet
 gc = gspread.service_account()
