@@ -108,10 +108,19 @@ rankf.append(dff.drop_duplicates(subset=['event_name'], keep='last'))
 urlf = "https://github.com/michalskop/ifortuna.cz/raw/master/data/MCZ26353.csv"
 dff = pd.read_csv(urlf, encoding="utf-8")
 rankf.append(dff.drop_duplicates(subset=['event_name'], keep='last'))
+urlf = "https://github.com/michalskop/ifortuna.cz/raw/master/data/MCZ26354.csv"
+dff = pd.read_csv(urlf, encoding="utf-8")
+rankf.append(dff.drop_duplicates(subset=['event_name'], keep='last'))
+urlf = "https://github.com/michalskop/ifortuna.cz/raw/master/data/MCZ26355.csv"
+dff = pd.read_csv(urlf, encoding="utf-8")
+rankf.append(dff.drop_duplicates(subset=['event_name'], keep='last'))
+urlf = "https://github.com/michalskop/ifortuna.cz/raw/master/data/MCZ26394.csv"
+dff = pd.read_csv(urlf, encoding="utf-8")
+rankf.append(dff.drop_duplicates(subset=['event_name'], keep='last'))
 
 growf = {
   'odds': 76,
-  'odds2': 88
+  'odds2': 94
 }
 for s in ['odds', 'odds2']:
 
@@ -133,8 +142,8 @@ urln = "https://raw.githubusercontent.com/michalskop/nike.sk/main/v0/data/428660
 dfn = pd.read_csv(urln, encoding="utf-8")
 
 grows = {
-  'áno': 103,
-  'nie': 119
+  'áno': 115,
+  'nie': 131
 }
 for s in ['áno', 'nie']:
 
