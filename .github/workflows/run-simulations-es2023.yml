@@ -1,4 +1,4 @@
-name: Run simulations SK Elections 2023
+name: Run simulations ES Elections 2023
 
 on:
   # push:
@@ -27,7 +27,7 @@ jobs:
             ${{ runner.os }}-pip-
       - name: Install Python dependencies
         run: |
-          pip install -r sk2023/requirements_simulations.txt
+          pip install -r es2023/requirements_simulations.txt
 
       # /home/runner/work/simple-polls/simple-polls
       - name: gspread credentials 1
@@ -48,7 +48,7 @@ jobs:
       #     ls /home/runner/.config/gspread/
       
       - name: Run simulations
-        run: python sk2023/simulations_sk2023.py
+        run: python es2023/simulations_es2023.py
       
       # - name: Run simulations 2
       #   run: python cz2023/simulations_fr2022_2.py
@@ -57,12 +57,12 @@ jobs:
         run: |
           rm -r /home/runner/.config
  
-      - name: Commit and push if it changed
-        run: |-
-          git config user.name "Automated"
-          git config user.email "actions@users.noreply.github.com"
-          git add -A
-          timestamp=$(date -u)
-          git commit -m "Latest data: ${timestamp}" || exit 0
-          git push
+      # - name: Commit and push if it changed
+      #  run: |-
+      #    git config user.name "Automated"
+      #    git config user.email "actions@users.noreply.github.com"
+      #    git add -A
+      #    timestamp=$(date -u)
+      #    git commit -m "Latest data: ${timestamp}" || exit 0
+      #    git push
   
