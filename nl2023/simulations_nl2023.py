@@ -134,6 +134,16 @@ for i in range(1, len(ranks_cov.columns)):
   ranks_statistics_cov[str(i)] = pd.DataFrame((ranks_cov <= i).sum() / sample).rename(columns={0: str(i)})
   ranks_statistics_aging_cov[str(i)] = pd.DataFrame((ranks_aging_cov <= i).sum() / sample).rename(columns={0: str(i)})
 
+# rank matrix (somehow did not work directly) - covariances
+# to number of seats, if the same number, then the same rank, the worse one
+ranks_cov_seats = ((simulations_cov * 150).round().loc[0:sample,:].rank(axis=1, ascending=False) + 0.45).round()
+ranks_statistics_cov_seats = pd.DataFrame(index=ranks_cov_seats.columns)
+ranks_aging_cov_seats = ((simulations_aging_cov * 150).round().loc[0:sample,:].rank(axis=1, ascending=False) + 0.45).round()
+ranks_statistics_aging_cov_seats = pd.DataFrame(index=ranks_aging_cov_seats.columns)
+for i in range(1, len(ranks_cov_seats.columns)):
+  ranks_statistics_cov_seats[str(i)] = pd.DataFrame((ranks_cov_seats <= i).sum() / sample).rename(columns={0: str(i)})
+  ranks_statistics_aging_cov_seats[str(i)] = pd.DataFrame((ranks_aging_cov_seats <= i).sum() / sample).rename(columns={0: str(i)})
+
 # top 2
 top2_cov = ranks_aging_cov.where(ranks_aging_cov <= 2).fillna(False).where(ranks_aging_cov > 2).fillna(True)
 top2_statistics_cov = pd.DataFrame(index=ranks_aging_cov.columns, columns=ranks_aging_cov.columns)
@@ -225,6 +235,9 @@ wsw.update('B1', [ranks_statistics_aging.transpose().columns.values.tolist()] + 
 
 wsw = sh.worksheet('pořadí_aktuální_aging_cov')
 wsw.update('B1', [ranks_statistics_aging_cov.transpose().columns.values.tolist()] + ranks_statistics_aging_cov.transpose().values.tolist())
+
+wsw = sh.worksheet('pořadí_aktuální_aging_cov_seats')
+wsw.update('B1', [ranks_statistics_aging_cov_seats.transpose().columns.values.tolist()] + ranks_statistics_aging_cov_seats.transpose().values.tolist())
 
 # wsw = sh.worksheet('pravděpodobnosti_aktuální')
 # wsw.update('B1', [interval_statistics.columns.values.tolist()] + interval_statistics.values.tolist())
