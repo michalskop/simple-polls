@@ -48,7 +48,7 @@ jobs:
       #     ls /home/runner/.config/gspread/
       
       - name: Run simulations
-        run: python nl2023/simulations_nl2023.py
+        run: python tw2024/simulations_tw2024.py
       
       # - name: Run simulations 2
       #   run: python cz2023/simulations_fr2022_2.py
