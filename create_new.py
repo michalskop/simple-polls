@@ -10,14 +10,14 @@ import re
 import time
 
 # Parameters for the elections
-election_code = "us-ia-gop2024"
-election_flag = "🏴󠁵󠁳󠁩󠁡󠁿"
-election_date = "2024-01-15"
+election_code = "us-nh-gop2024"
+election_flag = "🏴󠁵󠁳󠁮󠁨󠁿"
+election_date = "2024-01-23"
 source_election_code = "fi2024"
-wikipedia_link = "https://en.wikipedia.org/wiki/2024_Iowa_Republican_presidential_caucuses"
+wikipedia_link = "https://en.wikipedia.org/wiki/2024_New_Hampshire_Republican_presidential_primary"
 candidates = ['Trump', 'DeSantis', 'Haley', 'Ramaswamy', 'Christie', 'Hutchison']
 candidates_colors = ['#283681', '#A8002A', '#FE6100', 'FFB000', '#BBBBBB', '#CCCCCC']
-candidates_values = [49.5, 18.6, 15.6, 5.7, 3.9, 0.6]
+candidates_values = [43.4, 8.3, 23.6, 6.8, 12.2, 0.3]
 candidates_needs = [0, 0, 0, 0, 0, 0]
 # Create html colors by AI:
 # light green in html: #3AAD2E
@@ -110,7 +110,7 @@ worksheet.format('E2', {"textFormat": {"bold": True}})
 # add color
 worksheet.update_tab_color({'red': 58 / 255, 'green': 173 / 255, 'blue': 46 / 255})
 print("Sheet 2: preference created.")
-time.sleep(5)
+time.sleep(10)
 
 # Sheet 3 + 4: pořadí aktuální
 worksheet = sh.add_worksheet(title="pořadí_aktuální_aging", rows=20, cols=20)
@@ -166,7 +166,7 @@ worksheet.update('B' + str(len(candidates) + 5), rng, value_input_option='USER_E
 worksheet2.update('B' + str(len(candidates) + 5), rng, value_input_option='USER_ENTERED')
 # done
 print("Sheet 3 + 4: pořadí aktuální created.")
-time.sleep(5)
+time.sleep(15)
 
 # sheet 5 + 6: pravděpodobnosti aktuální
 worksheet = sh.add_worksheet(title="pravděpodobnosti_aktuální_aging", rows=200, cols=(len(candidates) + 1))
@@ -301,7 +301,6 @@ with open (path + source_election_code + '/requirements_simulations.txt') as f:
 if not os.path.exists(path + election_code):
   os.makedirs(path + election_code)
 # save
-os.create_dir(path + election_code)
 with open (path + election_code + '/requirements_simulations.txt', 'w') as f:
   f.write(content)
 print("Requirements file created.")
