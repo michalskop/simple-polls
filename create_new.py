@@ -10,15 +10,15 @@ import re
 import time
 
 # Parameters for the elections
-election_code = "fi2024"
-election_flag = "🇫🇮"
-election_date = "2024-01-28"
-source_election_code = "tw2024"
-wikipedia_link = "https://en.wikipedia.org/wiki/2024_Finnish_presidential_election"
-candidates = ['Haavisto', 'Stubb', 'Hallaaho', 'Rehn', 'Andersson', 'Urpilainen', 'Aaltola', 'Essayah', 'Harkimo']
-candidates_colors = ['#006845', '#006288', '#FFDE55', '#3AAD2E', '#F00A64', '#F54B4B','#214E89', '#2B67C9', '#ae2375']
-candidates_values = [22, 24, 13, 9, 7, 5, 4, 2, 1]
-candidates_needs = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+election_code = "us-ia-gop2024"
+election_flag = "🏴󠁵󠁳󠁩󠁡󠁿"
+election_date = "2024-01-15"
+source_election_code = "fi2024"
+wikipedia_link = "https://en.wikipedia.org/wiki/2024_Iowa_Republican_presidential_caucuses"
+candidates = ['Trump', 'DeSantis', 'Haley', 'Ramaswamy', 'Christie', 'Hutchison']
+candidates_colors = ['#283681', '#A8002A', '#FE6100', 'FFB000', '#BBBBBB', '#CCCCCC']
+candidates_values = [49.5, 18.6, 15.6, 5.7, 3.9, 0.6]
+candidates_needs = [0, 0, 0, 0, 0, 0]
 # Create html colors by AI:
 # light green in html: #3AAD2E
 # light green in RGB: (58, 173, 46)
@@ -79,6 +79,9 @@ worksheet.format('A14:A15', {"textFormat": {"bold": True}, 'backgroundColor': {'
 time.sleep(1)
 gspread_formatting.set_column_width(worksheet, 'A', 20)
 time.sleep(1)
+# flag
+worksheet.update('B2', election_flag)
+worksheet.format('B2', {"textFormat": {"fontSize": 150}})
 print("Sheet 1: info created.")
 
 # Sheet 2: preference
@@ -272,6 +275,10 @@ print("Sheet 13: history created.")
 # share with all
 sh.share(None, perm_type='anyone', role='writer')
 
+# transfer ownership to me
+permissions = sh.list_permissions()
+sh.transfer_ownership(permissions[0].get('id'))
+
 # CREATE THE WORKFLOW FILE
 with open (path + '.github/workflows/' + 'run-simulations-' + source_election_code + '.yml') as f:
   content = f.read()
@@ -297,6 +304,7 @@ if not os.path.exists(path + election_code):
 os.create_dir(path + election_code)
 with open (path + election_code + '/requirements_simulations.txt', 'w') as f:
   f.write(content)
+print("Requirements file created.")
 
 # CREATE SIMULATIONS FILE
 with open (path + source_election_code + '/simulations_' + source_election_code + '.py') as f:
@@ -311,4 +319,4 @@ content = content.replace(re.findall('sheetkey = "[a-zA-Z0-9-_]+"', content)[0],
 # save
 with open (path + election_code + '/simulations_' + election_code + '.py', 'w') as f:
   f.write(content)
-
+print("Simulations file created.")
