@@ -294,6 +294,11 @@ wsw = sh.worksheet('preference')
 d = datetime.datetime.now().isoformat()
 wsw.update('E2', d)
 
+# save to history initial preferences
+historical_row = [d] + [dfpreference['date'][0]] + dfpreference['gain'].to_list() + [''] + dfpreference['volatilita'].to_list()
+wsh = sh.worksheet('history')
+wsh.insert_row(historical_row, 2)
+
 # save to history
 # ranks
 # history = pd.read_csv(path + 'history_1_rank.csv')

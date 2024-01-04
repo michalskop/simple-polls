@@ -219,7 +219,7 @@ time.sleep(5)
 worksheet = sh.add_worksheet(title="number_in_aging_cov", rows=(len(candidates) + 2), cols=10)
 time.sleep(1)
 # add the first cell
-worksheet.update('A1', 'Number in')
+worksheet.update('A1', [['Number in', 'Pr']])
 # done
 print("Sheet 11: number_in_aging_cov created.")
 time.sleep(5)
@@ -257,6 +257,17 @@ for i in range(len(candidates)):
 worksheet.update('B2', rng)
 # done
 print("Sheet 12: median correlations created.")
+
+# sheet 13: history
+worksheet = sh.add_worksheet(title="history", rows=20, cols=(2 * len(candidates) + 3))
+time.sleep(1)
+# add the first row and freeze
+row = ['date_running', 'date'] + candidates + [''] + ['volatilita_' + x for x in candidates]
+worksheet.update('A1', [row])
+worksheet.freeze(rows=1)
+time.sleep(1)
+# done
+print("Sheet 13: history created.")
 
 # share with all
 sh.share(None, perm_type='anyone', role='writer')
