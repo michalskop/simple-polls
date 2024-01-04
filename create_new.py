@@ -228,7 +228,7 @@ time.sleep(5)
 worksheet = sh.add_worksheet(title="median correlations", rows=(len(candidates) + 1), cols=(len(candidates) + 1))
 time.sleep(1)
 # add the first cell
-worksheet.update('A1', 'Median correlations')
+worksheet.update('A1', 'Median')
 # fill names to row and column
 worksheet.update('B1', [candidates])
 col = [[x] for x in candidates]
