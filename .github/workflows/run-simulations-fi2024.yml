@@ -1,4 +1,4 @@
-name: Run simulations TW 2024 elections
+name: Run simulations FI 2024 elections
 
 on:
   push:
@@ -27,7 +27,7 @@ jobs:
             ${{ runner.os }}-pip-
       - name: Install Python dependencies
         run: |
-          pip install -r tw2024/requirements_simulations.txt
+          pip install -r fi2024/requirements_simulations.txt
 
       # /home/runner/work/simple-polls/simple-polls
       - name: gspread credentials 1
@@ -48,7 +48,7 @@ jobs:
       #     ls /home/runner/.config/gspread/
       
       - name: Run simulations
-        run: python tw2024/simulations_tw2024.py
+        run: python fi2024/simulations_fi2024.py
       
       # - name: Run simulations 2
       #   run: python cz2023/simulations_fr2022_2.py
