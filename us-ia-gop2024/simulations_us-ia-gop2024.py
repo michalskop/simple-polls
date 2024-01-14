@@ -86,25 +86,7 @@ del tt['Median']
 corr = tt.to_numpy()
 cov = p['sdx'].to_numpy() * corr * p['sdx'].to_numpy().T
 try:
-  simulations_cov = np.random.multivariate_normal(mean=p['p'], cov=cov, size=sample)
-except RuntimeWarning as warning:
-  print('Covariance matrix is not positive definite.')
-  # Ensure the covariance matrix is positive-semidefinite
-  eigenvalues, eigenvectors = np.linalg.eigh(cov)
-  eigenvalues = np.maximum(eigenvalues, 0)  # Set negative eigenvalues to zero
-  cov = eigenvectors @ np.diag(eigenvalues) @ eigenvectors.T  # Reconstruct the covariance matrix
-  simulations_cov = np.random.multivariate_normal(mean=p['p'], cov=cov, size=sample)
-
-p['sdxage'] = p['sdx'] * aging
-covage = p['sdxage'].to_numpy() * corr * p['sdxage'].to_numpy().T
-simulation_aging_cov = np.random.multivariate_normal(mean=p['p'], cov=covage, size=sample)
-simulations_cov = pd.DataFrame(simulations_cov, columns=dfpreference['party'].to_list())
-simulations_aging_cov = pd.DataFrame(simulation_aging_cov, columns=dfpreference['party'].to_list())
-# add uniform error
-for c in simulations_cov.columns:
-  sx = p[p['party'] == c]['sdx'].values[0]
-  simulations_cov[c] = simulations_cov[c] + np.random.uniform(low=(-1 * sx * math.sqrt(3)), high=(sx * math.sqrt(3)), size=sample)
-  simulations_aging_cov[c] = simulations_aging_cov[c] + np.random.uniform(low=(-1 * sx * aging * math.sqrt(3)), high=(sx * aging * math.sqrt(3)), size=sample)
+  wsw.update(values=ranks_statistics_aging.transpose().values.tolist(), range_name='B1')
 
 # rank matrix (somehow did not work directly)
 ranks = simulations.loc[0:sample,:].rank(axis=1, ascending=False)
