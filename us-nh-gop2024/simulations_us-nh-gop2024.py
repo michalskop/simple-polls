@@ -24,6 +24,9 @@ path = "us-nh-gop2024/"
 # additional_points = [2.9, 4.14, 6.34, 7.3, 10.94, 11.54, 12.74, 19.54, 20.54, 20.74] # + 0.01
 additional_points = []
 
+# additional points for difference
+additional_points_difference = [-100]
+
 # load data from GSheet
 gc = gspread.service_account()
 sh = gc.open_by_key(sheetkey)
@@ -226,6 +229,35 @@ number_in_aging_cov = pd.DataFrame(index=range(0, number_in_sim_aging_cov['numbe
 for i in range(0, nic_aging_cov.index.max()[0] + 1):
   number_in_aging_cov['p'][i] = nic_aging_cov.loc[i:].sum() / sample
 
+# Difference between first and second
+simulations_diff = simulations.copy()
+simulations_diff_trump = simulations_diff['Trump']
+simulations_diff_notrump = simulations_diff.drop(columns=['Trump'])
+simulations_sorted = simulations_diff_notrump.apply(lambda x: pd.Series(sorted(x, reverse=True)), axis=1)
+simulations_diff['diff'] = simulations_diff_trump - simulations_sorted.apply(lambda x: x[0], axis=1)
+
+arr = np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array(additional_points_difference)))
+arr = np.sort(arr)
+
+difference_statistics = pd.DataFrame(index=arr, columns=['diff', 'Pr'])
+difference_statistics['diff'] = arr
+for i in arr:
+  difference_statistics.loc[i, 'Pr'] = ((simulations_diff['diff'] <= i / 100).sum() / sample)
+difference_statistics = difference_statistics.fillna(0)
+
+# Difference between first and second - covariances
+simulations_diff_cov = simulations_cov.copy()
+simulations_sorted_cov = simulations_diff_cov.apply(lambda x: pd.Series(sorted(x, reverse=True)), axis=1)
+second_highest_cov = simulations_sorted_cov.apply(lambda x: x[1], axis=1)
+simulations_diff_cov['diff'] = simulations_diff_cov.max(axis=1) - second_highest_cov
+
+difference_statistics_cov = pd.DataFrame(index=arr, columns=['diff', 'Pr'])
+difference_statistics_cov['diff'] = arr
+for i in arr:
+  difference_statistics_cov.loc[i, 'Pr'] = ((simulations_diff_cov['diff'] <= i / 100).sum() / sample)
+difference_statistics_cov = difference_statistics_cov.fillna(0)
+
+
 # WRITE TO SHEET
 # wsw = sh.worksheet('pořadí_aktuální')
 # wsw.update('B1', [ranks_statistics.transpose().columns.values.tolist()] + ranks_statistics.transpose().values.tolist())
@@ -289,6 +321,12 @@ wsw.update('B2', [top2_statistics_cov.columns.values.tolist()] + top2_statistics
 wsw = sh.worksheet('number_in_aging_cov')
 number_in_aging_cov = number_in_aging_cov.reset_index(drop=False)
 wsw.update('A2', number_in_aging_cov.values.tolist())
+
+wsw = sh.worksheet('difference_1_2_aging')
+wsw.update('A2', difference_statistics.values.tolist())
+
+wsw = sh.worksheet('difference_1_2_aging_cov')
+wsw.update('A2', difference_statistics_cov.values.tolist())
 
 wsw = sh.worksheet('preference')
 d = datetime.datetime.now().isoformat()
