@@ -10,14 +10,15 @@ import re
 import time
 
 # Parameters for the elections
-election_code = "us-nh-gop2024"
-election_flag = "🏴󠁵󠁳󠁮󠁨󠁿"
-election_date = "2024-01-23"
-source_election_code = "fi2024"
-wikipedia_link = "https://en.wikipedia.org/wiki/2024_New_Hampshire_Republican_presidential_primary"
-candidates = ['Trump', 'DeSantis', 'Haley', 'Ramaswamy', 'Christie', 'Hutchison']
-candidates_colors = ['#283681', '#A8002A', '#FE6100', 'FFB000', '#BBBBBB', '#CCCCCC']
-candidates_values = [43.4, 8.3, 23.6, 6.8, 12.2, 0.3]
+election_code = "sk-president-2024"
+election_flag = "🇸🇰"
+election_date = "2024-03-23"
+source_election_code = "fi2024" # to copy from
+wikipedia_link = "https://sk.wikipedia.org/wiki/Vo%C4%BEba_prezidenta_Slovenskej_republiky_v_roku_2024"
+
+candidates = ['Pellegrini', 'Korčok', 'Kubiš', 'Matovič', 'Harabin', 'Danko', 'Kotleba', 'Forró', 'Švec', 'Náhlík', 'Dubovský']
+candidates_colors = ['#7F00FF', '#1111ff', '#BBBBBB', '#BBBBBB', '#BBBBBB', '#BBBBBB', '#BBBBBB', '#BBBBBB', '#BBBBBB', '#BBBBBB', '#BBBBBB']
+candidates_values = [38.1, 25.6, 4.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
 candidates_needs = [0, 0, 0, 0, 0, 0]
 # Create html colors by AI:
 # light green in html: #3AAD2E
