@@ -1,4 +1,0 @@
-gspread
-numpy
-pandas
-scipy

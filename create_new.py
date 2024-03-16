@@ -19,7 +19,7 @@ wikipedia_link = "https://sk.wikipedia.org/wiki/Vo%C4%BEba_prezidenta_Slovenskej
 candidates = ['Pellegrini', 'Korčok', 'Kubiš', 'Matovič', 'Harabin', 'Danko', 'Kotleba', 'Forró', 'Švec', 'Náhlík', 'Dubovský']
 candidates_colors = ['#7F00FF', '#1111ff', '#BBBBBB', '#BBBBBB', '#BBBBBB', '#BBBBBB', '#BBBBBB', '#BBBBBB', '#BBBBBB', '#BBBBBB', '#BBBBBB']
 candidates_values = [38.1, 25.6, 4.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
-candidates_needs = [0, 0, 0, 0, 0, 0]
+candidates_needs = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 # Create html colors by AI:
 # light green in html: #3AAD2E
 # light green in RGB: (58, 173, 46)
