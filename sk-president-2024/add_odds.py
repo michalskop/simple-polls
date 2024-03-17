@@ -188,7 +188,40 @@ dfmore = dfmore[:dfmore_end]
 
 # Tipsport
 # not available
-lastcol = 'AM'
+dftf = dft[dft['hypername'] == 'Počet hlasů v procentech'].drop_duplicates(subset=['hypername', 'supername', 'name'], keep='last')
+last_date = dftf['date'].max()
+dftf = dftf[dftf['date'] == last_date]
+gcols = {
+  '{}% a více': 'P',
+  'Méně než {}%': 'AC'
+}
+lastcol = {
+  'header1': 'AM',
+  'header2': 'Z'
+}
+# clear
+ws = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
+start_row = 134
+range_to_clear = f'{gcols["{}% a více"]}{start_row}:{lastcol["header2"]}{start_row + len(dfmore)}'
+ws.batch_clear([range_to_clear])
+range_to_clear = f'{gcols["Méně než {}%"]}{start_row}:{lastcol["header1"]}{start_row + len(dfmore)}'
+ws.batch_clear([range_to_clear])
+
+for s in ['{}% a více', 'Méně než {}%']:
+  moret = []
+  for n in dfmore:
+    item = []
+    for c in dfr.columns[1:]:
+      filtered = dftf[(dftf['name'].eq(s.format(round(float(n) + 0.01, 2)))) & (dftf['supername'].eq(mappingt[c]))]
+      if len(filtered) > 0:
+        item.append(filtered.iloc[0]['odd'])
+      else:
+        item.append('')
+    moret.append(item)
+
+  ws = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
+  ws.update(gcols[s] + '134', moret)
+
 
 # Fortuna
 urlf2 = "https://raw.githubusercontent.com/michalskop/ifortuna.cz/master/data/MSK44665.v2-1.csv"

@@ -22,7 +22,7 @@ path = "sk-president-2024/"
 
 # additional_points = [0.55, 1.11]
 # additional_points = [2.9, 4.14, 6.34, 7.3, 10.94, 11.54, 12.74, 19.54, 20.54, 20.74] # + 0.01
-additional_points = [4.85, 34.75]
+additional_points = [4.84, 34.74]
 
 # load data from GSheet
 gc = gspread.service_account()
