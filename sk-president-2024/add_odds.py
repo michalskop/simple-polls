@@ -86,6 +86,9 @@ for s in ['Ano', 'Ne']:
   ws = sh.worksheet('pořadí_aktuální_aging_cov')
   ws.update('A' + str(grows[s]), rt)
 
+  ws = sh.worksheet('pořadí_aktuální_aging')
+  ws.update('A' + str(grows[s]), rt)
+
 
 # Fortuna
 urlf = "https://github.com/michalskop/ifortuna.cz/raw/master/data/MSK44666.csv"
@@ -116,6 +119,8 @@ for s in ['odds', 'odds2']:
       rf[i + 1].append(float(str(rankf[i][rankf[i]['event_name'] == mappingf[c]].iloc[0][s]).replace('\xa0','')))
 
   ws = sh.worksheet('pořadí_aktuální_aging_cov')
+  ws.update('A' + str(growf[s]), rf)
+  ws = sh.worksheet('pořadí_aktuální_aging')
   ws.update('A' + str(growf[s]), rf)
 
 # Nike
@@ -154,6 +159,9 @@ duelf.append([dfff['date'].iloc[-1]])
 ws = sh.worksheet('duely_aging_cov')
 ws.update('B47', duelf)
 
+ws = sh.worksheet('duely_aging')
+ws.update('B47', duelf)
+
 # Nike
 urln = "https://raw.githubusercontent.com/michalskop/nike.sk/main/v0/data/43804671.csv"
 dfn = pd.read_csv(urln, encoding="utf-8")
@@ -179,6 +187,9 @@ dueln.append([dfn['date'].iloc[-1]])
 ws = sh.worksheet('duely_aging_cov')
 ws.update('B62', dueln)
 
+ws = sh.worksheet('duely_aging')
+ws.update('B62', dueln)
+
 # MORE THAN x%
 ####################
 ws = sh.worksheet("pravděpodobnosti_aktuální_aging_cov")
@@ -187,7 +198,6 @@ dfmore_end = dfmore.index('')
 dfmore = dfmore[:dfmore_end]
 
 # Tipsport
-# not available
 dftf = dft[dft['hypername'] == 'Počet hlasů v procentech'].drop_duplicates(subset=['hypername', 'supername', 'name'], keep='last')
 last_date = dftf['date'].max()
 dftf = dftf[dftf['date'] == last_date]
@@ -206,6 +216,11 @@ range_to_clear = f'{gcols["{}% a více"]}{start_row}:{lastcol["header2"]}{start_
 ws.batch_clear([range_to_clear])
 range_to_clear = f'{gcols["Méně než {}%"]}{start_row}:{lastcol["header1"]}{start_row + len(dfmore)}'
 ws.batch_clear([range_to_clear])
+ws = sh.worksheet('pravděpodobnosti_aktuální_aging')
+range_to_clear = f'{gcols["{}% a více"]}{start_row}:{lastcol["header2"]}{start_row + len(dfmore)}'
+ws.batch_clear([range_to_clear])
+range_to_clear = f'{gcols["Méně než {}%"]}{start_row}:{lastcol["header1"]}{start_row + len(dfmore)}'
+ws.batch_clear([range_to_clear])
 
 for s in ['{}% a více', 'Méně než {}%']:
   moret = []
@@ -220,6 +235,9 @@ for s in ['{}% a více', 'Méně než {}%']:
     moret.append(item)
 
   ws = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
+  ws.update(gcols[s] + '134', moret)
+
+  ws = sh.worksheet('pravděpodobnosti_aktuální_aging')
   ws.update(gcols[s] + '134', moret)
 
 
@@ -250,6 +268,11 @@ range_to_clear = f'{gcols["header2"]}{start_row}:{lastcol["header2"]}{start_row 
 ws.batch_clear([range_to_clear])
 range_to_clear = f'{gcols["header1"]}{start_row}:{lastcol["header1"]}{start_row + len(dfmore)}'
 ws.batch_clear([range_to_clear])
+ws = sh.worksheet('pravděpodobnosti_aktuální_aging')
+range_to_clear = f'{gcols["header2"]}{start_row}:{lastcol["header2"]}{start_row + len(dfmore)}'
+ws.batch_clear([range_to_clear])
+range_to_clear = f'{gcols["header1"]}{start_row}:{lastcol["header1"]}{start_row + len(dfmore)}'
+ws.batch_clear([range_to_clear])
 
 i = 1
 for s in ['header1', 'header2']:
@@ -266,6 +289,8 @@ for s in ['header1', 'header2']:
   i += 1
   ws = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
   ws.update(gcols[s] + '266', moref)
+  ws = sh.worksheet('pravděpodobnosti_aktuální_aging')
+  ws.update(gcols[s] + '266', moref)
 
 # Nike
 gcols = {
@@ -280,9 +305,15 @@ dfnf = dfn[(dfn['header'] == 'Počet percent')].drop_duplicates(subset=['header'
 last_date = dfnf['date'].max()
 dfnf = dfnf[dfnf['date'] == last_date]
 
+# clear
 # API limit: Max rows: 200, max columns: 12
 ws = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
 start_row = 308
+range_to_clear = f'{gcols["viac ako"]}{start_row}:{lastcol["header2"]}{start_row + len(dfmore)}'
+ws.batch_clear([range_to_clear])
+range_to_clear = f'{gcols["menej ako"]}{start_row}:{lastcol["header1"]}{start_row + len(dfmore)}'
+ws.batch_clear([range_to_clear])
+ws = sh.worksheet('pravděpodobnosti_aktuální_aging')
 range_to_clear = f'{gcols["viac ako"]}{start_row}:{lastcol["header2"]}{start_row + len(dfmore)}'
 ws.batch_clear([range_to_clear])
 range_to_clear = f'{gcols["menej ako"]}{start_row}:{lastcol["header1"]}{start_row + len(dfmore)}'
@@ -304,4 +335,6 @@ for s in ['viac ako', 'menej ako']:
     moren.append(item)
 
   ws = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
+  ws.update(gcols[s] + '398', moren)
+  ws = sh.worksheet('pravděpodobnosti_aktuální_aging')
   ws.update(gcols[s] + '398', moren)
