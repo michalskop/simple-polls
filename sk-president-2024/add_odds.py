@@ -129,8 +129,36 @@ for s in ['odds', 'odds2']:
 
 # DUELS
 ####################
-# Tipsport
-# not available
+# Tipsport  
+dfft = dft[dft['hypername'] == 'Kdo získá více hlasů'].drop_duplicates(subset=['hypername', 'supername', 'name'], keep='last')
+last_date = dft['date'].max()
+dfft = dfft[dfft['date'] == last_date]
+
+duelt = []
+for c1 in dfr.columns[1:]:
+  item = []
+  for c2 in dfr.columns[1:]:
+    exist = False
+    filtered = dfft[(dfft['supername'] == (mappingt[c1] + ' x ' + mappingt[c2]))]
+    if len(filtered) > 0:
+      filtered2 = filtered[(filtered['name'] == mappingt[c1])]
+      item.append(filtered2.iloc[0]['odd'])
+      exist = True
+    filtered = dfft[(dfft['supername'] == (mappingt[c2] + ' x ' + mappingt[c1]))]
+    if len(filtered) > 0:
+      filtered2 = filtered[(filtered['name'] == mappingt[c1])]
+      item.append(filtered2.iloc[0]['odd'])
+      exist = True
+    if not exist:
+      item.append('')
+  duelt.append(item)
+duelt.append([dfft['date'].iloc[-1]])
+
+ws = sh.worksheet('duely_aging')
+ws.update('B32', duelt)
+
+ws = sh.worksheet('duely_aging_cov')
+ws.update('B32', duelt)
   
 # Fortuna
 urlf2 = "https://github.com/michalskop/ifortuna.cz/raw/master/data/MSK44667.csv"
