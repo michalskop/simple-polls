@@ -1,0 +1,68 @@
+name: Run simulations CZ-EU- 2024 elections
+
+on:
+  # push:
+  #   branches:
+  #     - main
+  workflow_dispatch:
+  # schedule:
+  #   - cron: '15 * * * *'
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - uses: actions/cache@v2
+        name: Configure pip caching
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements_simulations.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Install Python dependencies
+        run: |
+          pip install -r cz-eu-2024/requirements_simulations.txt
+
+      # /home/runner/work/simple-polls/simple-polls
+      - name: gspread credentials 1
+        run: |
+          mkdir -p /home/runner/.config
+          mkdir -p /home/runner/.config/gspread
+      - name: gspread credentials 2
+        uses: jsdaniell/create-json@1.1.2
+        with:
+          name: 'service_account.json'
+          json: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+          dir: '../../../.config/gspread/'
+          
+      # - name: debug 1
+      #   run: |-
+      #     pwd
+      #     ls /home/runner/
+      #     ls /home/runner/.config/gspread/
+      
+      - name: Run simulations
+        run: python cz-eu-2024/simulations_cz-eu-2024.py
+      
+      # - name: Run simulations 2
+      #   run: python cz2023/simulations_fr2022_2.py
+
+      - name: gspread credentials 3
+        run: |
+          rm -r /home/runner/.config
+ 
+      - name: Commit and push if it changed
+        run: |-
+          git config user.name "Automated"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          timestamp=$(date -u)
+          git commit -m "Latest data: ${timestamp}" || exit 0
+          git push
+  
