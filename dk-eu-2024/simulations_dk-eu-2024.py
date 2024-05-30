@@ -204,7 +204,7 @@ for i in ranks_aging_cov.columns:
     duels_aging_cov[i][j] = p
 
 # number of parties in parliament
-needed = dfpreference.loc[:, ['party', 'needed']].set_index('party')
+needed = dfpreference.loc[:, ['party', 'needed']].set_index('party') / 100
 
 number_in_sim = simulations.T.ge(needed['needed'], axis=0).sum().to_frame().rename(columns={0: 'number_in'})
 nic = number_in_sim.value_counts(sort=False, ascending=True)

@@ -9,7 +9,7 @@ import scipy.stats
 import warnings
 # from matplotlib import pyplot as plt
 
-print(gspread.__version__)
+print(gspread.__version__)  # version 6 is the last version, it should be used here
 
 election_date = '2024-06-08'
 election_day = datetime.date.fromisoformat(election_date)
