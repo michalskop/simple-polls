@@ -9,6 +9,8 @@ import scipy.stats
 import warnings
 # from matplotlib import pyplot as plt
 
+print(gspread.__version__)
+
 election_date = '2024-06-08'
 election_day = datetime.date.fromisoformat(election_date)
 today = datetime.date.today()   # it changes later !!!
@@ -292,7 +294,7 @@ wsw.update(range_name='A2', values=number_in_aging_cov.values.tolist())
 
 wsw = sh.worksheet('preference')
 d = datetime.datetime.now().isoformat()
-wsw.update(range_name='E2', values=d)
+wsw.update(range_name='E2', values=[[d]])
 
 # save to history initial preferences
 historical_row = [d] + [dfpreference['date'][0]] + dfpreference['gain'].to_list() + [''] + dfpreference['volatilita'].to_list()
