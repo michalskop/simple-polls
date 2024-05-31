@@ -24,7 +24,7 @@ path = "cz-eu-2024/"
 
 # additional_points = [0.55, 1.11]
 # additional_points = [2.9, 4.14, 6.34, 7.3, 10.94, 11.54, 12.74, 19.54, 20.54, 20.74] # + 0.01
-additional_points = []
+additional_points = [11.86, 22.74, 25.24]
 
 # load data from GSheet
 gc = gspread.service_account()
