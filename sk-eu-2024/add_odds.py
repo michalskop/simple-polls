@@ -17,25 +17,16 @@ sh = gc.open_by_key(sheetkey)
 # mappingt = {
 
 # }
-PS
-SMER–SSD
-HLAS–SD
-REP
-KDH
-SaS
-Other
-AS
-SNS
-KÚ+OĽaNO+ZĽ
-D
+
 # fortuna
 mappingf = {
   "PS": "Progresívne Slovensko",
-  "SMER–SSD": "SMER–SD",
-  "HLAS–SD": "HLAS–SD",
+  "SMER–SSD": "	Smer - SD",
+  "HLAS–SD": "Hlas - SD",
   "REP": "Republika",
   "KDH": "KDH",
   "SaS": "SaS",
+  "Other": "Other",
   "AS": "Maďarská aliancia",
   "SNS": "SNS",
   "KÚ+OĽaNO+ZĽ": "Slovensko, Za ľudí",
@@ -44,19 +35,19 @@ mappingf = {
 # candidates are keys
 candidates = [k for k in mappingf.keys()]
 
-# mappingn = {
-#   "ANO": "ANO 2011",
-#   "SPOLU": "SPOLU",
-#   "SPD+Trikolóra": "SPD a Trikolora",
-#   "STAN": "Starostové a osobnosti pro Evropu",
-#   "Piráti": "Česká pirátská strana",
-#   "Stačilo!": "STAČILO!",
-#   "Přísaha": "PŘÍSAHA a MOTORISTÉ",
-#   "SOCDEM": "Sociální demokracie",
-#   "Svobodní": "Svobodní",
-#   "PRO": "PRO",
-#   "Zelení": "Zelení",
-# }
+mappingn = {
+  "PS": "Progresívne Slovensko",
+  "SMER–SSD": "Smer - SD",
+  "HLAS–SD": "Hlas - SD",
+  "REP": "Republika",
+  "KDH": "KDH",
+  "SaS": "SaS",
+  "Other": "Other",
+  "AS": "Maďarská aliancia",
+  "SNS": "SNS",
+  "KÚ+OĽaNO+ZĽ": "Slovensko, Za ľudí",
+  "D": "Demokrati",
+}
 
 # RANK
 ####################
@@ -92,26 +83,26 @@ dfr = pd.DataFrame(ws.get_all_records())
 
 
 # Fortuna
-urlf = "https://github.com/michalskop/ifortuna.cz/raw/master/data/MCZ45367.csv"
+urlf = "https://github.com/michalskop/ifortuna.cz/raw/master/data/MCZ45366.csv"
 dff = pd.read_csv(urlf, encoding="utf-8")
 rankf = []
 rankf.append(dff.drop_duplicates(subset=['event_name'], keep='last'))
-urlf = "https://github.com/michalskop/ifortuna.cz/raw/master/data/MCZ45731.csv"
+urlf = "https://github.com/michalskop/ifortuna.cz/raw/master/data/MCZ45701.csv"
 dff = pd.read_csv(urlf, encoding="utf-8")
 rankf.append(dff.drop_duplicates(subset=['event_name'], keep='last'))
-urlf = "https://github.com/michalskop/ifortuna.cz/raw/master/data/MCZ45732.csv"
+urlf = "https://github.com/michalskop/ifortuna.cz/raw/master/data/MCZ45702.csv"
 dff = pd.read_csv(urlf, encoding="utf-8")
 rankf.append(dff.drop_duplicates(subset=['event_name'], keep='last'))
-urlf = "https://github.com/michalskop/ifortuna.cz/raw/master/data/MCZ45845.csv"
+urlf = "https://github.com/michalskop/ifortuna.cz/raw/master/data/MCZ45841.csv"
 dff = pd.read_csv(urlf, encoding="utf-8")
 rankf.append(dff.drop_duplicates(subset=['event_name'], keep='last'))
-urlf = "https://github.com/michalskop/ifortuna.cz/raw/master/data/MCZ45846.csv"
+urlf = "https://github.com/michalskop/ifortuna.cz/raw/master/data/MCZ45842.csv"
 dff = pd.read_csv(urlf, encoding="utf-8")
 rankf.append(dff.drop_duplicates(subset=['event_name'], keep='last'))
 
 growf = {
-  'odds': 28,
-  'odds2': 45
+  'odds': 30,
+  'odds2': 47
 }
 for s in ['odds', 'odds2']:
 
@@ -132,8 +123,37 @@ for s in ['odds', 'odds2']:
   ws.update(range_name=('A' + str(growf[s])), values=rf)
 
 # Nike
-# not available
-  
+urln = "https://github.com/michalskop/nike.sk/raw/main/v0/data/44177136.csv"
+dfn = pd.read_csv(urln, encoding="utf-8")
+rankn = []
+rankn.append(dfn[(dfn['header'] == 'Celkovo - Víťaz')].drop_duplicates(subset=['header', 'name', 'odds_name'], keep='last'))
+
+grown = {
+  'header1': 65,
+  'header2': 76
+}
+
+strn = {
+  'header1': 'áno',
+  'header2': 'nie'
+}
+
+for s in ['header1', 'header2']:
+  rn = [[dfn['date'].iloc[-1], strn[s]]]
+  for i, r in enumerate(rankn):
+    # break
+    rn.append([''])
+    for c in candidates:
+      filtered = rankn[i][(rankn[i]['name'] == mappingn[c]) & (rankn[i]['odds_name'] == strn[s])]
+      if len(filtered) > 0:
+        rn[i + 1].append(filtered.iloc[0]['odds'])
+      else:
+        rn[i + 1].append('')
+
+  ws = sh.worksheet('pořadí_aktuální_aging_cov')
+  ws.update(range_name=('A' + str(grown[s])), values=rn)
+  ws = sh.worksheet('pořadí_aktuální_aging')
+  ws.update(range_name=('A' + str(grown[s])), values=rn)
 
 # DUELS
 ####################
@@ -169,7 +189,7 @@ for s in ['odds', 'odds2']:
 # ws.update('B32', duelt)
   
 # Fortuna
-urlf2 = "https://github.com/michalskop/ifortuna.cz/raw/master/data/MCZ45733.csv"
+urlf2 = "https://github.com/michalskop/ifortuna.cz/raw/master/data/MCZ45703.csv"
 dff2 = pd.read_csv(urlf2, encoding="utf-8")
 
 dfff = dff2.drop_duplicates(subset=['event_name'], keep='last')
@@ -202,33 +222,33 @@ ws.update(range_name='B34', values=duelf)
 ws = sh.worksheet('duely_aging')
 ws.update(range_name='B34', values=duelf)
 
-# # Nike
-# urln = "https://raw.githubusercontent.com/michalskop/nike.sk/main/v0/data/43804671.csv"
-# dfn = pd.read_csv(urln, encoding="utf-8")
+# Nike
+urln = "https://raw.githubusercontent.com/michalskop/nike.sk/main/v0/data/44177136.csv"
+dfn = pd.read_csv(urln, encoding="utf-8")
 
-# dfnf = dfn[(dfn['header'] == 'Získa viac percent')].drop_duplicates(subset=['header', 'name', 'odds_name'], keep='last')
+dfnf = dfn[(dfn['header'] == 'Získa viac percent')].drop_duplicates(subset=['header', 'name', 'odds_name'], keep='last')
 
-# dueln = []
-# for c1 in dfr.columns[1:]:
-#   item = []
-#   for c2 in dfr.columns[1:]:
-#     filtered = dfnf[(dfnf['name'] == (mappingn[c1] + ' - ' + mappingn[c2])) & (dfnf['odds_name'] == mappingn[c1])]
-#     if len(filtered) > 0:
-#       item.append(filtered.iloc[0]['odds'])
-#     else:
-#       filtered = dfnf[(dfnf['name'] == (mappingn[c2] + ' - ' + mappingn[c1])) & (dfnf['odds_name'] == mappingn[c1])]
-#       if len(filtered) > 0:
-#         item.append(filtered.iloc[0]['odds'])
-#       else:
-#         item.append('')
-#   dueln.append(item)
-# dueln.append([dfn['date'].iloc[-1]])
+dueln = []
+for c1 in candidates:
+  item = []
+  for c2 in candidates:
+    filtered = dfnf[(dfnf['name'] == (mappingn[c1] + ' - ' + mappingn[c2])) & (dfnf['odds_name'] == mappingn[c1])]
+    if len(filtered) > 0:
+      item.append(filtered.iloc[0]['odds'])
+    else:
+      filtered = dfnf[(dfnf['name'] == (mappingn[c2] + ' - ' + mappingn[c1])) & (dfnf['odds_name'] == mappingn[c1])]
+      if len(filtered) > 0:
+        item.append(filtered.iloc[0]['odds'])
+      else:
+        item.append('')
+  dueln.append(item)
+dueln.append([dfn['date'].iloc[-1]])
 
-# ws = sh.worksheet('duely_aging_cov')
-# ws.update('B62', dueln)
+ws = sh.worksheet('duely_aging_cov')
+ws.update(range_name='B49', values=dueln)
 
-# ws = sh.worksheet('duely_aging')
-# ws.update('B62', dueln)
+ws = sh.worksheet('duely_aging')
+ws.update(range_name='B49', values=dueln)
 
 # MORE THAN x%
 ####################
@@ -283,101 +303,101 @@ dfmore = dfmore[:dfmore_end]
 
 # Fortuna
 # NOTE : not working now
-# urlf2 = "https://raw.githubusercontent.com/michalskop/ifortuna.cz/master/data/MCZ45847.v2-1.csv"
-# dff2 = pd.read_csv(urlf2, encoding="utf-8")
+urlf2 = "https://raw.githubusercontent.com/michalskop/ifortuna.cz/master/data/MCZ45844.v2-1.csv"
+dff2 = pd.read_csv(urlf2, encoding="utf-8")
 
-# dfff = dff2.drop_duplicates(subset=['event_name', 'event_link'], keep='last')
-# last_date = dfff['date'].max()
-# dfff = dfff[dfff['date'] == last_date]
-# gcols = {
-#   'header1': 'AC',
-#   'header2': 'Q'
-# }
-# gstr = {
-#   'header1': '- {}',
-#   'header2': '+ {}'
-# }
-# lastcol = {
-#   'header1': 'AM',
-#   'header2': 'AA'
-# }
-# # clear
-# # API limit: Max rows: 200, max columns: 12
-# ws = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
-# start_row = 141
-# range_to_clear = f'{gcols["header2"]}{start_row}:{lastcol["header2"]}{start_row + len(dfmore)}'
-# ws.batch_clear([range_to_clear])
-# range_to_clear = f'{gcols["header1"]}{start_row}:{lastcol["header1"]}{start_row + len(dfmore)}'
-# ws.batch_clear([range_to_clear])
-# ws = sh.worksheet('pravděpodobnosti_aktuální_aging')
-# range_to_clear = f'{gcols["header2"]}{start_row}:{lastcol["header2"]}{start_row + len(dfmore)}'
-# ws.batch_clear([range_to_clear])
-# range_to_clear = f'{gcols["header1"]}{start_row}:{lastcol["header1"]}{start_row + len(dfmore)}'
-# ws.batch_clear([range_to_clear])
+dfff = dff2.drop_duplicates(subset=['event_name', 'event_link'], keep='last')
+last_date = dfff['date'].max()
+dfff = dfff[dfff['date'] == last_date]
+gcols = {
+  'header1': 'AC',
+  'header2': 'Q'
+}
+gstr = {
+  'header1': 'Méně než {}',
+  'header2': 'Více než {}'
+}
+lastcol = {
+  'header1': 'AM',
+  'header2': 'AA'
+}
+# clear
+# API limit: Max rows: 200, max columns: 12
+ws = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
+start_row = 141
+range_to_clear = f'{gcols["header2"]}{start_row}:{lastcol["header2"]}{start_row + len(dfmore)}'
+ws.batch_clear([range_to_clear])
+range_to_clear = f'{gcols["header1"]}{start_row}:{lastcol["header1"]}{start_row + len(dfmore)}'
+ws.batch_clear([range_to_clear])
+ws = sh.worksheet('pravděpodobnosti_aktuální_aging')
+range_to_clear = f'{gcols["header2"]}{start_row}:{lastcol["header2"]}{start_row + len(dfmore)}'
+ws.batch_clear([range_to_clear])
+range_to_clear = f'{gcols["header1"]}{start_row}:{lastcol["header1"]}{start_row + len(dfmore)}'
+ws.batch_clear([range_to_clear])
 
-# i = 1
-# for s in ['header1', 'header2']:
-#   moref = []
-#   for n in dfmore:
-#     item = []
-#     for c in dfr.columns[1:]:
-#       if c not in candidates:
-#         continue
-#       filtered = dfff[(dfff['event_name'] == mappingf[c]) & (dfff[s].eq(gstr[s].format(float(n) + 0.01)))]
-#       if len(filtered) > 0:
-#         item.append(filtered.iloc[0]['odd' + str(i)])
-#       else:
-#         item.append('')
-#     moref.append(item)
-#   i += 1
-#   ws = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
-#   ws.update(gcols[s] + str(start_row), moref)
-#   ws = sh.worksheet('pravděpodobnosti_aktuální_aging')
-#   ws.update(gcols[s] + str(start_row), moref)
+i = 1
+for s in ['header1', 'header2']:
+  moref = []
+  for n in dfmore:
+    item = []
+    for c in dfr.columns[1:]:
+      if c not in candidates:
+        continue
+      filtered = dfff[(dfff['event_name'] == mappingf[c]) & (dfff[s].eq(gstr[s].format(float(n) + 0.01)))]
+      if len(filtered) > 0:
+        item.append(filtered.iloc[0]['odd' + str(i)])
+      else:
+        item.append('')
+    moref.append(item)
+  i += 1
+  ws = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
+  ws.update(range_name=(gcols[s] + str(start_row)), values=moref)
+  ws = sh.worksheet('pravděpodobnosti_aktuální_aging')
+  ws.update(range_name=(gcols[s] + str(start_row)), values=moref)
 
 # # Nike
-# gcols = {
-#   'viac ako': 'P',
-#   'menej ako': 'AC'
-# }
-# lastcol = {
-#   'header1': 'Z',
-#   'header2': 'AM'
-# }
-# dfnf = dfn[(dfn['header'] == 'Počet percent')].drop_duplicates(subset=['header', 'name', 'odds_name'], keep='last')
-# last_date = dfnf['date'].max()
-# dfnf = dfnf[dfnf['date'] == last_date]
+gcols = {
+  'viac ako': 'Q',
+  'menej ako': 'AC'
+}
+lastcol = {
+  'header1': 'AA',
+  'header2': 'AM'
+}
+dfnf = dfn[(dfn['header'] == 'Počet percent')].drop_duplicates(subset=['header', 'name', 'odds_name'], keep='last')
+last_date = dfnf['date'].max()
+dfnf = dfnf[dfnf['date'] == last_date]
 
-# # clear
-# # API limit: Max rows: 200, max columns: 12
-# ws = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
-# start_row = 308
-# range_to_clear = f'{gcols["viac ako"]}{start_row}:{lastcol["header2"]}{start_row + len(dfmore)}'
-# ws.batch_clear([range_to_clear])
-# range_to_clear = f'{gcols["menej ako"]}{start_row}:{lastcol["header1"]}{start_row + len(dfmore)}'
-# ws.batch_clear([range_to_clear])
-# ws = sh.worksheet('pravděpodobnosti_aktuální_aging')
-# range_to_clear = f'{gcols["viac ako"]}{start_row}:{lastcol["header2"]}{start_row + len(dfmore)}'
-# ws.batch_clear([range_to_clear])
-# range_to_clear = f'{gcols["menej ako"]}{start_row}:{lastcol["header1"]}{start_row + len(dfmore)}'
-# ws.batch_clear([range_to_clear])
+# clear
+# API limit: Max rows: 200, max columns: 12
+ws = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
+start_row = 270
+range_to_clear = f'{gcols["viac ako"]}{start_row}:{lastcol["header2"]}{start_row + len(dfmore)}'
+ws.batch_clear([range_to_clear])
+range_to_clear = f'{gcols["menej ako"]}{start_row}:{lastcol["header1"]}{start_row + len(dfmore)}'
+ws.batch_clear([range_to_clear])
+ws = sh.worksheet('pravděpodobnosti_aktuální_aging')
+range_to_clear = f'{gcols["viac ako"]}{start_row}:{lastcol["header2"]}{start_row + len(dfmore)}'
+ws.batch_clear([range_to_clear])
+range_to_clear = f'{gcols["menej ako"]}{start_row}:{lastcol["header1"]}{start_row + len(dfmore)}'
+ws.batch_clear([range_to_clear])
 
 
-# for s in ['viac ako', 'menej ako']:
-#   moren = []
-#   for n in dfmore:
-#     item = []
-#     for c in dfr.columns[1:]:
-#       # break
-#       filtered = dfnf[(dfnf['name'] == mappingn[c]) & (dfnf['odds_name'].eq(s + ' ' + '{:.2f}'.format(float(n))))]
-#       if len(filtered) > 0:
-#         item.append(filtered.iloc[0]['odds'])
-#       else:
-#         item.append('')
+for s in ['viac ako', 'menej ako']:
+  moren = []
+  for n in dfmore:
+    item = []
+    for c in dfr.columns[1:]:
+      # break
+      filtered = dfnf[(dfnf['name'] == mappingn[c]) & (dfnf['odds_name'].eq(s + ' ' + '{:.2f}'.format(float(n))))]
+      if len(filtered) > 0:
+        item.append(filtered.iloc[0]['odds'])
+      else:
+        item.append('')
 
-#     moren.append(item)
+    moren.append(item)
 
-#   ws = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
-#   ws.update(gcols[s] + '398', moren)
-#   ws = sh.worksheet('pravděpodobnosti_aktuální_aging')
-#   ws.update(gcols[s] + '398', moren)
+  ws = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
+  ws.update(gcols[s] + str(start_row), moren)
+  ws = sh.worksheet('pravděpodobnosti_aktuální_aging')
+  ws.update(gcols[s] + str(start_row), moren)
