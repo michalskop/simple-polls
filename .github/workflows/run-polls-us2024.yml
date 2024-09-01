@@ -27,7 +27,7 @@ jobs:
             ${{ runner.os }}-pip-
       - name: Install Python dependencies
         run: |
-          pip install -r us2024/requirements_polls.txt
+          pip install -r us-2024/requirements_polls.txt
 
       # /home/runner/work/simple-polls/simple-polls
       - name: gspread credentials 1
