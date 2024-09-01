@@ -140,7 +140,7 @@ for state in df0['state'].unique():
     worksheet.clear()
     # add column last_updated with current data and time in the first row
     us_short['last_updated'] = np.nan
-    us_short.loc[0, 'last_updated'] = pd.Timestamp.now()
+    us_short.iloc[0, us_short.columns.get_loc('last_updated')] = pd.Timestamp.now()
     # update worksheet
     set_with_dataframe(worksheet, us_short)
     print(f"{state} updated with {len(us_short)} rows.")
