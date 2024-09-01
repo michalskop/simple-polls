@@ -8,23 +8,23 @@ import numpy as np
 import pandas as pd
 import time
 
-path = "/us-2024/"
-sheetkey = "1osHcYaKPesurmX5kjMnzdMD2T2Ih75gaAWPqCP9T4YA"
+path = "us-2024/"
+sheetkey = "1Yd3EUMsNZmMNud9Q40TNSrXHMtPJU2jAgvokblZUvmk"
 
 # connect to GSheet
 gc = gspread.service_account()
 sh = gc.open_by_key(sheetkey)
 
 # Read in data
-furl = "https://projects.fivethirtyeight.com/polls/data/president_polls_historical.csv"
+furl = "https://projects.fivethirtyeight.com/polls/data/president_polls.csv"
 df = pd.read_csv(furl)
 
 # Filters
-# >= 
+# >= 2024-07-21 only
 df['start_date'] = pd.to_datetime(df['start_date'])
 df['end_date'] = pd.to_datetime(df['end_date'])
 df['middle_date'] = df['start_date'] + (df['end_date'] - df['start_date']) / 2
-df0 = df[df["start_date"] >= "2000-01-01"]
+df0 = df[df["start_date"] >= "2024-07-21"]
 
 # national polls only race_id == 8914
 df0['race_id'].unique()
@@ -51,8 +51,8 @@ for state in df0['state'].unique():
   df2_2 = polls_include2.merge(df0, on=["poll_id", "question_id"], how="left")
 
   # select only Harris, Trump, Kennedy, West and Stein
-  df3 = df2[df2["answer"].isin(['Biden', 'Trump', 'Jorgensen', 'Sanders', 'Warren'])]
-  df3_2 = df2_2[df2_2["answer"].isin(["Biden", "Trump"])]
+  df3 = df2[df2["answer"].isin(["Harris", "Trump", "West", "Stein", "Kennedy"])]
+  df3_2 = df2_2[df2_2["answer"].isin(["Harris", "Trump"])]
 
   # pivot table, fill all indexes
   cols_index = ["start_date", "end_date", "middle_date", "pollster", "sponsors", "population", "sample_size", "numeric_grade", "url", "pollscore", "transparency_score"]
@@ -72,7 +72,7 @@ for state in df0['state'].unique():
   pt2all = pt2all.sort_values(['middle_date', 'end_date'], ascending=[False, False])
 
   # average values for number_of_candidates (field, h2h) over the same polls (start_date, end_date, pollster, sponsors)
-  cols_to_average = ['Biden', 'Trump', 'Jorgensen', 'Sanders', 'Warren']
+  cols_to_average = ['Harris', 'Trump', 'Stein', 'West', 'Kennedy']
   # add columns to pt2all if needed
   for col in cols_to_average:
     if col not in pt2all.columns:
@@ -97,7 +97,7 @@ for state in df0['state'].unique():
   pt2all_grouped['number_of_candidates'] = pt2all.groupby(cols_index).apply(set_number_of_candidates).values
 
   # add columns
-  election_date = pd.to_datetime('2020-11-03')
+  election_date = pd.to_datetime('2024-11-05')
   pt2all_grouped['days to elections'] = (election_date - pd.to_datetime(pt2all_grouped['middle_date'])).dt.days
   pt2all_2['days to elections'] = (election_date - pd.to_datetime(pt2all_2['middle_date'])).dt.days
 
@@ -108,11 +108,11 @@ for state in df0['state'].unique():
   pt2all_grouped = pt2all_grouped.drop_duplicates(subset=['start_date', 'end_date', 'pollster', 'sponsors'], keep='first')
 
   # calculate Harris - Trump
-  pt2all_grouped['Biden - Trump'] = pt2all_grouped['Biden'] - pt2all_grouped['Trump']
+  pt2all_grouped['Harris - Trump'] = pt2all_grouped['Harris'] - pt2all_grouped['Trump']
 
   # columns
-  cols_short = ['pollster', 'sponsors', 'start_date', 'end_date', 'middle_date', 'days to elections', 'Biden', 'Trump', 'Biden - Trump', 'population', 'number_of_candidates']
-  cols_wide = ['pollster', 'sponsors', 'numeric_grade', 'pollscore', 'transparency_score', 'start_date', 'end_date', 'middle_date', 'sample_size', 'population', 'number_of_candidates', 'url', 'Biden', 'Trump', 'Jorgensen', 'Sanders', 'Warren']
+  cols_short = ['pollster', 'sponsors', 'start_date', 'end_date', 'middle_date', 'days to elections', 'Harris', 'Trump', 'Harris - Trump', 'population', 'number_of_candidates']
+  cols_wide = ['pollster', 'sponsors', 'numeric_grade', 'pollscore', 'transparency_score', 'start_date', 'end_date', 'middle_date', 'sample_size', 'population', 'number_of_candidates', 'url', 'Harris', 'Trump', 'Stein', 'West', 'Kennedy']
   us_short = pt2all_grouped.loc[:, cols_short]
   us_wide = pt2all_2.loc[:, cols_wide]
   # sort
@@ -121,7 +121,8 @@ for state in df0['state'].unique():
   # save
   if not(state):
     state = 'US'
-    
+
+  # note saving to csv on server    
   # us_short.to_csv(path + f"polls_{state}_short.csv", index=False)
   # us_wide.to_csv(path + f"polls_{state}_wide.csv", index=False)
 
@@ -137,8 +138,10 @@ for state in df0['state'].unique():
 
     # clear worksheet
     worksheet.clear()
+    # add column last_updated with current data and time in the first row
+    us_short['last_updated'] = np.nan
+    us_short.loc[0, 'last_updated'] = pd.Timestamp.now()
     # update worksheet
     set_with_dataframe(worksheet, us_short)
     print(f"{state} updated with {len(us_short)} rows.")
     time.sleep(5)
-  
