@@ -1,0 +1,4 @@
+gspread
+gspread_dataframe
+numpy
+pandas
