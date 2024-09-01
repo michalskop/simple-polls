@@ -48,7 +48,7 @@ jobs:
       #     ls /home/runner/.config/gspread/
       
       - name: Run simulations
-        run: python us2024/prepare_for_gsheet.v1.py
+        run: python us-2024/prepare_for_gsheet.v1.py
       
       # - name: Run simulations 2
       #   run: python cz2023/simulations_fr2022_2.py
