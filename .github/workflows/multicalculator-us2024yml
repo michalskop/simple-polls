@@ -1,9 +1,9 @@
 name: Run MultiCalculator US 2024
 
 on:
-  # push:
-  #   branches:
-      # - main
+  push:
+    branches:
+      - main
   workflow_dispatch:
   # schedule:
   #   - cron: '20 * * * *'
