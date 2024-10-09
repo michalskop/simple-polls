@@ -17,7 +17,10 @@ sheetkey = "1a5Y0Rz-eG3LjamsWyBfEhlMmMwxM75aDhPgcWR865oU"
 path = "us-2024/"
 
 # load data from GSheet
-gc = gspread.service_account("service_account.json")
+try:
+  gc = gspread.service_account("service_account.json")
+except:
+  gc = gspread.service_account()
 sh = gc.open_by_key(sheetkey)
 
 ws = sh.worksheet('parametry')
