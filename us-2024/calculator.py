@@ -1,4 +1,6 @@
-"""Calculator for second rounds."""
+"""Calculator for multiple two-races."""
+
+# NOT WORKING FOR MULTIPLE CANDIDATES NOW
 
 # Note: more than 2 candidates is supported: 2 main candidates + "others"
 
@@ -29,7 +31,7 @@ for row in dfpreference.iterrows():
     nraces += 1
 
 # for each race:
-for nr in range(1, nraces + 1):
+for nr in range(1, nraces + 1): # last row returns an error
   print(nr)
   # parameters
   election_day = datetime.date.fromisoformat(dfpreference['election date'][nr] if dfpreference['election date'][nr] != "" else dfpreference['election date'][0])
@@ -89,12 +91,12 @@ for nr in range(1, nraces + 1):
 
   for j in range(0, sample):
     for i in {1, 3}:
-      p = normal_error(dfpreference, i, sample_n, volatility, 1)
+      p = normal_error(dfpreferencern, i, sample_n, volatility, 1)
       p = uniform_error(p, i, sample_n, volatility, 1.5 * 0.9)
       # p['estimate'] = p['normal_error'] + p['uniform_error'] + p['p']
       p['estimate_aging'] = aging * (p['normal_error'] + p['uniform_error']) + p['p' + str(i)]
       # simx = dict(zip(dfpreference['party'].to_list(), p['estimate']))
-      simxa = dict(zip(dfpreference['name'].to_list(), p['estimate_aging']))
+      simxa = dict(zip(dfpreferencern['name'].to_list(), p['estimate_aging']))
       # simulations = simulations.append(simx, ignore_index=True)
       simulations_aging[i] = pd.concat([simulations_aging[i], pd.DataFrame([simxa])], ignore_index=True)
       # simulations_aging = simulations_aging.append(simxa, ignore_index=True)
