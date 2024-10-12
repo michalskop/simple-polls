@@ -11,6 +11,10 @@ import numpy as np
 import pandas as pd
 import scipy.stats
 import time
+import warnings
+
+# Suppress all warnings
+warnings.filterwarnings("ignore")
 
 sheetkey = "1a5Y0Rz-eG3LjamsWyBfEhlMmMwxM75aDhPgcWR865oU"
 
