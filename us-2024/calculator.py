@@ -16,6 +16,9 @@ sheetkey = "1a5Y0Rz-eG3LjamsWyBfEhlMmMwxM75aDhPgcWR865oU"
 
 path = "us-2024/"
 
+# parameters for the difference
+diffpoints = [-10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
 # load data from GSheet
 try:
   gc = gspread.service_account("service_account.json")
@@ -26,6 +29,11 @@ sh = gc.open_by_key(sheetkey)
 ws = sh.worksheet('parametry')
 dfpreference = pd.DataFrame(ws.get_all_records())
 
+# get additional limits
+ws = sh.worksheet('parametry 2')
+dflimits = pd.DataFrame(ws.get_all_records())
+additional_limits = list(dflimits['additional limits'])
+
 # get number of races:
 nraces = 0
 for row in dfpreference.iterrows():
@@ -34,7 +42,7 @@ for row in dfpreference.iterrows():
     nraces += 1
 
 # for each race:
-for nr in range(1, nraces + 1): # last row returns an error
+for nr in range(0, nraces): # last row returns an error
   print(nr)
   # parameters
   election_day = datetime.date.fromisoformat(dfpreference['election date'][nr] if dfpreference['election date'][nr] != "" else dfpreference['election date'][0])
@@ -79,7 +87,7 @@ for nr in range(1, nraces + 1): # last row returns an error
   # remove empty rows
   dfpreference = dfpreference[dfpreference['name'] != '']
   # create sub-dataframes with only rn row:
-  dfpreferencern = dfpreference.iloc[nr - 1: nr]
+  dfpreferencern = dfpreference.iloc[nr: nr + 1]
 
   # p
   dfpreferencern['p1'] = dfpreferencern['gain1'] / 100
@@ -87,7 +95,7 @@ for nr in range(1, nraces + 1): # last row returns an error
 
   # simulations
   # simulations = pd.DataFrame(columns=fpreference['name'].to_list())
-  simulations_aging = {}
+  simulations_aging = {} 
   for i in range(1, 4):
     simulations_aging[i] = pd.DataFrame(columns=dfpreferencern['name'].to_list())
   aging = aging_coeff(today, election_day)
@@ -105,6 +113,7 @@ for nr in range(1, nraces + 1): # last row returns an error
       # simulations_aging = simulations_aging.append(simxa, ignore_index=True)
 
   simulations_aging[2] = 1 - simulations_aging[1] - simulations_aging[3]
+  difference12 = simulations_aging[1] - simulations_aging[2]
 
   # rank
   winning = pd.DataFrame((simulations_aging[1] >= simulations_aging[2]).sum(axis=0) / sample).rename(columns={0: 'p1'})
@@ -112,34 +121,62 @@ for nr in range(1, nraces + 1): # last row returns an error
 
   # write to GSheet
   wsw = sh.worksheet('poradi')
-  wsw.update('A' + str(nr + 1), winning.reset_index().values.tolist())
+  wsw.update('A' + str(nr + 2), winning.reset_index().values.tolist())
   wsw.update('A1', [['Pr[duel winned]', 'p1', 'p2']])
   # avoid Google Sheets API rate limit
   time.sleep(5)
 
-# # less than
-# interval_statistics_aging = {}
-# interval = {}
-# for j in range(1, 4):
-#   interval_statistics_aging[j] = pd.DataFrame(columns=dfpreference['name'].to_list())
-#   interval[j] = pd.DataFrame(columns=['Pr[duel zisk > x %]'])
-#   # for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([26.33, 22.79, 17.11, 9.13, 8.51]))):
-#   for i in np.concatenate((np.arange(interval_min, interval_max + step, step), np.array([]))):
-#     # interval[j] = interval[j].append([{'Pr[duel zisk > x %]': i}], ignore_index=True)
-#     interval_j_new = pd.DataFrame({'Pr[duel zisk > x %]': [i]})
-#     interval[j] = pd.concat([interval[j], interval_j_new], ignore_index=True)
-#     # interval_statistics_aging[j] = interval_statistics_aging[j].append((simulations_aging[j] > (i / 100)).sum() / sample, ignore_index=True)
-#     interval_statistics_j_new = pd.DataFrame((simulations_aging[j] > (i / 100)).sum() / sample, columns=['interval_statistics_aging'])
-#     interval_statistics_aging[j] = pd.concat([interval_statistics_aging[j], interval_statistics_j_new], ignore_index=True)
-#   interval_statistics_aging[j] = interval_statistics_aging[j].loc[:, ['interval_statistics_aging']]
+  # less than
+  interval_statistics_aging = {}
+  interval = {}
+  for j in range(1, 4):
+    interval_statistics_aging[j] = pd.DataFrame(columns=dfpreferencern['name'].to_list())
+    interval[j] = pd.DataFrame(columns=['Pr[duel zisk > x %]'])
+    # for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([26.33, 22.79, 17.11, 9.13, 8.51]))):
+    for i in np.concatenate((np.arange(interval_min, interval_max + step, step), np.array(additional_limits))):
+      # interval[j] = interval[j].append([{'Pr[duel zisk > x %]': i}], ignore_index=True)
+      interval_j_new = pd.DataFrame({'Pr[duel zisk > x %]': [i]})
+      interval[j] = pd.concat([interval[j], interval_j_new], ignore_index=True)
+      # interval_statistics_aging[j] = interval_statistics_aging[j].append((simulations_aging[j] > (i / 100)).sum() / sample, ignore_index=True)
+      interval_statistics_j_new = pd.DataFrame((simulations_aging[j] > (i / 100)).sum() / sample, columns=['interval_statistics_aging'])
+      interval_statistics_aging[j] = pd.concat([interval_statistics_aging[j], interval_statistics_j_new], ignore_index=True)
+    interval_statistics_aging[j] = interval_statistics_aging[j].loc[:, ['interval_statistics_aging']]
 
-# # write to GSheet
-# for j in range(1, 3):
-#   wsw = sh.worksheet('pravděpodobnosti' + str(j))
-#   interval[j][interval_statistics_aging[j].columns] = interval_statistics_aging[j]
-#   wsw.update('A1', [interval[j].columns.values.tolist()] + interval[j].values.tolist())
+  # write to GSheet
+  for j in range(1, 3):
+    wsw = sh.worksheet('pravdepodobnosti' + str(j))
+    interval[j][interval_statistics_aging[j].columns] = interval_statistics_aging[j]
+    interval[j].columns = ['Pr[duel zisk > x %]'] + dfpreferencern['name'].to_list()
+    if nr == 0:
+      wsw.clear()
+      wsw.update('A1', [interval[j].columns.values.tolist()] + interval[j].values.tolist())
+    else:
+      # write only second column into sheet column B + nr, calculate the name of the column
+      c = chr(ord('B') + nr)
+      wsw.update(c + '1', [dfpreferencern['name'].to_list()] + interval_statistics_aging[j].values.tolist())
 
-# # write datetime
-# wsw = sh.worksheet('parametry')
-# d = datetime.datetime.now().isoformat()
-# wsw.update_cell(2, pos + 1, d)
+  time.sleep(5)
+
+  # difference 1 - 2 from difference12:
+  diffprobs = []
+  for dp in diffpoints:
+    diffprobs.append(((difference12 > (dp / 100)).sum() / sample).values.tolist())
+  # write to GSheet
+  wsw = sh.worksheet('difference')
+  if nr == 0:
+    wsw.clear()
+    # save diffpoints to A, values to B
+    # diffpoints should be a list of lists
+    diffpointsx = [[x] for x in diffpoints]
+    wsw.update('A1', [['Pr[difference(X1-X2) > x]']] + diffpointsx)
+  c = chr(ord('B') + nr)
+  wsw.update(c + '1', [dfpreferencern['name'].to_list()] + diffprobs)
+  
+
+
+
+
+# write datetime
+wsw = sh.worksheet('parametry')
+d = datetime.datetime.now().isoformat()
+wsw.update_cell(2, pos + 1, d)
