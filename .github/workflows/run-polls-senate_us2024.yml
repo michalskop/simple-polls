@@ -1,4 +1,4 @@
-name: Run download polls for US 2024
+name: Run download polls senate for US 2024
 
 on:
   # push:
