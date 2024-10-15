@@ -56,6 +56,8 @@ for state in df0['state'].unique():
 
   # pivot table, fill all indexes
   cols_index = ["start_date", "end_date", "middle_date", "pollster", "sponsors", "population", "sample_size", "numeric_grade", "url", "pollscore", "transparency_score"]
+  df3[cols_index] = df3[cols_index].fillna('NaN')
+  df3_2[cols_index] = df3_2[cols_index].fillna('NaN')
   pt2 = pd.pivot_table(df3, values="pct", index=cols_index, columns=["answer"], aggfunc="mean")
   pt2_2 = pd.pivot_table(df3_2, values="pct", index=cols_index, columns=["answer"], aggfunc="mean")
 
