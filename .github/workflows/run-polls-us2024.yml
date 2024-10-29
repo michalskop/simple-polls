@@ -6,7 +6,7 @@ on:
   #     - main
   workflow_dispatch:
   schedule:
-    - cron: '15 6,18 * * *'
+    - cron: '1 6,18 * * *'
 
 jobs:
   update:
