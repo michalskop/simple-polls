@@ -45,6 +45,14 @@ for row in dfpreference.iterrows():
   if row1['name'] != '':
     nraces += 1
 
+# function to get column letter(s) from number
+def get_column_letter(n):
+    result = ''
+    while n > 0:
+        n, remainder = divmod(n - 1, 26)
+        result = chr(65 + remainder) + result
+    return result
+
 # for each race:
 for nr in range(0, nraces): # last row returns an error
   print(nr)
@@ -156,7 +164,8 @@ for nr in range(0, nraces): # last row returns an error
       wsw.update('A1', [interval[j].columns.values.tolist()] + interval[j].values.tolist())
     else:
       # write only second column into sheet column B + nr, calculate the name of the column
-      c = chr(ord('B') + nr)
+      column_index = 2 + nr  # B is the 2nd column, so start from 2
+      c = get_column_letter(column_index)
       wsw.update(c + '1', [dfpreferencern['name'].to_list()] + interval_statistics_aging[j].values.tolist())
 
   time.sleep(5)
@@ -173,7 +182,8 @@ for nr in range(0, nraces): # last row returns an error
     # diffpoints should be a list of lists
     diffpointsx = [[x] for x in diffpoints]
     wsw.update('A1', [['Pr[difference(X1-X2) > x]']] + diffpointsx)
-  c = chr(ord('B') + nr)
+  column_index = 2 + nr  # B is the 2nd column, so start from 2
+  c = get_column_letter(column_index)
   wsw.update(c + '1', [dfpreferencern['name'].to_list()] + diffprobs)
   
 
