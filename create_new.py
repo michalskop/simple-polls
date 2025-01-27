@@ -10,16 +10,16 @@ import re
 import time
 
 # Parameters for the elections
-election_code = "sk-president-2024"
-election_flag = "🇸🇰"
-election_date = "2024-03-23"
+election_code = "de-parliament-2025"
+election_flag = "🇩🇪"
+election_date = "2025-02-23"
 source_election_code = "fi2024" # to copy from
-wikipedia_link = "https://sk.wikipedia.org/wiki/Vo%C4%BEba_prezidenta_Slovenskej_republiky_v_roku_2024"
+wikipedia_link = "https://en.wikipedia.org/wiki/2025_German_federal_election"
 
-candidates = ['Pellegrini', 'Korčok', 'Kubiš', 'Matovič', 'Harabin', 'Danko', 'Kotleba', 'Forró', 'Švec', 'Náhlík', 'Dubovský']
-candidates_colors = ['#7F00FF', '#1111ff', '#BBBBBB', '#BBBBBB', '#BBBBBB', '#BBBBBB', '#BBBBBB', '#BBBBBB', '#BBBBBB', '#BBBBBB', '#BBBBBB']
-candidates_values = [38.1, 25.6, 4.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
-candidates_needs = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+candidates = ['CDU/CSU', 'AfD', 'SPD', 'Grüne', 'BSW', 'FDP', 'Linke']
+candidates_colors = ['#151518', '#00A2DE', '#E3000F', '#409A3C', '#792351', '#FFED00', '#BE3075']
+candidates_values = [30, 21, 16, 12, 7, 4, 4]
+candidates_needs = [5, 5, 5, 5, 5, 5, 5]
 # Create html colors by AI:
 # light green in html: #3AAD2E
 # light green in RGB: (58, 173, 46)
@@ -65,14 +65,14 @@ worksheet = sh.get_worksheet(0)
 worksheet.update_title('info')
 time.sleep(1)
 # set the values
-worksheet.update('A11', 'Viz')
-worksheet.update('A12', 'https://docs.google.com/spreadsheets/d/1QCOLhcvmC04hiaFikqXGVFTtJ_dttsYxPfS-HQoK6FQ/edit#gid=850346774', value_input_option='USER_ENTERED')
+worksheet.update('A11',[['Viz']])
+worksheet.update('A12', [['https://docs.google.com/spreadsheets/d/1QCOLhcvmC04hiaFikqXGVFTtJ_dttsYxPfS-HQoK6FQ/edit#gid=850346774']], value_input_option='USER_ENTERED')
 time.sleep(1)
-worksheet.update('A14', 'Run:')
-worksheet.update('A15', 'https://github.com/michalskop/simple-polls/actions/workflows/run-simulations-' + election_code + '.yml', value_input_option='USER_ENTERED')
+worksheet.update('A14', [['Run:']])
+worksheet.update('A15', [['https://github.com/michalskop/simple-polls/actions/workflows/run-simulations-' + election_code + '.yml']], value_input_option='USER_ENTERED')
 time.sleep(1)
-worksheet.update('A17', 'Wiki:')
-worksheet.update('A18', wikipedia_link, value_input_option='USER_ENTERED')
+worksheet.update('A17', [['Wiki:']])
+worksheet.update('A18', [[wikipedia_link]], value_input_option='USER_ENTERED')
 time.sleep(1)
 # formats
 worksheet.format('A11:A12', {"textFormat": {"fontSize": 7}})
@@ -81,12 +81,13 @@ time.sleep(1)
 gspread_formatting.set_column_width(worksheet, 'A', 20)
 time.sleep(1)
 # flag
-worksheet.update('B2', election_flag)
+worksheet.update('B2', [[election_flag]])
 worksheet.format('B2', {"textFormat": {"fontSize": 150}})
 print("Sheet 1: info created.")
 
 # Sheet 2: preference
 worksheet = sh.add_worksheet(title="preference", rows=20, cols=20)
+# worksheet = sh.worksheet("preference")
 # freeze and set the first row values
 worksheet.freeze(rows=1)
 row = ['party', 'gain', 'date', 'volatilita', 'last update - computed (GMT)', 'needed']
@@ -146,11 +147,11 @@ worksheet.update('A2', col)
 worksheet2.update('A2', col)
 time.sleep(1)
 # set Fair price part
-worksheet.update('A' + str(len(candidates) + 3), 'Fair price')
-worksheet2.update('A' + str(len(candidates) + 3), 'Fair price')
+worksheet.update('A' + str(len(candidates) + 3), [['Fair price']])
+worksheet2.update('A' + str(len(candidates) + 3), [['Fair price']])
 time.sleep(2)
-worksheet.update('A' + str(len(candidates) + 4), 'Pořadí')
-worksheet2.update('A' + str(len(candidates) + 4), 'Pořadí')
+worksheet.update('A' + str(len(candidates) + 4), [['Pořadí']])
+worksheet2.update('A' + str(len(candidates) + 4), [['Pořadí']])
 time.sleep(2)
 worksheet.update('A' + str(len(candidates) + 5), col)
 worksheet2.update('A' + str(len(candidates) + 5), col)
@@ -172,6 +173,9 @@ time.sleep(15)
 # sheet 5 + 6: pravděpodobnosti aktuální
 worksheet = sh.add_worksheet(title="pravděpodobnosti_aktuální_aging", rows=200, cols=(len(candidates) + 1))
 worksheet2 = sh.add_worksheet(title="pravděpodobnosti_aktuální_aging_cov", rows=200, cols=(len(candidates) + 1))
+# or get them by title
+# worksheet = sh.worksheet("pravděpodobnosti_aktuální_aging")
+# worksheet2 = sh.worksheet("pravděpodobnosti_aktuální_aging_cov")
 time.sleep(2)
 # freeze and set the first row values
 worksheet.freeze(rows=1)
@@ -199,9 +203,12 @@ time.sleep(5)
 worksheet = sh.add_worksheet(title="duely_aging", rows=(len(candidates) + 2), cols=(len(candidates) + 1))
 worksheet2 = sh.add_worksheet(title="duely_aging_cov", rows=(len(candidates) + 2), cols=(len(candidates) + 1))
 time.sleep(2)
+# or get them by title
+# worksheet = sh.worksheet("duely_aging")
+# worksheet2 = sh.worksheet("duely_aging_cov")
 # add the first cell
-worksheet.update('A1', 'Pr[row >= column]')
-worksheet2.update('A1', 'Pr[row >= column]')
+worksheet.update('A1', [['Pr[row >= column]']])
+worksheet2.update('A1', [['Pr[row >= column]']])
 time.sleep(1)
 # done
 print("Sheet 7 + 8: duely aging created.")
@@ -211,9 +218,12 @@ time.sleep(5)
 worksheet = sh.add_worksheet(title="top_2", rows=(len(candidates) + 2), cols=(len(candidates) + 1))
 worksheet2 = sh.add_worksheet(title="top_2_cov", rows=(len(candidates) + 2), cols=(len(candidates) + 1))
 time.sleep(2)
+# or get them by title
+# worksheet = sh.worksheet("top_2")
+# worksheet2 = sh.worksheet("top_2_cov")
 # add the first cell
-worksheet.update('A1', 'Pr[TOP 2]')
-worksheet2.update('A1', 'Pr[TOP 2]')
+worksheet.update('A1', [['Pr[TOP 2]']])
+worksheet2.update('A1', [['Pr[TOP 2]']])
 time.sleep(1)
 # done
 print("Sheet 9 + 10: top 2 aging created.")
@@ -232,7 +242,7 @@ time.sleep(5)
 worksheet = sh.add_worksheet(title="median correlations", rows=(len(candidates) + 1), cols=(len(candidates) + 1))
 time.sleep(1)
 # add the first cell
-worksheet.update('A1', 'Median')
+worksheet.update('A1', [['Median']])
 # fill names to row and column
 worksheet.update('B1', [candidates])
 col = [[x] for x in candidates]
@@ -278,7 +288,7 @@ sh.share(None, perm_type='anyone', role='writer')
 
 # transfer ownership to me
 permissions = sh.list_permissions()
-sh.transfer_ownership(permissions[0].get('id'))
+sh.transfer_ownership(permissions[1].get('id'))
 
 # CREATE THE WORKFLOW FILE
 with open (path + '.github/workflows/' + 'run-simulations-' + source_election_code + '.yml') as f:
