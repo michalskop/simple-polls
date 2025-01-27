@@ -292,7 +292,7 @@ wsw.update('A2', number_in_aging_cov.values.tolist())
 
 wsw = sh.worksheet('preference')
 d = datetime.datetime.now().isoformat()
-wsw.update('E2', d)
+wsw.update('E2', [[d]])
 
 # save to history initial preferences
 historical_row = [d] + [dfpreference['date'][0]] + dfpreference['gain'].to_list() + [''] + dfpreference['volatilita'].to_list()
