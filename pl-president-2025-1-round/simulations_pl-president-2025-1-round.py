@@ -231,10 +231,10 @@ for i in range(0, nic_aging_cov.index.max()[0] + 1):
 # wsw.update('B1', [ranks_statistics.transpose().columns.values.tolist()] + ranks_statistics.transpose().values.tolist())
 
 wsw = sh.worksheet('pořadí_aktuální_aging')
-wsw.update('B1', [ranks_statistics_aging.transpose().columns.values.tolist()] + ranks_statistics_aging.transpose().values.tolist())
+wsw.update(values=[ranks_statistics_aging.transpose().columns.values.tolist()] + ranks_statistics_aging.transpose().values.tolist(), range_name='B1')
 
 wsw = sh.worksheet('pořadí_aktuální_aging_cov')
-wsw.update('B1', [ranks_statistics_aging_cov.transpose().columns.values.tolist()] + ranks_statistics_aging_cov.transpose().values.tolist())
+wsw.update(values=[ranks_statistics_aging_cov.transpose().columns.values.tolist()] + ranks_statistics_aging_cov.transpose().values.tolist(), range_name='B1')
 
 # wsw = sh.worksheet('pořadí_aktuální_aging_cov_seats')
 # wsw.update('B1', [ranks_statistics_aging_cov_seats.transpose().columns.values.tolist()] + ranks_statistics_aging_cov_seats.transpose().values.tolist())
@@ -246,12 +246,12 @@ wsw = sh.worksheet('pravděpodobnosti_aktuální_aging')
 arr2 = []
 for item in arr:
   arr2.append([item])
-wsw.update('A2', arr2)
-wsw.update('B1', [interval_statistics_aging.columns.values.tolist()] + interval_statistics_aging.values.tolist())
+wsw.update(values=arr2, range_name='A2')
+wsw.update(values=[interval_statistics_aging.columns.values.tolist()] + interval_statistics_aging.values.tolist(), range_name='B1')
 
 wsw = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
-wsw.update('A2', arr2)
-wsw.update('B1', [interval_statistics_aging_cov.columns.values.tolist()] + interval_statistics_aging_cov.values.tolist())
+wsw.update(values=arr2, range_name='A2')
+wsw.update(values=[interval_statistics_aging_cov.columns.values.tolist()] + interval_statistics_aging_cov.values.tolist(), range_name='B1')
 
 # wsw = sh.worksheet('duely')
 # wsw.update('B2', [duels.columns.values.tolist()] + duels.values.tolist())
@@ -260,23 +260,20 @@ wsw = sh.worksheet('duely_aging')
 arrd = []
 for item in duels_aging.columns:
   arrd.append([item])
-wsw.update('A3', arrd)
-wsw.update('B2', [duels_aging.columns.values.tolist()] + duels_aging.values.tolist())
+wsw.update(values=arrd, range_name='A3')
+wsw.update(values=[duels_aging.columns.values.tolist()] + duels_aging.values.tolist(), range_name='B2')
 
 wsw = sh.worksheet('duely_aging_cov')
-arrd = []
-for item in duels_aging_cov.columns:
-  arrd.append([item])
-wsw.update('A3', arrd)
-wsw.update('B2', [duels_aging_cov.columns.values.tolist()] + duels_aging_cov.values.tolist())
+wsw.update(values=arrd, range_name='A3')
+wsw.update(values=[duels_aging_cov.columns.values.tolist()] + duels_aging_cov.values.tolist(), range_name='B2')
 
 wsw = sh.worksheet('top_2')
-wsw.update('A3', arrd)
-wsw.update('B2', [top2_statistics.columns.values.tolist()] + top2_statistics.values.tolist())
+wsw.update(values=arrd, range_name='A3')
+wsw.update(values=[top2_statistics.columns.values.tolist()] + top2_statistics.values.tolist(), range_name='B2')
 
 wsw = sh.worksheet('top_2_cov')
-wsw.update('A3', arrd)
-wsw.update('B2', [top2_statistics_cov.columns.values.tolist()] + top2_statistics_cov.values.tolist())
+wsw.update(values=arrd, range_name='A3')
+wsw.update(values=[top2_statistics_cov.columns.values.tolist()] + top2_statistics_cov.values.tolist(), range_name='B2')
 
 # wsw = sh.worksheet('number_in')
 # number_in = number_in.reset_index(drop=False)
@@ -288,11 +285,11 @@ wsw.update('B2', [top2_statistics_cov.columns.values.tolist()] + top2_statistics
 
 wsw = sh.worksheet('number_in_aging_cov')
 number_in_aging_cov = number_in_aging_cov.reset_index(drop=False)
-wsw.update('A2', number_in_aging_cov.values.tolist())
+wsw.update(values=number_in_aging_cov.values.tolist(), range_name='A2')
 
 wsw = sh.worksheet('preference')
 d = datetime.datetime.now().isoformat()
-wsw.update('E2', d)
+wsw.update(values=[[d]], range_name='E2')
 
 # save to history initial preferences
 historical_row = [d] + [dfpreference['date'][0]] + dfpreference['gain'].to_list() + [''] + dfpreference['volatilita'].to_list()
@@ -309,7 +306,6 @@ wsh.insert_row(historical_row, 2)
 #   t['gain'] = dfpreference[dfpreference['party'] == col]['gain'].values[0]
 #   t['name'] = col
 #   t['datetime'] = d
-#   t['date'] = today.isoformat()
 #   # newly = newly.append(t, ignore_index=True)
 #   newly = pd.concat([newly, pd.DataFrame(t, columns=history.columns)])
 
