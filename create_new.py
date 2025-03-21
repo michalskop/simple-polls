@@ -10,16 +10,16 @@ import re
 import time
 
 # Parameters for the elections
-election_code = "de-parliament-2025"
-election_flag = "🇩🇪"
-election_date = "2025-02-23"
+election_code = "pl-president-2025-1-round"
+election_flag = "🇵🇱"
+election_date = "2025-05-18"
 source_election_code = "fi2024" # to copy from
-wikipedia_link = "https://en.wikipedia.org/wiki/2025_German_federal_election"
+wikipedia_link = "https://en.wikipedia.org/wiki/2025_Polish_presidential_election"
 
-candidates = ['CDU/CSU', 'AfD', 'SPD', 'Grüne', 'BSW', 'FDP', 'Linke']
-candidates_colors = ['#151518', '#00A2DE', '#E3000F', '#409A3C', '#792351', '#FFED00', '#BE3075']
-candidates_values = [30, 21, 16, 12, 7, 4, 4]
-candidates_needs = [5, 5, 5, 5, 5, 5, 5]
+candidates = ['Trzaskowski', 'Nawrocki', 'Mentzen', 'Hołownia', 'Biejat', 'Zandberg', 'Braun', 'Jakubiak', 'Stanowski']
+candidates_colors = ['#F68F2D', '#263778;', '#122746', '#FAC300', '#ac145a', '#870f57', '#D4AA00', '#1B2D7F', '#DCDCDC']
+candidates_values = [36.2, 24.6, 19, 5.4, 2.6, 2.4, 0.5, 0.8, 2.2]
+candidates_needs = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 # Create html colors by AI:
 # light green in html: #3AAD2E
 # light green in RGB: (58, 173, 46)
@@ -107,10 +107,10 @@ for i in range(len(candidates)):
   time.sleep(1)
 # add dates
 todate = datetime.datetime.today().isoformat()[:10]
-worksheet.update('C2', todate)
+worksheet.update('C2', [[todate]])
 worksheet.format('E2', {"textFormat": {"bold": True}})
 # add color
-worksheet.update_tab_color({'red': 58 / 255, 'green': 173 / 255, 'blue': 46 / 255})
+worksheet.update_tab_color((58 / 255, 173 / 255, 46 / 255))
 print("Sheet 2: preference created.")
 time.sleep(10)
 
