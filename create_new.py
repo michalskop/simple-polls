@@ -10,14 +10,14 @@ import re
 import time
 
 # Parameters for the elections
-election_code = "pl-president-2025-2-round-nawrocki"
+election_code = "pl-president-2025-2-round-mentzen"
 election_flag = "🇵🇱"
 election_date = "2025-06-01"
 source_election_code = "pl-president-2025-1-round" # to copy from
 wikipedia_link = "https://en.wikipedia.org/wiki/2025_Polish_presidential_election"
 
-candidates = ['Trzaskowski', 'Nawrocki'] #, 'Mentzen', 'Hołownia', 'Biejat', 'Zandberg', 'Braun', 'Jakubiak', 'Stanowski']
-candidates_colors = ['#F68F2D', '#263778'] #, '#122746', '#FAC300', '#ac145a', '#870f57', '#D4AA00', '#1B2D7F', '#DCDCDC']
+candidates = ['Trzaskowski', 'Mentzen'] #, 'Mentzen', 'Hołownia', 'Biejat', 'Zandberg', 'Braun', 'Jakubiak', 'Stanowski']
+candidates_colors = ['#F68F2D', '#122746'] #, '#122746', '#FAC300', '#ac145a', '#870f57', '#D4AA00', '#1B2D7F', '#DCDCDC']
 candidates_values = [51.1, 37.9] #, 19, 5.4, 2.6, 2.4, 0.5, 0.8, 2.2]
 candidates_needs = [0, 0] #, 0, 0, 0, 0, 0, 0, 0]
 # Create html colors by AI:
@@ -48,6 +48,10 @@ def hex_to_rgb(hexa):
     return tuple(int(hexa[i:i+1], 16)*17  for i in (0, 1, 2))
   else:
     return tuple(int(hexa[i:i+2], 16)  for i in (0, 2, 4))
+  
+def rgb_to_hex(rgb):
+  """Convert rgb to hex."""
+  return "#{:02x}{:02x}{:02x}".format(int(rgb[0] * 255), int(rgb[1] * 255), int(rgb[2] * 255))
 
 
 def is_dark(hexa):
@@ -110,7 +114,7 @@ todate = datetime.datetime.today().isoformat()[:10]
 worksheet.update('C2', [[todate]])
 worksheet.format('E2', {"textFormat": {"bold": True}})
 # add color
-worksheet.update_tab_color((58 / 255, 173 / 255, 46 / 255))
+worksheet.update_tab_color(rgb_to_hex((58 / 255, 173 / 255, 46 / 255)))
 print("Sheet 2: preference created.")
 time.sleep(10)
 
