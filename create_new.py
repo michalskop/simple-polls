@@ -10,16 +10,16 @@ import re
 import time
 
 # Parameters for the elections
-election_code = "ro-2025-1-round"
-election_flag = "🇷🇴"
-election_date = "2025-05-04"
-source_election_code = "ca-2025" # to copy from
-wikipedia_link = "https://en.wikipedia.org/wiki/2025_Romanian_presidential_election#Opinion_polls"
+election_code = "cz-2025"
+election_flag = "🇨🇿"
+election_date = "2025-09-29"
+source_election_code = "pl-2025-2" # to copy from
+wikipedia_link = "https://cs.wikipedia.org/wiki/Volby_do_Poslaneck%C3%A9_sn%C4%9Bmovny_Parlamentu_%C4%8Cesk%C3%A9_republiky_2025"
 
-candidates = ['Simion', 'Dan', 'Antonescu', 'Ponta', 'Lasconi', 'Funeriu'] 
-candidates_colors = ['#FCB21F', '#666666', '#999999', '#cccccc', '#002A59', '#333333']
-candidates_values = [30, 21, 23, 14, 8, 1] #, 19, 5.4, 2.6, 2.4, 0.5, 0.8, 2.2]
-candidates_needs = [0, 0, 0, 0, 0, 0] #, 0, 0, 0, 0, 0, 0, 0]
+candidates = ['ANO', 'SPOLU', 'STAN', 'SPD', 'Piráti', 'Stačilo!', 'Motoristé']
+candidates_colors = ['#272A59', '#5e66d5', '#FF1A4A', '#993366', '#111111', '#C5143C', '#1A9FBD']
+candidates_values = [34, 19, 11, 8, 6, 6, 6] #, 19, 5.4, 2.6, 2.4, 0.5, 0.8, 2.2]
+candidates_needs = [5, 11, 5, 5, 5, 5, 5] #, 0, 0, 0, 0, 0, 0, 0]
 # Create html colors by AI:
 # light green in html: #3AAD2E
 # light green in RGB: (58, 173, 46)
