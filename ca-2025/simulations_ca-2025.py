@@ -288,11 +288,11 @@ wsw.update('B2', [top2_statistics_cov.columns.values.tolist()] + top2_statistics
 
 wsw = sh.worksheet('number_in_aging_cov')
 number_in_aging_cov = number_in_aging_cov.reset_index(drop=False)
-wsw.update('A2', number_in_aging_cov.values.tolist())
+wsw.update(values=number_in_aging_cov.values.tolist(), range_name='A2')
 
 wsw = sh.worksheet('preference')
 d = datetime.datetime.now().isoformat()
-wsw.update('E2', d)
+wsw.update(values=[[d]], range_name='E2')
 
 # save to history initial preferences
 historical_row = [d] + [dfpreference['date'][0]] + dfpreference['gain'].to_list() + [''] + dfpreference['volatilita'].to_list()

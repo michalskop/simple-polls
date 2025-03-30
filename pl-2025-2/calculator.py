@@ -221,4 +221,4 @@ for nr in range(0, nraces): # last row returns an error
 # write datetime
 wsw = sh.worksheet('parametry')
 d = datetime.datetime.now().isoformat()
-wsw.update_cell(2, pos + 1, d)
+wsw.update_cell(2, pos + 1, [[d]])
