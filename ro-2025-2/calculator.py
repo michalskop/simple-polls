@@ -16,9 +16,9 @@ import warnings
 # Suppress all warnings
 warnings.filterwarnings("ignore")
 
-sheetkey = "10kUDHS8zh4xxC_7scyhOjHs3ECQSUVKCvVdFXT-IHeY"
+sheetkey = "1PZ2evJG4Kj_XF6jOayvLQokbArZkmSB4mQdzBhKH8ng"
 
-path = "pl-2025-2/"
+path = "ro-2025-2/"
 
 # parameters for the difference
 diffpoints = [-10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -221,4 +221,4 @@ for nr in range(0, nraces): # last row returns an error
 # write datetime
 wsw = sh.worksheet('parametry')
 d = datetime.datetime.now().isoformat()
-wsw.update_cell(2, pos + 1, d)
+wsw.update_cell(2, pos + 1, [[d]])
