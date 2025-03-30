@@ -1,4 +1,4 @@
-"""Simulations for CA-2025."""
+"""Simulations for RO-2025-1-ROUND."""
 
 import datetime
 import gspread
@@ -9,7 +9,7 @@ import scipy.stats
 import warnings
 # from matplotlib import pyplot as plt
 
-election_date = '2025-04-28'
+election_date = '2025-05-04'
 election_day = datetime.date.fromisoformat(election_date)
 today = datetime.date.today()   # it changes later !!!
 sample_n = 1000 # used in statistical error
@@ -17,8 +17,8 @@ re_coef = 0.6 # random error coefficient
 sample = 2000 # number of simulation
 interval_max = 60 # highest gain to calc probability
 # source sheet
-sheetkey = "1-6KKCN96eS9P5UWYJ3ZgdxKP6CzrznzRm4XFm3IMngc"
-path = "ca-2025/"
+sheetkey = "1LbfybydswDS98q4zvDFtyS31J7KAnIuyGW5fAoVcKaw"
+path = "ro-2025-1-round/"
 
 # additional_points = [0.55, 1.11]
 # additional_points = [2.9, 4.14, 6.34, 7.3, 10.94, 11.54, 12.74, 19.54, 20.54, 20.74] # + 0.01
