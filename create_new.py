@@ -10,16 +10,16 @@ import re
 import time
 
 # Parameters for the elections
-election_code = "pl-president-2025-2-round-mentzen"
-election_flag = "🇵🇱"
-election_date = "2025-06-01"
+election_code = "ca-2025"
+election_flag = "🇨🇦"
+election_date = "2025-04-28"
 source_election_code = "pl-president-2025-1-round" # to copy from
-wikipedia_link = "https://en.wikipedia.org/wiki/2025_Polish_presidential_election"
+wikipedia_link = "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2025_Canadian_federal_election"
 
-candidates = ['Trzaskowski', 'Mentzen'] #, 'Mentzen', 'Hołownia', 'Biejat', 'Zandberg', 'Braun', 'Jakubiak', 'Stanowski']
-candidates_colors = ['#F68F2D', '#122746'] #, '#122746', '#FAC300', '#ac145a', '#870f57', '#D4AA00', '#1B2D7F', '#DCDCDC']
-candidates_values = [51.1, 37.9] #, 19, 5.4, 2.6, 2.4, 0.5, 0.8, 2.2]
-candidates_needs = [0, 0] #, 0, 0, 0, 0, 0, 0, 0]
+candidates = ['LPC', 'CPC', 'NDP', 'BQ', 'PPC', 'Green'] #, 'Mentzen', 'Hołownia', 'Biejat', 'Zandberg', 'Braun', 'Jakubiak', 'Stanowski']
+candidates_colors = ['#EA6D6A', '#6495ED', '#F4A460', '#87CEFA', '#6f5d9a', '#99C955']
+candidates_values = [42, 38, 7, 6, 3, 3] #, 19, 5.4, 2.6, 2.4, 0.5, 0.8, 2.2]
+candidates_needs = [0, 0, 0, 0, 0, 0] #, 0, 0, 0, 0, 0, 0, 0]
 # Create html colors by AI:
 # light green in html: #3AAD2E
 # light green in RGB: (58, 173, 46)
