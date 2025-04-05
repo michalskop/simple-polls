@@ -1,375 +1,642 @@
-"""Simulations for CZ-2025."""
+# run_manual_analysis.py
+# Runner script for Project 2: Analysis based on manual GSheet data.
 
-import datetime
-import gspread
-import math
-import numpy as np
-import pandas as pd
-import scipy.stats
-import warnings
-# from matplotlib import pyplot as plt
+# %%
+# --- Setup Python Path ---
+import sys
+import os
+import importlib
+from numpy.linalg import LinAlgError # Import error type
+import datetime # Import datetime
 
-election_date = '2025-09-29'
-election_day = datetime.date.fromisoformat(election_date)
-today = datetime.date.today()   # it changes later !!!
-sample_n = 1000 # used in statistical error
-re_coef = 0.6 # random error coefficient
-sample = 2000 # number of simulation
-interval_max = 60 # highest gain to calc probability
-# source sheet
-sheetkey = "1es2J0O_Ig7RfnVHG3bHmX8SBjlMvrPwn4s1imYkxbwg"
-path = "ro-2025-1-round/"
-
-# additional_points = [0.55, 1.11]
-# additional_points = [2.9, 4.14, 6.34, 7.3, 10.94, 11.54, 12.74, 19.54, 20.54, 20.74] # + 0.01
-additional_points = []
-
-# load data from GSheet
-gc = gspread.service_account()
-sh = gc.open_by_key(sheetkey)
-
-ws = sh.worksheet('preference')
-dfpreference = pd.DataFrame(ws.get_all_records())
-dfpreference['p'] = dfpreference['gain'] / 100
-# today
-today = datetime.date.fromisoformat(dfpreference['date'][0])
-
-# aging curve 
-def aging_coeff(day1, day2):
-  diff = abs((day2 - day1).days)
-  if diff <= 0:
-    return 1
-  return pow(diff, 1.15) / diff
-
-# p = dfpreference
-# n = sample_n
-# normal error
-def normal_error(p, n, volatility, coef = 1):
-  p['sdx'] = (n * p['p'] * (1 - p['p'])).apply(math.sqrt) / n * coef * volatility
-  p['normal_error'] = scipy.stats.norm.rvs(loc=0, scale=p['sdx'])
-  return p
-
-# uniform_error as function of normal error
-def uniform_error(p, n, volatility, coef = 1):
-  p['sdx'] = (n * p['p'] * (1 - p['p'])).apply(math.sqrt) / n * coef * volatility
-  p['uniform_error'] = scipy.stats.uniform.rvs(loc=(-1 * p['sdx'] * math.sqrt(3)), scale=(2 * p['sdx'] * math.sqrt(3)))
-  return p
-
-# simulations
-simulations = pd.DataFrame(columns=dfpreference['party'].to_list())
-simulations_aging = pd.DataFrame(columns=dfpreference['party'].to_list())
-aging = aging_coeff(today, election_day)
-for i in range(0, sample):
-  p = normal_error(dfpreference, sample_n, dfpreference['volatilita'], 0.9)
-  p = uniform_error(p, sample_n, dfpreference['volatilita'], 1.5 * 0.9 * 0.9)
-  p['estimate'] = p['normal_error'] + p['uniform_error'] + p['p']
-  p['estimate_aging'] = aging * (p['normal_error'] + p['uniform_error']) + p['p']
-  simx = dict(zip(dfpreference['party'].to_list(), p['estimate']))
-  simxa = dict(zip(dfpreference['party'].to_list(), p['estimate_aging']))
-  # simulations = simulations.append(simx, ignore_index=True)
-  simulations = pd.concat([simulations, pd.DataFrame([simx])], ignore_index=True)
-  # simulations_aging = simulations_aging.append(simxa, ignore_index=True)
-  simulations_aging = pd.concat([simulations_aging, pd.DataFrame([simxa])], ignore_index=True)
-
-# simulations with correlations
-# note: correlation is used only for the normal distribution part
-wsc = sh.worksheet('median correlations')
-correlations = pd.DataFrame(wsc.get_all_records())
-# reorder to match p
-t = p.loc[:, ['party']].merge(correlations, left_on='party', right_on='Median')
-del t['party']
-tt = t.loc[:, ['Median']]
-for c in tt['Median']:
-  tt[c] = t.loc[:, c]
-del tt['Median']
-# simulations
-corr = tt.to_numpy()
-cov = p['sdx'].to_numpy() * corr * p['sdx'].to_numpy().T
+# %%
+# --- RELOAD CUSTOM MODULES ---
 try:
-  simulations_cov = np.random.multivariate_normal(mean=p['p'], cov=cov, size=sample)
-except RuntimeWarning as warning:
-  print('Covariance matrix is not positive definite.')
-  # Ensure the covariance matrix is positive-semidefinite
-  eigenvalues, eigenvectors = np.linalg.eigh(cov)
-  eigenvalues = np.maximum(eigenvalues, 0)  # Set negative eigenvalues to zero
-  cov = eigenvectors @ np.diag(eigenvalues) @ eigenvectors.T  # Reconstruct the covariance matrix
-  simulations_cov = np.random.multivariate_normal(mean=p['p'], cov=cov, size=sample)
+  if 'simulation_core' in locals() or 'simulation_core' in globals():
+    print(f"Reloading simulation_core...")
+    simulation_core = importlib.reload(simulation_core)
+  if 'manual_data_preparer' in locals() or 'manual_data_preparer' in globals():
+    print(f"Reloading manual_data_preparer...")
+    manual_data_preparer = importlib.reload(manual_data_preparer)
+  print("Reload complete.")
+except NameError:
+  print("Modules not imported yet, skipping reload.")
+except Exception as e:
+  print(f"Error reloading modules: {e}")
 
-p['sdxage'] = p['sdx'] * aging
-covage = p['sdxage'].to_numpy() * corr * p['sdxage'].to_numpy().T
-simulation_aging_cov = np.random.multivariate_normal(mean=p['p'], cov=covage, size=sample)
-simulations_cov = pd.DataFrame(simulations_cov, columns=dfpreference['party'].to_list())
-simulations_aging_cov = pd.DataFrame(simulation_aging_cov, columns=dfpreference['party'].to_list())
-# add uniform error
-for c in simulations_cov.columns:
-  sx = p[p['party'] == c]['sdx'].values[0]
-  simulations_cov[c] = simulations_cov[c] + np.random.uniform(low=(-1 * sx * math.sqrt(3)), high=(sx * math.sqrt(3)), size=sample)
-  simulations_aging_cov[c] = simulations_aging_cov[c] + np.random.uniform(low=(-1 * sx * aging * math.sqrt(3)), high=(sx * aging * math.sqrt(3)), size=sample)
 
-# rank matrix (somehow did not work directly)
-ranks = simulations.loc[0:sample,:].rank(axis=1, ascending=False)
-ranks_statistics = pd.DataFrame(index=ranks.columns)
-ranks_aging = simulations_aging.loc[0:sample,:].rank(axis=1, ascending=False)
-ranks_statistics_aging = pd.DataFrame(index=ranks_aging.columns)
-for i in range(1, len(ranks.columns) + 1):
-  ranks_statistics[str(i)] = pd.DataFrame((ranks <= i).sum() / sample).rename(columns={0: str(i)})
-  ranks_statistics_aging[str(i)] = pd.DataFrame((ranks_aging <= i).sum() / sample).rename(columns={0: str(i)})
+# %%
+# --- Setup, Imports ---
+try:
+  script_dir = os.path.dirname(os.path.abspath(__file__))
+except NameError:
+  script_dir = os.getcwd()
 
-# top 2
-top2 = ranks_aging.where(ranks_aging <= 2).fillna(False).where(ranks_aging > 2).fillna(True)
-top2_statistics = pd.DataFrame(index=ranks_aging.columns, columns=ranks_aging.columns)
-for i in range(0, len(ranks_aging.columns)):
-  for j in range(0, len(ranks_aging.columns)):
-    if i != j:
-      top2_statistics.iloc[i, j] = (top2.iloc[:, i] & top2.iloc[:, j]).sum() / sample
-    else:
-      top2_statistics.iloc[i, j] = ''
+if script_dir not in sys.path: sys.path.insert(0, script_dir)
 
-# rank matrix (somehow did not work directly) - covariances
-ranks_cov = simulations_cov.loc[0:sample,:].rank(axis=1, ascending=False)
-ranks_statistics_cov = pd.DataFrame(index=ranks_cov.columns)
-ranks_aging_cov = simulations_aging_cov.loc[0:sample,:].rank(axis=1, ascending=False)
-ranks_statistics_aging_cov = pd.DataFrame(index=ranks_aging_cov.columns)
-for i in range(1, len(ranks_cov.columns)):
-  ranks_statistics_cov[str(i)] = pd.DataFrame((ranks_cov <= i).sum() / sample).rename(columns={0: str(i)})
-  ranks_statistics_aging_cov[str(i)] = pd.DataFrame((ranks_aging_cov <= i).sum() / sample).rename(columns={0: str(i)})
+import pandas as pd
+import numpy as np
+import math
+import gspread # Import gspread for writing results
+# Import the refactored modules
+import simulation_core
+import manual_data_preparer
 
-# rank matrix (somehow did not work directly) - covariances
-# to number of seats, if the same number, then the same rank, the worse one
-ranks_cov_seats = ((simulations_cov * 150).round().loc[0:sample,:].rank(axis=1, ascending=False) + 0.45).round()
-ranks_statistics_cov_seats = pd.DataFrame(index=ranks_cov_seats.columns)
-ranks_aging_cov_seats = ((simulations_aging_cov * 150).round().loc[0:sample,:].rank(axis=1, ascending=False) + 0.45).round()
-ranks_statistics_aging_cov_seats = pd.DataFrame(index=ranks_aging_cov_seats.columns)
-for i in range(1, len(ranks_cov_seats.columns)):
-  ranks_statistics_cov_seats[str(i)] = pd.DataFrame((ranks_cov_seats <= i).sum() / sample).rename(columns={0: str(i)})
-  ranks_statistics_aging_cov_seats[str(i)] = pd.DataFrame((ranks_aging_cov_seats <= i).sum() / sample).rename(columns={0: str(i)})
+try:
+  print(f"Imported simulation_core from: {simulation_core.__file__}")
+  print(f"Imported manual_data_preparer from: {manual_data_preparer.__file__}")
+except Exception as e:
+  print(f"ERROR: Failed to import custom modules: {e}")
+  sys.exit(1)
 
-# top 2
-top2_cov = ranks_aging_cov.where(ranks_aging_cov <= 2).fillna(False).where(ranks_aging_cov > 2).fillna(True)
-top2_statistics_cov = pd.DataFrame(index=ranks_aging_cov.columns, columns=ranks_aging_cov.columns)
-for i in range(0, len(ranks_aging_cov.columns)):
-  for j in range(0, len(ranks_aging_cov.columns)):
-    if i != j:
-      top2_statistics_cov.iloc[i, j] = (top2_cov.iloc[:, i] & top2_cov.iloc[:, j]).sum() / sample
-    else:
-      top2_statistics_cov.iloc[i, j] = ''
 
-# less than
-arr = np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array(additional_points)))
+# %%
+# --- Configuration for Manual Analysis ---
+print("Setting configuration for Manual Analysis...")
+# Google Sheet Info
+SHEET_KEY = "1es2J0O_Ig7RfnVHG3bHmX8SBjlMvrPwn4s1imYkxbwg"
+PREF_WORKSHEET = 'preference'
+CORR_WORKSHEET = 'median correlations'
+CUSTOM_COALITIONS_WS = 'vlastní_koalice'
 
-interval_statistics = pd.DataFrame(columns=dfpreference['party'].to_list())
-interval_statistics_aging = pd.DataFrame(columns=dfpreference['party'].to_list())
-interval = pd.DataFrame(columns=['Pr'])
-for i in arr:
-# for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([]))):    
-  # interval = interval.append({'Pr': i}, ignore_index=True)
-  interval = pd.concat([interval, pd.DataFrame({'Pr': i}, index=[0])], ignore_index=True)
-  # interval_statistics = interval_statistics.append((simulations > (i / 100)).sum() / sample, ignore_index=True)
-  interval_statistics = pd.concat(
-    [interval_statistics, 
-    pd.DataFrame([(simulations > (i / 100)).sum() / sample], columns=dfpreference['party'].to_list())
-    ], ignore_index=True
+# Output Worksheets (matching original script)
+RANKS_AGING_COV_WS = 'pořadí_aktuální_aging_cov'
+PROBS_AGING_COV_WS = 'pravděpodobnosti_aktuální_aging_cov'
+DUELS_AGING_COV_WS = 'duely_aging_cov'
+TOP2_COV_WS = 'top_2_cov'
+NUM_IN_AGING_COV_WS = 'number_in_aging_cov'
+PREF_WRITEBACK_WS = 'preference' # For timestamp
+HISTORY_WRITEBACK_WS = 'history' # For archiving preferences
+COALITIONS_EXCL_WS = 'koalice_excl' # 
+COALITIONS_INCL_WS = 'koalice_inc' # 
+PROB_IN_WS = 'in' #
+
+# Paths for Auxiliary Data (Seat Calculation - same as Project 1)
+# *** ADJUST THIS PATH ***
+DATA_PATH_PREFIX = "./data/" # Assuming data folder is sibling to script dir
+REGIONAL_RESULTS_CSV = DATA_PATH_PREFIX + "psp2021_regional_results.csv"
+REGIONS_SEATS_CSV = DATA_PATH_PREFIX + "psp2021_seats.csv"
+CHOICES_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRhp47e91OazMSiu56gOTsUtnFEIaJiIhJbsgNTylwt89XIEnbiVyObJ8xHEoZPObo6ntOmQ9Tg-sf9/pub?gid=302501468&single=true&output=csv" # For choices metadata
+
+# Simulation Parameters
+SAMPLE_N_MANUAL = 1000 # sample_n from original script
+NUM_RUNS_MANUAL = 2000 # sample from original script
+# Note: Original script applied 0.9 factor during error calculation AND added uniform noise.
+# The 'error_coef' here scales the covariance matrix for the NORMAL part.
+# Let's set it to 1 and let manual_data_preparer handle volatility scaling,
+# and add uniform noise separately. Adjust if needed.
+ERROR_COEF_MANUAL = 1.0
+# Coefficient for the UNIFORM noise component (based on 1.5 * 0.9 * 0.9 from original script notes)
+UNIFORM_NOISE_COEF = 1.215
+
+# Aging Parameters
+ELECTION_DATE_MANUAL = '2025-09-29' # From original script
+AGING_POWER_MANUAL = 1.15
+
+# Seat Calculation Parameters (same as Project 1)
+TOTAL_LAST_VOTES = 5375090
+MAJORITY_THRESHOLD = 101
+
+# Interval Calculation Parameters
+INTERVAL_MAX = 60
+ADDITIONAL_POINTS = [] # Add specific points if needed, e.g., [5.0]
+
+# Control Flags
+USE_AGING = True # Use the aged sigman for simulation
+ADD_UNIFORM_NOISE = True # Add the extra uniform noise step
+LOAD_CUSTOM_COALITIONS = True # Load custom coalitions from sheet
+
+print("Configuration set.")
+
+
+# %%
+# --- Load Auxiliary Seat Calc Data ---
+print("\n--- Loading Auxiliary Seat Calculation Data ---")
+last_regional_results = pd.DataFrame()
+regions_seats = pd.DataFrame()
+choices_data_aux = pd.DataFrame() # For metadata (mps, abbreviation)
+try:
+  last_regional_results_raw = pd.read_csv(REGIONAL_RESULTS_CSV)
+  regions_seats = pd.read_csv(REGIONS_SEATS_CSV)
+  choices_data_aux = pd.read_csv(CHOICES_URL) # Need this for stats_df later
+
+  # Merge 'needs' from manual sheet later, this is just base data
+  # Assuming 'party', 'rate', 'votes' exist in regional results
+  required_regional_cols = ['party', 'region_code', 'votes', 'rate']
+  if not all(col in last_regional_results_raw.columns for col in required_regional_cols):
+    raise ValueError(f"Regional results CSV missing required columns: {required_regional_cols}")
+  last_regional_results = last_regional_results_raw[required_regional_cols].copy() # Keep only needed cols
+
+  if 'region_code' not in regions_seats.columns or 'seats' not in regions_seats.columns:
+    raise ValueError("Region seats CSV missing region_code or seats column.")
+  
+  # --- Load custom coalitions --- # <-- NEW Section
+  if LOAD_CUSTOM_COALITIONS:
+    custom_coalitions_list = manual_data_preparer.load_custom_coalitions_from_sheet(
+      sheetkey=SHEET_KEY,
+      worksheet_name=CUSTOM_COALITIONS_WS
+    )
+  else:
+    print("Skipping custom coalitions loading.")
+
+  print("Auxiliary seat calculation data loaded.")
+except Exception as e:
+  print(f"\n>>> Error loading auxiliary seat calc data: {e}")
+  # Ensure variables are defined
+  last_regional_results = pd.DataFrame()
+  regions_seats = pd.DataFrame()
+  choices_data_aux = pd.DataFrame()
+
+
+# %%
+# --- Step 1: Load Manual Data & Prepare Inputs ---
+print("\n--- 1. Loading Manual Data & Preparing Inputs ---")
+preference_df = pd.DataFrame()
+sheet_date = None
+mu_latest = pd.Series(dtype=float)
+sigman_latest = pd.Series(dtype=float)
+sigman_latest_aged = pd.Series(dtype=float)
+corr_matrix = pd.DataFrame()
+try:
+  # Load preferences
+  preference_df, sheet_date = manual_data_preparer.load_manual_poll_data(
+    sheetkey=SHEET_KEY, worksheet_name=PREF_WORKSHEET
   )
-  # interval_statistics_aging = interval_statistics_aging.append((simulations_aging > (i / 100)).sum() / sample, ignore_index=True)
-  interval_statistics_aging = pd.concat([interval_statistics_aging, pd.DataFrame([(simulations_aging > (i / 100)).sum() / sample], columns=dfpreference['party'].to_list())], ignore_index=True)
+  mu_latest = preference_df.set_index('party')['p'] # Mean is just the preference 'p'
 
-# less than covariance
-interval_statistics_cov = pd.DataFrame(columns=dfpreference['party'].to_list())
-interval_statistics_aging_cov = pd.DataFrame(columns=dfpreference['party'].to_list())
-interval_cov = pd.DataFrame(columns=['Pr'])
-for i in arr:
-# for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([]))):    
-  # interval_cov = interval_cov.append({'Pr': i}, ignore_index=True)
-  interval_cov = pd.concat([interval_cov, pd.DataFrame({'Pr': i}, index=[0])], ignore_index=True)
-  # interval_statistics_cov = interval_statistics_cov.append((simulations_cov > (i / 100)).sum() / sample, ignore_index=True)
-  interval_statistics_cov = pd.concat([interval_statistics_cov, pd.DataFrame([(simulations_cov > (i / 100)).sum() / sample], columns=dfpreference['party'].to_list())], ignore_index=True)
-  # interval_statistics_aging_cov = interval_statistics_aging_cov.append((simulations_aging_cov > (i / 100)).sum() / sample, ignore_index=True)
-  interval_statistics_aging_cov = pd.concat([interval_statistics_aging_cov, pd.DataFrame([(simulations_aging_cov > (i / 100)).sum() / sample], columns=dfpreference['party'].to_list())], ignore_index=True)
+  # Calculate Sigman (and aged version)
+  sigman_latest, sigman_latest_aged = manual_data_preparer.calculate_manual_sigman(
+    preference_df=preference_df,
+    sample_n=SAMPLE_N_MANUAL,
+    sheet_date=sheet_date if USE_AGING else None, # Pass dates only if aging
+    election_date=ELECTION_DATE_MANUAL if USE_AGING else None,
+    aging_power=AGING_POWER_MANUAL
+  )
 
-# duels
-duels = pd.DataFrame(columns = ranks.columns, index=ranks.columns)
-for i in ranks.columns:
-  for j in ranks.columns:
-    p = (sum(ranks[i] >= ranks[j])) / sample
-    duels[i][j] = p
-duels_aging = pd.DataFrame(columns = ranks_aging.columns, index=ranks_aging.columns)
-for i in ranks_aging.columns:
-  for j in ranks_aging.columns:
-    p = (sum(ranks_aging[i] >= ranks_aging[j])) / sample
-    duels_aging[i][j] = p
-duels_aging_cov = pd.DataFrame(columns = ranks_aging_cov.columns, index=ranks_aging_cov.columns)
-for i in ranks_aging_cov.columns:
-  for j in ranks_aging_cov.columns:
-    p = (sum(ranks_aging_cov[i] >= ranks_aging_cov[j])) / sample
-    duels_aging_cov[i][j] = p
+  # Load Correlation
+  corr_matrix = manual_data_preparer.load_manual_correlation(
+    sheetkey=SHEET_KEY,
+    party_order=mu_latest.index.tolist(), # Use order from preferences
+    worksheet_name=CORR_WORKSHEET
+  )
 
-# number of parties in parliament
-needed = dfpreference.loc[:, ['party', 'needed']].set_index('party')
+  # --- Choose Sigman for Simulation ---
+  if USE_AGING and sigman_latest_aged is not None:
+    sigman_to_use = sigman_latest_aged
+    aging_factor_for_noise = manual_data_preparer.calculate_aging_coeff(
+      sheet_date, datetime.date.fromisoformat(ELECTION_DATE_MANUAL), AGING_POWER_MANUAL
+    )
+    print("Using AGED sigman for simulation.")
+  else:
+    sigman_to_use = sigman_latest
+    aging_factor_for_noise = 1.0
+    if USE_AGING: print("Warning: Aging requested but failed. Using non-aged sigman.")
+    else: print("Using NON-AGED sigman for simulation.")
 
-number_in_sim = simulations.T.ge(needed['needed'], axis=0).sum().to_frame().rename(columns={0: 'number_in'})
-nic = number_in_sim.value_counts(sort=False, ascending=True)
-number_in = pd.DataFrame(index=range(0, number_in_sim['number_in'].max() + 1), columns=['p'])
-for i in range(0, nic.index.max()[0] + 1):
-  number_in['p'][i] = nic.loc[i:].sum() / sample
+  # --- Align Inputs ---
+  common_index = mu_latest.index.intersection(sigman_to_use.index).intersection(corr_matrix.index)
+  if len(common_index) < len(mu_latest.index):
+    print(f"Warning: Aligning inputs. Parties dropped: {set(mu_latest.index) - set(common_index)}")
 
-# number of parties in parliament - aging
-number_in_sim_aging = simulations_aging.T.ge(needed['needed'], axis=0).sum().to_frame().rename(columns={0: 'number_in'})
-nic_aging = number_in_sim_aging.value_counts(sort=False, ascending=True)
-number_in_aging = pd.DataFrame(index=range(0, number_in_sim_aging['number_in'].max() + 1), columns=['p'])
-for i in range(0, nic_aging.index.max()[0] + 1):
-  number_in_aging['p'][i] = nic_aging.loc[i:].sum() / sample
+  mu_latest_aligned = mu_latest.loc[common_index]
+  sigman_latest_aligned = sigman_to_use.loc[common_index]
+  corr_matrix_aligned = corr_matrix.loc[common_index, common_index]
 
-# number of parties in parliament - aging - cov
-number_in_sim_aging_cov = simulations_aging_cov.T.ge(needed['needed'], axis=0).sum().to_frame().rename(columns={0: 'number_in'})
-nic_aging_cov = number_in_sim_aging_cov.value_counts(sort=False, ascending=True)
-number_in_aging_cov = pd.DataFrame(index=range(0, number_in_sim_aging_cov['number_in'].max() + 1), columns=['p'])
-for i in range(0, nic_aging_cov.index.max()[0] + 1):
-  number_in_aging_cov['p'][i] = nic_aging_cov.loc[i:].sum() / sample
+  if mu_latest_aligned.empty or sigman_latest_aligned.empty or corr_matrix_aligned.empty:
+    raise ValueError("Inputs for simulation are empty after alignment.")
 
-# WRITE TO SHEET
-# wsw = sh.worksheet('pořadí_aktuální')
-# wsw.update('B1', [ranks_statistics.transpose().columns.values.tolist()] + ranks_statistics.transpose().values.tolist())
+  print("Manual data loaded and inputs prepared.")
 
-wsw = sh.worksheet('pořadí_aktuální_aging')
-wsw.update('B1', [ranks_statistics_aging.transpose().columns.values.tolist()] + ranks_statistics_aging.transpose().values.tolist())
+except Exception as e:
+  print(f"\n>>> Error preparing manual inputs: {e}")
+  # Ensure variables are defined
+  preference_df = pd.DataFrame()
+  mu_latest_aligned = pd.Series(dtype=float)
+  sigman_latest_aligned = pd.Series(dtype=float)
+  corr_matrix_aligned = pd.DataFrame()
 
-wsw = sh.worksheet('pořadí_aktuální_aging_cov')
-wsw.update('B1', [ranks_statistics_aging_cov.transpose().columns.values.tolist()] + ranks_statistics_aging_cov.transpose().values.tolist())
 
-# wsw = sh.worksheet('pořadí_aktuální_aging_cov_seats')
-# wsw.update('B1', [ranks_statistics_aging_cov_seats.transpose().columns.values.tolist()] + ranks_statistics_aging_cov_seats.transpose().values.tolist())
+# %%
+# --- Step 2: Generate Base Poll Simulations (CORE) ---
+print("\n--- 2. Generating Base Poll Simulations (Multivariate Normal) ---")
+simulated_polls_mvn = pd.DataFrame()
+if not mu_latest_aligned.empty:
+  try:
+    simulated_polls_mvn = simulation_core.generate_poll_simulations(
+      mu_latest=mu_latest_aligned,
+      sigman_latest=sigman_latest_aligned,
+      corr_matrix=corr_matrix_aligned,
+      num_runs=NUM_RUNS_MANUAL,
+      sample_n=SAMPLE_N_MANUAL, # Note: passed sample_n used for scaling mean/cov
+      error_coef=ERROR_COEF_MANUAL # Scales sigman in cov matrix build
+    )
+    print(f"Generated MVN simulations. Shape: {simulated_polls_mvn.shape}")
+  except (ValueError, LinAlgError, Exception) as e:
+    print(f"\n>>> Error generating MVN simulations: {e}")
+    simulated_polls_mvn = pd.DataFrame()
+else:
+  print("Skipping MVN simulation: Input preparation failed.")
 
-# wsw = sh.worksheet('pravděpodobnosti_aktuální')
-# wsw.update('B1', [interval_statistics.columns.values.tolist()] + interval_statistics.values.tolist())
 
-wsw = sh.worksheet('pravděpodobnosti_aktuální_aging')
-arr2 = []
-for item in arr:
-  arr2.append([item])
-wsw.update('A2', arr2)
-wsw.update('B1', [interval_statistics_aging.columns.values.tolist()] + interval_statistics_aging.values.tolist())
+# %%
+# --- Step 3: Add Uniform Noise (Manual Project Specific) ---
+print("\n--- 3. Adding Uniform Noise ---")
+simulated_polls_final = pd.DataFrame()
+if not simulated_polls_mvn.empty and ADD_UNIFORM_NOISE:
+  try:
+    simulated_polls_final = manual_data_preparer.add_uniform_noise(
+      simulated_polls_mvn=simulated_polls_mvn,
+      preference_df=preference_df, # Contains volatility, p
+      sample_n=SAMPLE_N_MANUAL, # Base N for sdx calc
+      aging_factor=aging_factor_for_noise, # Use calculated aging factor
+      uniform_error_coef=UNIFORM_NOISE_COEF
+    )
+    print(f"Added uniform noise. Final simulations shape: {simulated_polls_final.shape}")
+  except Exception as e:
+    print(f"\n>>> Error adding uniform noise: {e}")
+    simulated_polls_final = simulated_polls_mvn # Fallback to MVN results if noise fails? Or empty?
+elif not ADD_UNIFORM_NOISE:
+  simulated_polls_final = simulated_polls_mvn # Use MVN results if noise is skipped
+  print("Skipping uniform noise as per configuration.")
+else:
+  print("Skipping uniform noise: Base MVN simulation failed.")
 
-wsw = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
-wsw.update('A2', arr2)
-wsw.update('B1', [interval_statistics_aging_cov.columns.values.tolist()] + interval_statistics_aging_cov.values.tolist())
 
-# wsw = sh.worksheet('duely')
-# wsw.update('B2', [duels.columns.values.tolist()] + duels.values.tolist())
+# %%
+# --- Step 4: Calculate Best Estimate Seats (CORE) ---
+# Note: Uses the base mu_latest (without noise) for the single best estimate
+print("\n--- 4. Calculating Best Estimate Seats ---")
+best_estimate_seats = pd.Series(dtype=int)
+# Merge manual 'needs' into regional results for seat calculation
+if not mu_latest_aligned.empty and not last_regional_results.empty and not regions_seats.empty and not preference_df.empty:
+  try:
+    # Prepare regional results with manual needs
+    needs_map = preference_df.set_index('party')['needed']
+    regional_results_with_needs = last_regional_results.copy()
+    regional_results_with_needs['needs'] = regional_results_with_needs['party'].map(needs_map)
+    # Handle parties in regional results but not in manual preferences (fallback need?)
+    if regional_results_with_needs['needs'].isna().any():
+      missing_need_parties = regional_results_with_needs[regional_results_with_needs['needs'].isna()]['party'].unique()
+      print(f"Warning: Missing 'needed' threshold for {missing_need_parties} in best estimate calc. Using 0.05.")
+      regional_results_with_needs['needs'] = regional_results_with_needs['needs'].fillna(0.05)
 
-wsw = sh.worksheet('duely_aging')
-arrd = []
-for item in duels_aging.columns:
-  arrd.append([item])
-wsw.update('A3', arrd)
-wsw.update('B2', [duels_aging.columns.values.tolist()] + duels_aging.values.tolist())
+    # Align mu_latest with parties present in regional data
+    mu_for_best = mu_latest_aligned.copy()
+    common_parties_best = mu_for_best.index.intersection(regional_results_with_needs['party'].unique())
+    mu_for_best_aligned = mu_for_best.loc[common_parties_best]
+    mu_for_best_aligned.name = 'poll_value'
 
-wsw = sh.worksheet('duely_aging_cov')
-arrd = []
-for item in duels_aging_cov.columns:
-  arrd.append([item])
-wsw.update('A3', arrd)
-wsw.update('B2', [duels_aging_cov.columns.values.tolist()] + duels_aging_cov.values.tolist())
+    if not mu_for_best_aligned.empty:
+      seat_calc_args_best = {
+        'regional_results_df': regional_results_with_needs, # Use version with manual needs
+        'regions_seats_df': regions_seats,
+        'total_last_votes': TOTAL_LAST_VOTES
+      }
+      best_estimate_seats = simulation_core.calculate_seats_imperiali(
+        poll_sample_series=mu_for_best_aligned, **seat_calc_args_best
+      )
+      print("Calculated best estimate seats.")
+    else: print("Skipping: No common parties between mu and regional data.")
 
-wsw = sh.worksheet('top_2')
-wsw.update('A3', arrd)
-wsw.update('B2', [top2_statistics.columns.values.tolist()] + top2_statistics.values.tolist())
+  except Exception as e:
+    print(f"\n>>> Error calculating best estimate seats: {e}")
+    best_estimate_seats = pd.Series(dtype=int)
+else: print("Skipping: Previous steps failed or auxiliary data missing.")
 
-wsw = sh.worksheet('top_2_cov')
-wsw.update('A3', arrd)
-wsw.update('B2', [top2_statistics_cov.columns.values.tolist()] + top2_statistics_cov.values.tolist())
 
-# wsw = sh.worksheet('number_in')
-# number_in = number_in.reset_index(drop=False)
-# wsw.update('A2', number_in.values.tolist())
+# %%
+# --- Step 5: Run Seat Simulations (CORE) ---
+# Uses the FINAL simulated polls (potentially with noise)
+print("\n--- 5. Running Seat Simulations ---")
+simulated_seats = pd.DataFrame()
+if not simulated_polls_final.empty and not last_regional_results.empty and not regions_seats.empty and not preference_df.empty:
+  try:
+    # Prepare regional results with manual needs (as in step 4)
+    needs_map = preference_df.set_index('party')['needed']
+    regional_results_with_needs = last_regional_results.copy()
+    regional_results_with_needs['needs'] = regional_results_with_needs['party'].map(needs_map)
+    if regional_results_with_needs['needs'].isna().any(): # Handle missing needs again
+      regional_results_with_needs['needs'] = regional_results_with_needs['needs'].fillna(0.05)
 
-# wsw = sh.worksheet('number_in_aging')
-# number_in_aging = number_in_aging.reset_index(drop=False)
-# wsw.update('A2', number_in_aging.values.tolist())
+    seat_calc_args_sim = {
+      'regional_results_df': regional_results_with_needs, # Use version with manual needs
+      'regions_seats_df': regions_seats,
+      'total_last_votes': TOTAL_LAST_VOTES
+    }
+    simulated_seats = simulation_core.run_seat_simulations(
+      simulated_polls_df=simulated_polls_final, # Use final simulations
+      seat_calc_function=simulation_core.calculate_seats_imperiali,
+      seat_calc_args=seat_calc_args_sim
+    )
+    print(f"Generated simulated seats. Shape: {simulated_seats.shape}")
+  except Exception as e:
+    print(f"\n>>> Error running seat simulations: {e}")
+    simulated_seats = pd.DataFrame()
+else: print("Skipping: Previous steps failed or required data missing.")
 
-wsw = sh.worksheet('number_in_aging_cov')
-number_in_aging_cov = number_in_aging_cov.reset_index(drop=False)
-wsw.update(values=number_in_aging_cov.values.tolist(), range_name='A2')
 
-wsw = sh.worksheet('preference')
-d = datetime.datetime.now().isoformat()
-wsw.update(values=[[d]], range_name='E2')
+# %%
+# --- Step 6: Calculate Simulation Statistics (CORE) ---
+print("\n--- 6. Calculating Core Simulation Statistics ---")
+stats_df = pd.DataFrame()
+if not simulated_seats.empty and not best_estimate_seats.empty and not choices_data_aux.empty:
+  try:
+    # The core stats function needs 'mps', 'abbreviation' etc. from choices_data_aux
+    stats_df = simulation_core.calculate_simulation_stats(
+      simulated_seats_df=simulated_seats,
+      best_estimate_seats_series=best_estimate_seats,
+      choices_df=choices_data_aux # Use standard choices data for metadata
+    )
+    print(f"Calculated core statistics. Shape: {stats_df.shape}")
+    # print(stats_df.head())
+  except Exception as e:
+    print(f"\n>>> Error calculating core simulation statistics: {e}")
+    stats_df = pd.DataFrame()
+else: print("Skipping: Previous steps failed or required data missing.")
 
-# save to history initial preferences
-historical_row = [d] + [dfpreference['date'][0]] + dfpreference['gain'].to_list() + [''] + dfpreference['volatilita'].to_list()
-wsh = sh.worksheet('history')
-wsh.insert_row(historical_row, 2)
 
-# save to history
-# ranks
-# history = pd.read_csv(path + 'history_1_rank.csv')
-# newly = pd.DataFrame(columns=history.columns)
-# cols = ranks_statistics.T.columns
-# for col in cols:
-#   t = ranks_statistics.T[col].to_frame().reset_index().rename(columns={'index': 'rank', col: 'p'})
-#   t['gain'] = dfpreference[dfpreference['party'] == col]['gain'].values[0]
-#   t['name'] = col
-#   t['datetime'] = d
-#   t['date'] = today.isoformat()
-#   # newly = newly.append(t, ignore_index=True)
-#   newly = pd.concat([newly, pd.DataFrame(t, columns=history.columns)])
+# %%
+# --- Step 7: Calculate Coalition Probabilities (CORE) ---
+# Note: Predefined coalitions are not typically used in this manual analysis, but the function handles it
+print("\n--- 7. Calculating Coalition Probabilities ---")
+coalitions_exclusive = pd.DataFrame()
+coalitions_inclusive = pd.DataFrame()
+if not simulated_seats.empty and not stats_df.empty:
+  try:
+    coalitions_exclusive, coalitions_inclusive = simulation_core.calculate_coalition_probabilities(
+      simulated_seats_df=simulated_seats,
+      stats_df=stats_df,
+      majority_threshold=MAJORITY_THRESHOLD,
+      # Use the list loaded from the custom sheet
+      predefined_coalitions_list=custom_coalitions_list # Pass None if not loading predefined
+    )
+    print("Calculated coalition probabilities.")
+    # print("\nExclusive (Top 5):\n", coalitions_exclusive.head())
+    # print("\nInclusive (Top 5):\n", coalitions_inclusive.head())
+  except Exception as e:
+    print(f"\n>>> Error calculating coalition probabilities: {e}")
+    coalitions_exclusive = pd.DataFrame()
+    coalitions_inclusive = pd.DataFrame()
+else: print("Skipping: Previous steps failed or required data missing.")
 
-# pd.concat([history, newly], ignore_index=True).to_csv(path + 'history_1_rank.csv', index=False)
 
-# # probability
-# history = pd.read_csv(path + 'history_1_prob.csv')
-# newly = pd.DataFrame(columns=history.columns)
-# cols = interval_statistics.columns
-# for col in cols:
-#     t = interval_statistics[col].to_frame()
-#     t.columns = ['p']
-#     t['less'] = interval['Pr']
-#     t['datetime'] = d
-#     t['gain'] = dfpreference[dfpreference['party'] == col]['gain'].values[0]
-#     t['name'] = col
-#     t['date'] = today.isoformat()
-#     # newly = newly.append(t, ignore_index=True)
-#     newly = pd.concat([newly, pd.DataFrame(t, columns=history.columns)])
+# %%
+# --- Step 8: Calculate Manual Project Specific Statistics ---
+# (Rankings, Intervals, Duels, Top2, Number In)
+# These use simulated_polls_final (with noise, aged)
+print("\n--- 8. Calculating Manual Project Specific Statistics ---")
 
-# pd.concat([history, newly], ignore_index=True).to_csv(path + 'history_1_prob.csv', index=False)
+ranks_stats_final = pd.DataFrame()
+probs_stats_final = pd.DataFrame()
+probs_interval_final = pd.DataFrame()
+duels_stats_final = pd.DataFrame()
+top2_stats_final = pd.DataFrame()
+num_in_stats_final = pd.DataFrame()
 
-# # top2
-# history = pd.read_csv(path + 'history_1_top2.csv')
-# newly = pd.DataFrame(columns=history.columns)
-# cols = top2_statistics.columns
-# for col in cols:
-#   for row in cols:
-#     if row > col:
-#       t = {}
-#       t['p'] = top2_statistics[col][row]
-#       t['name1'] = col
-#       t['name2'] = row
-#       t['gain1'] = dfpreference[dfpreference['party'] == col]['gain'].values[0]
-#       t['gain2'] = dfpreference[dfpreference['party'] == row]['gain'].values[0]
-#       t['date'] = today.isoformat()
-#       t['datetime'] = d
-      
-#       # newly = newly.append(t, ignore_index=True)
-#       newly = pd.concat([newly, pd.DataFrame(t, columns=history.columns, index=[0])])
+if not simulated_polls_final.empty and not preference_df.empty:
+  try:
+    parties_list = simulated_polls_final.columns.tolist()
+    num_parties = len(parties_list)
+    num_sim_runs = len(simulated_polls_final)
 
-# pd.concat([history, newly], ignore_index=True).to_csv(path + 'history_1_top2.csv', index=False)
+    # --- Ranks ---
+    print("  Calculating ranks...")
+    ranks_df = simulated_polls_final.rank(axis=1, ascending=False, method='first')
+    ranks_stats_list = []
+    for i in range(1, num_parties + 1):
+      prob_rank_i = (ranks_df <= i).sum() / num_sim_runs
+      prob_rank_i.name = str(i)
+      ranks_stats_list.append(prob_rank_i)
+    if ranks_stats_list:
+      ranks_stats_final = pd.concat(ranks_stats_list, axis=1)
 
-# # duels 1
-# history = pd.read_csv(path + 'history_1_duel.csv')
-# newly = pd.DataFrame(columns=history.columns)
-# cols = duels_aging.columns
-# for col in cols:
-#   for row in cols:
-#     if row > col:
-#       t = {}
-#       t['p'] = duels_aging[row][col]
-#       t['name1'] = col
-#       t['name2'] = row
-#       t['gain1'] = dfpreference[dfpreference['party'] == col]['gain'].values[0]
-#       t['gain2'] = dfpreference[dfpreference['party'] == row]['gain'].values[0]
-#       t['date'] = today.isoformat()
-#       t['datetime'] = d
-      
-#       # newly = newly.append(t, ignore_index=True)
-#       newly = pd.concat([newly, pd.DataFrame(t, columns=history.columns, index=[0])])
+    # --- Intervals ---
+    print("  Calculating interval probabilities...")
+    interval_points = np.concatenate((np.arange(0, INTERVAL_MAX + 0.5, 0.5), np.array(ADDITIONAL_POINTS)))
+    interval_points = np.unique(interval_points) # Ensure unique and sorted
+    interval_points.sort()
+    probs_stats_list = []
+    for i in interval_points:
+      prob_over_i = (simulated_polls_final > (i / 100.0)).sum() / num_sim_runs
+      prob_over_i.name = i # Use interval value as name/index later
+      probs_stats_list.append(prob_over_i)
+    if probs_stats_list:
+      probs_stats_final = pd.concat(probs_stats_list, axis=1).T # Transpose, index is interval
+      probs_stats_final.index.name = 'Pr'
+      probs_interval_final = pd.DataFrame(interval_points, columns=['Pr'])
 
-# pd.concat([history, newly], ignore_index=True).to_csv(path + 'history_1_duel.csv', index=False)
+
+    # --- Duels ---
+    print("  Calculating duels...")
+    duels_stats_final = pd.DataFrame(index=parties_list, columns=parties_list, dtype=float)
+    for p1 in parties_list:
+      for p2 in parties_list:
+        # Prob(p1 >= p2)
+        duels_stats_final.loc[p1, p2] = (simulated_polls_final[p1] >= simulated_polls_final[p2]).mean()
+
+    # --- Top 2 ---
+    print("  Calculating Top 2...")
+    top2_condition = (ranks_df <= 2) # True if party is rank 1 or 2
+    top2_stats_final = pd.DataFrame(index=parties_list, columns=parties_list, dtype=float)
+    for p1 in parties_list:
+      for p2 in parties_list:
+        if p1 == p2:
+          top2_stats_final.loc[p1, p2] = np.nan # Or empty string?
+        else:
+          # Prob(p1 in Top2 AND p2 in Top2)
+          top2_stats_final.loc[p1, p2] = (top2_condition[p1] & top2_condition[p2]).mean()
+
+    # --- Number In ---
+    print("  Calculating number of parties in parliament...")
+    needs_map = preference_df.set_index('party')['needed']
+    # Ensure needs_map covers all parties in simulation, fallback if needed
+    needs_aligned = needs_map.reindex(parties_list).fillna(0.05) # Fallback to 5%
+    passes_threshold = simulated_polls_final.ge(needs_aligned, axis=1)
+    num_in_sim_series = passes_threshold.sum(axis=1)
+    value_counts_num_in = num_in_sim_series.value_counts().sort_index()
+    # Cumulative probability: P(N >= k)
+    cum_prob = value_counts_num_in[::-1].cumsum()[::-1] / num_sim_runs
+    # Create final DataFrame
+    max_parties_in = num_in_sim_series.max()
+    num_in_index = range(0, max_parties_in + 1)
+    num_in_stats_final = cum_prob.reindex(num_in_index, fill_value=0.0).reset_index()
+    num_in_stats_final.columns = ['index', 'p'] # Match original script output names
+
+    print("Manual statistics calculation complete.")
+
+  except Exception as e:
+    print(f"\n>>> Error calculating manual statistics: {e}")
+    # Reset outputs
+    ranks_stats_final = pd.DataFrame()
+    probs_stats_final = pd.DataFrame()
+    probs_interval_final = pd.DataFrame()
+    duels_stats_final = pd.DataFrame()
+    top2_stats_final = pd.DataFrame()
+    num_in_stats_final = pd.DataFrame()
+else:
+  print("Skipping manual statistics: Final simulated polls not available.")
+
+
+# %%
+# --- Step 9: Write Results to Google Sheet ---
+print("\n--- 9. Writing Results to Google Sheet ---")
+try:
+  gc = gspread.service_account()
+  sh = gc.open_by_key(SHEET_KEY)
+  print(f"Opened GSheet: {sh.title}")
+  
+  # Helper to write dataframe with custom A1 header
+  def write_gsheet_with_a1(worksheet_name, df, a1_header_text, data_start_cell='A2'):
+    if df.empty:
+      print(f"  Skipping write to '{worksheet_name}': DataFrame is empty.")
+      return
+    try:
+      print(f"  Writing to worksheet: '{worksheet_name}'...")
+      wsw = sh.worksheet(worksheet_name)
+      wsw.clear()
+      # Write custom header to A1
+      wsw.update(range_name='A1', values=[[a1_header_text]])
+      print(f"    Wrote header '{a1_header_text}' to A1.")
+      # Prepare data including header for update
+      data_to_write = [df.columns.values.tolist()] + df.values.tolist()
+      wsw.update(range_name=data_start_cell, values=data_to_write)
+      print(f"    Successfully wrote {len(data_to_write)} rows starting {data_start_cell}.")
+    except gspread.exceptions.WorksheetNotFound:
+      print(f"  Error: Worksheet '{worksheet_name}' not found.")
+    except Exception as e_write:
+      print(f"  Error writing to '{worksheet_name}': {e_write}")
+
+  # Helper to write dataframe
+  def write_gsheet(worksheet_name, df, start_cell='B1', include_header=True, include_index=False, clear_before_write=True):
+    try:
+      print(f"  Writing to worksheet: '{worksheet_name}', cell: {start_cell}...")
+      wsw = sh.worksheet(worksheet_name)
+      if clear_before_write:
+        wsw.clear() # Clear sheet before writing
+      # Prepare data list including header/index if needed
+      data_to_write = []
+      if include_header: data_to_write.append(df.columns.tolist())
+      if include_index:
+        # Need to combine index and values carefully
+        df_reset = df.reset_index()
+        if include_header: data_to_write = [df_reset.columns.tolist()] + df_reset.values.tolist()
+        else: data_to_write = df_reset.values.tolist()
+      else:
+        data_to_write.extend(df.values.tolist())
+
+      # Write data
+      wsw.update(range_name=start_cell, values=data_to_write)
+      print(f"  Successfully wrote {len(data_to_write)} rows to '{worksheet_name}'.")
+    except gspread.exceptions.WorksheetNotFound:
+      print(f"  Error: Worksheet '{worksheet_name}' not found.")
+    except Exception as e_write:
+      print(f"  Error writing to '{worksheet_name}': {e_write}")
+
+  # --- Write Specific Stats ---
+  # Ranks (pořadí_aktuální_aging_cov) - Index is party, Columns are ranks '1', '2', ...
+  if not ranks_stats_final.empty:
+    write_gsheet(RANKS_AGING_COV_WS, ranks_stats_final.T, start_cell='B1', include_header=True, include_index=False, clear_before_write=False) # Transposed in original
+
+  # Probabilities (pravděpodobnosti_aktuální_aging_cov) - Index is Pr, Columns are parties
+  if not probs_stats_final.empty and not probs_interval_final.empty:
+    # Write interval points to column A first
+    try:
+      wsw_prob = sh.worksheet(PROBS_AGING_COV_WS)
+      wsw_prob.clear()
+      wsw_prob.update(range_name='A2', values=probs_interval_final.values.tolist())
+      print(f"  Wrote interval points to '{PROBS_AGING_COV_WS}' column A.")
+      # Then write the probabilities starting from B1 (header + data)
+      write_gsheet(PROBS_AGING_COV_WS, probs_stats_final, start_cell='B1', include_header=True, include_index=False, clear_before_write=False)
+    except Exception as e_prob: print(f" Error writing probabilities: {e_prob}")
+
+
+  # Duels (duely_aging_cov) - Index is party, Columns are party
+  if not duels_stats_final.empty:
+    # Write index (row headers) to A3:
+    try:
+      wsw_duel = sh.worksheet(DUELS_AGING_COV_WS)
+      wsw_duel.clear()
+      row_headers = [[h] for h in duels_stats_final.index.tolist()] # List of lists
+      wsw_duel.update(range_name='A3', values=row_headers)
+      print(f"  Wrote row headers to '{DUELS_AGING_COV_WS}' column A.")
+      # Write data + column headers starting B2
+      write_gsheet(DUELS_AGING_COV_WS, duels_stats_final, start_cell='B2', include_header=True, include_index=False)
+      # Write to A1 "Pr[row >= column]"
+      wsw_duel.update(range_name='A1', values=[['Pr[row >= column]']])
+      # Write starting A3 down the name of the parties in one write
+      party_names = duels_stats_final.index.tolist()
+      parties_to_write = [[party_names[i]] for i in range(len(party_names))]
+      wsw_duel.update(range_name='A3', values=parties_to_write)
+    except Exception as e_duel: print(f" Error writing duels: {e_duel}")
+
+  # Top 2 (top_2_cov) - Index is party, Columns are party
+  if not top2_stats_final.empty:
+    # Write index (row headers) to A3:
+    try:
+      wsw_top2 = sh.worksheet(TOP2_COV_WS)
+      wsw_top2.clear()
+      row_headers_top2 = [[h] for h in top2_stats_final.index.tolist()]
+      wsw_top2.update(range_name='A3', values=row_headers_top2)
+      print(f"  Wrote row headers to '{TOP2_COV_WS}' column A.")
+      # Write data + column headers starting B2
+      top2_write = top2_stats_final.fillna('') # Replace NaN with empty string for GSheet
+      write_gsheet(TOP2_COV_WS, top2_write, start_cell='B2', include_header=True, include_index=False)
+      # Write to A1 "Pr[TOP 2]"
+      wsw_top2.update(range_name='A1', values=[['Pr[TOP 2]']])
+      # Write starting A3 down the name of the parties in one write
+      party_names = top2_stats_final.index.tolist()
+      parties_to_write = [[party_names[i]] for i in range(len(party_names))]
+      wsw_top2.update(range_name='A3', values=parties_to_write)
+    except Exception as e_top2: print(f" Error writing Top 2: {e_top2}")
+
+
+  # Number In (number_in_aging_cov) - Columns are 'index', 'p'
+  if not num_in_stats_final.empty:
+    # Write header + data starting A1 (assuming sheet clear)
+    write_gsheet(NUM_IN_AGING_COV_WS, num_in_stats_final, start_cell='A1', include_header=True, include_index=False)
+    
+  # --- Write NEW Coalition Probabilities ---
+    if not coalitions_exclusive.empty:
+      write_gsheet_with_a1(COALITIONS_EXCL_WS, coalitions_exclusive,
+                            "Pr [tato koalice nebo libovolná podmnožina]", data_start_cell='A2')
+    if not coalitions_inclusive.empty:
+      write_gsheet_with_a1(COALITIONS_INCL_WS, coalitions_inclusive,
+                            "Pr [přesně tato koalice]", data_start_cell='A2')
+
+    # --- Write NEW Probability In ---
+    if not stats_df.empty and 'party' in stats_df.columns and 'in' in stats_df.columns:
+      prob_in_df = stats_df[['party', 'in']].sort_values('in', ascending=False).reset_index(drop=True)
+      write_gsheet_with_a1(PROB_IN_WS, prob_in_df, "Pr[in]", data_start_cell='A2')
+    elif stats_df.empty: print(f"  Skipping write to '{PROB_IN_WS}': stats_df is empty.")
+    else: print(f"  Skipping write to '{PROB_IN_WS}': 'party' or 'in' column missing in stats_df.")
+
+  # --- Update Timestamp ---
+  try:
+    wsw_pref = sh.worksheet(PREF_WRITEBACK_WS)
+    timestamp = datetime.datetime.now().isoformat()
+    wsw_pref.update(range_name='E2', values=[[timestamp]]) # Cell for timestamp
+    print(f"Updated timestamp in '{PREF_WRITEBACK_WS}'.")
+  except Exception as e_ts: print(f" Error updating timestamp: {e_ts}")
+
+  # --- Write History Row ---
+  if not preference_df.empty and sheet_date:
+    try:
+      wsh_hist = sh.worksheet(HISTORY_WRITEBACK_WS)
+      timestamp = datetime.datetime.now().isoformat()
+      # Prepare row data: timestamp, sheet_date, gains..., '', volatilities...
+      gains = preference_df.set_index('party').loc[mu_latest_aligned.index]['p'] * 100 # Use aligned order
+      volas = preference_df.set_index('party').loc[mu_latest_aligned.index]['volatilita']
+      hist_row_data = [timestamp, sheet_date.isoformat()] + gains.tolist() + [''] + volas.tolist()
+      wsh_hist.insert_row(hist_row_data, 2, value_input_option='USER_ENTERED') # Insert as second row
+      print(f"Inserted history row into '{HISTORY_WRITEBACK_WS}'.")
+    except Exception as e_hist: print(f" Error writing history row: {e_hist}")
+
+
+  print("Finished writing results to Google Sheet.")
+
+except Exception as e_main_write:
+  print(f"\n>>> Error interacting with Google Sheet for writing: {e_main_write}")
+
+
+# %%
+print("\n--- Manual Analysis Run Finished ---")
