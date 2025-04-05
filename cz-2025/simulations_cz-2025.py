@@ -71,11 +71,26 @@ COALITIONS_EXCL_WS = 'koalice_excl' #
 COALITIONS_INCL_WS = 'koalice_inc' # 
 PROB_IN_WS = 'in' #
 
-# Paths for Auxiliary Data (Seat Calculation - same as Project 1)
-# *** ADJUST THIS PATH ***
-DATA_PATH_PREFIX = "./data/" # Assuming data folder is sibling to script dir
-REGIONAL_RESULTS_CSV = DATA_PATH_PREFIX + "psp2021_regional_results.csv"
-REGIONS_SEATS_CSV = DATA_PATH_PREFIX + "psp2021_seats.csv"
+# --- PATH CONSTRUCTION ---
+# Get the directory containing this script file
+try:
+  # This works when running as a script
+  SCRIPT_DIR_PATH = os.path.dirname(os.path.abspath(__file__))
+except NameError:
+  # Fallback for interactive environments like notebooks/kernels
+  SCRIPT_DIR_PATH = os.getcwd()
+  print(f"Warning: __file__ not defined. Using current working directory for path base: {SCRIPT_DIR_PATH}")
+
+# Construct paths relative to the SCRIPT directory
+# **IMPORTANT**: Adjust the relative location ('../data' vs './data') based on your actual project structure!
+# Option A: If 'data' folder is a SIBLING of the 'cz-2025' folder (i.e., at the repo root)
+# DATA_FOLDER_PATH = os.path.abspath(os.path.join(SCRIPT_DIR_PATH, '../data'))
+# Option B: If 'data' folder is INSIDE the 'cz-2025' folder
+DATA_FOLDER_PATH = os.path.join(SCRIPT_DIR_PATH, 'data')
+
+print(f"Expecting auxiliary data files in: {DATA_FOLDER_PATH}")
+REGIONAL_RESULTS_CSV = os.path.join(DATA_FOLDER_PATH, "psp2021_regional_results.csv")
+REGIONS_SEATS_CSV = os.path.join(DATA_FOLDER_PATH, "psp2021_seats.csv")
 CHOICES_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRhp47e91OazMSiu56gOTsUtnFEIaJiIhJbsgNTylwt89XIEnbiVyObJ8xHEoZPObo6ntOmQ9Tg-sf9/pub?gid=302501468&single=true&output=csv" # For choices metadata
 
 # Simulation Parameters
