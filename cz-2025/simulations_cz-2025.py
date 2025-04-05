@@ -156,11 +156,9 @@ try:
 
   print("Auxiliary seat calculation data loaded.")
 except Exception as e:
-  print(f"\n>>> Error loading auxiliary seat calc data: {e}")
-  # Ensure variables are defined
-  last_regional_results = pd.DataFrame()
-  regions_seats = pd.DataFrame()
-  choices_data_aux = pd.DataFrame()
+  print(f"\n>>> FATAL ERROR loading auxiliary data: {e}")
+  print("Cannot proceed without auxiliary data.")
+  sys.exit(1)
 
 
 # %%
@@ -223,12 +221,9 @@ try:
   print("Manual data loaded and inputs prepared.")
 
 except Exception as e:
-  print(f"\n>>> Error preparing manual inputs: {e}")
-  # Ensure variables are defined
-  preference_df = pd.DataFrame()
-  mu_latest_aligned = pd.Series(dtype=float)
-  sigman_latest_aligned = pd.Series(dtype=float)
-  corr_matrix_aligned = pd.DataFrame()
+  print(f"\n>>> FATAL ERROR preparing manual inputs: {e}")
+  print("Cannot proceed without simulation inputs.")
+  sys.exit(1) # <-- FAIL script
 
 
 # %%
@@ -250,7 +245,8 @@ if not mu_latest_aligned.empty:
     print(f"\n>>> Error generating MVN simulations: {e}")
     simulated_polls_mvn = pd.DataFrame()
 else:
-  print("Skipping MVN simulation: Input preparation failed.")
+  print("ERROR: Skipping MVN simulation - Input preparation failed. Exiting.")
+  sys.exit(1) # <-- FAIL script
 
 
 # %%
@@ -268,13 +264,17 @@ if not simulated_polls_mvn.empty and ADD_UNIFORM_NOISE:
     )
     print(f"Added uniform noise. Final simulations shape: {simulated_polls_final.shape}")
   except Exception as e:
-    print(f"\n>>> Error adding uniform noise: {e}")
-    simulated_polls_final = simulated_polls_mvn # Fallback to MVN results if noise fails? Or empty?
+    print(f"\n>>> ERROR adding uniform noise: {e}")
+    # Decide: Fail here? Or use MVN results? Let's fail if noise step fails.
+    print("Exiting due to error in noise addition.")
+    sys.exit(1) # <-- FAIL script
 elif not ADD_UNIFORM_NOISE:
   simulated_polls_final = simulated_polls_mvn # Use MVN results if noise is skipped
   print("Skipping uniform noise as per configuration.")
 else:
-  print("Skipping uniform noise: Base MVN simulation failed.")
+# This case means MVN simulation failed, already exited above.
+  print("ERROR: Cannot add noise - Base MVN simulation failed previously. Exiting.")
+  sys.exit(1) # <-- FAIL script
 
 
 # %%
@@ -311,12 +311,16 @@ if not mu_latest_aligned.empty and not last_regional_results.empty and not regio
         poll_sample_series=mu_for_best_aligned, **seat_calc_args_best
       )
       print("Calculated best estimate seats.")
-    else: print("Skipping: No common parties between mu and regional data.")
+    else:
+      print("ERROR: No common parties between mu and regional data for best estimate. Exiting.")
+      sys.exit(1) # <-- FAIL script
 
   except Exception as e:
-    print(f"\n>>> Error calculating best estimate seats: {e}")
-    best_estimate_seats = pd.Series(dtype=int)
-else: print("Skipping: Previous steps failed or auxiliary data missing.")
+    print(f"\n>>> FATAL ERROR calculating best estimate seats: {e}")
+    sys.exit(1) # <-- FAIL script
+else: 
+  print("ERROR: Skipping best estimate seats calculation due to missing inputs. Exiting.")
+  sys.exit(1) # <-- FAIL script
 
 
 # %%
@@ -345,9 +349,11 @@ if not simulated_polls_final.empty and not last_regional_results.empty and not r
     )
     print(f"Generated simulated seats. Shape: {simulated_seats.shape}")
   except Exception as e:
-    print(f"\n>>> Error running seat simulations: {e}")
-    simulated_seats = pd.DataFrame()
-else: print("Skipping: Previous steps failed or required data missing.")
+    print(f"\n>>> FATAL ERROR running seat simulations: {e}")
+    sys.exit(1) # <-- FAIL script
+else:
+  print("ERROR: Skipping seat simulations due to missing inputs. Exiting.")
+  sys.exit(1) # <-- FAIL script
 
 
 # %%
@@ -365,9 +371,11 @@ if not simulated_seats.empty and not best_estimate_seats.empty and not choices_d
     print(f"Calculated core statistics. Shape: {stats_df.shape}")
     # print(stats_df.head())
   except Exception as e:
-    print(f"\n>>> Error calculating core simulation statistics: {e}")
-    stats_df = pd.DataFrame()
-else: print("Skipping: Previous steps failed or required data missing.")
+    print(f"\n>>> FATAL ERROR calculating core simulation statistics: {e}")
+    sys.exit(1) # <-- FAIL script
+else:
+  print("ERROR: Skipping core statistics due to missing inputs. Exiting.")
+  sys.exit(1) # <-- FAIL script
 
 
 # %%
@@ -390,9 +398,11 @@ if not simulated_seats.empty and not stats_df.empty:
     # print("\nInclusive (Top 5):\n", coalitions_inclusive.head())
   except Exception as e:
     print(f"\n>>> Error calculating coalition probabilities: {e}")
+    print("Continuing despite coalition probability error.")
     coalitions_exclusive = pd.DataFrame()
     coalitions_inclusive = pd.DataFrame()
-else: print("Skipping: Previous steps failed or required data missing.")
+else: 
+  print("WARNING: Skipping coalition probabilities due to missing inputs.")
 
 
 # %%
@@ -480,14 +490,10 @@ if not simulated_polls_final.empty and not preference_df.empty:
     print("Manual statistics calculation complete.")
 
   except Exception as e:
-    print(f"\n>>> Error calculating manual statistics: {e}")
-    # Reset outputs
-    ranks_stats_final = pd.DataFrame()
-    probs_stats_final = pd.DataFrame()
-    probs_interval_final = pd.DataFrame()
-    duels_stats_final = pd.DataFrame()
-    top2_stats_final = pd.DataFrame()
-    num_in_stats_final = pd.DataFrame()
+    print(f"\n>>> ERROR calculating manual statistics: {e}")
+    # Decide if this is fatal - it prevents writing results. Let's make it fatal.
+    print("Exiting due to error in manual statistics calculation.")
+    sys.exit(1) # <-- FAIL script
 else:
   print("Skipping manual statistics: Final simulated polls not available.")
 
