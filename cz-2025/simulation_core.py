@@ -476,3 +476,104 @@ def calculate_coalition_probabilities(
   print("Coalition probability calculation finished.")
   # Return Prob_All_Members_In DF first, Prob_Any_Run DF second
   return df_prob_all_members_in, df_prob_any_run
+
+
+def calculate_partner_coalition_probabilities(
+  simulated_seats_df: pd.DataFrame,
+  partner_definitions: Dict[str, List[str]],
+  majority_threshold: int
+) -> pd.DataFrame:
+  """
+  Calculates the probability that a main party plus exactly k partners
+  (from a defined list) achieves a majority.
+
+  Args:
+    simulated_seats_df: DataFrame of simulated seat outcomes (rows=simulations,
+                        columns=parties).
+    partner_definitions: Dictionary where keys are main party names and values
+                         are lists of their potential partner names.
+    majority_threshold: The number of seats required for a majority.
+
+  Returns:
+    results_df: DataFrame where index is the main party and columns are
+                'partners_0', 'partners_1', ..., 'partners_k' containing the
+                probabilities P(Main + exactly k partners >= Majority).
+  Raises:
+      ValueError: If inputs are invalid or parties are not found.
+  """
+  if simulated_seats_df.empty:
+    print("Warning: simulated_seats_df is empty. Cannot calculate partner probabilities.")
+    return pd.DataFrame()
+  if not partner_definitions:
+    print("Warning: partner_definitions dict is empty. Cannot calculate.")
+    return pd.DataFrame()
+
+  print(f"Calculating partner coalition probabilities (Majority threshold: {majority_threshold})...")
+  num_runs = len(simulated_seats_df)
+  all_parties_in_sim = simulated_seats_df.columns.tolist()
+  results_list = []
+
+  for main_party, partners_list in partner_definitions.items():
+    print(f"  Processing main party: {main_party} with partners: {partners_list}")
+
+    # Validate main party exists in simulation results
+    if main_party not in all_parties_in_sim:
+      print(f"    Warning: Main party '{main_party}' not found in simulation results. Skipping.")
+      continue
+
+    # Validate and filter partners to those existing in simulation results
+    valid_partners = [p for p in partners_list if p in all_parties_in_sim]
+    if len(valid_partners) < len(partners_list):
+      missing = set(partners_list) - set(valid_partners)
+      print(f"    Warning: Partners not found in simulation results: {missing}. Proceeding with valid partners: {valid_partners}")
+    if not valid_partners:
+        print(f"    Info: No valid partners found for '{main_party}' in simulation results.")
+        # Proceed to calculate for k=0 (main party alone)
+
+    probs_for_main_party = {'main_party': main_party}
+    main_party_seats = simulated_seats_df[main_party]
+
+    # Iterate through the number of partners (k)
+    max_k = len(valid_partners)
+    for k in range(max_k + 1): # From k=0 (main party alone) to k=max_k
+      col_name = f'partners_{k}'
+      # Find runs where *any* combination of size k meets the threshold
+
+      # Optimization: Calculate sums for all combos first?
+      # Or iterate runs? Let's stick to iterating combos for clarity first.
+
+      # Series to track if *any* combo of size k worked in a given run
+      any_combo_met_threshold_k = pd.Series(False, index=simulated_seats_df.index)
+
+      # Generate combinations of k partners from the valid list
+      for partner_combo in combinations(valid_partners, k):
+        # Combine main party with the current partner combination
+        full_coalition = [main_party] + list(partner_combo)
+
+        # Calculate sum of seats for this specific coalition across all runs
+        coalition_sum_seats = simulated_seats_df[full_coalition].sum(axis=1)
+
+        # Identify runs where this specific combo met the threshold
+        met_threshold_this_combo = (coalition_sum_seats >= majority_threshold)
+
+        # Update the tracker using logical OR: if *any* combo works for this k, mark the run as True
+        any_combo_met_threshold_k = any_combo_met_threshold_k | met_threshold_this_combo
+
+      # Calculate the final probability for having exactly k partners
+      prob_k = any_combo_met_threshold_k.mean()
+      probs_for_main_party[col_name] = prob_k
+      print(f"    P({main_party} + exactly {k} partners >= {majority_threshold}) = {prob_k:.4f}")
+
+    results_list.append(probs_for_main_party)
+
+  if not results_list:
+    print("No partner probabilities were calculated.")
+    return pd.DataFrame()
+
+  # Convert results to DataFrame
+  results_df = pd.DataFrame(results_list)
+  # Set main_party as index if desired, or keep as column
+  results_df = results_df.set_index('main_party')
+
+  print("Partner coalition probability calculation finished.")
+  return results_df

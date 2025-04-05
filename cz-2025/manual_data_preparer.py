@@ -6,7 +6,7 @@ import numpy as np
 import gspread
 import math
 import datetime
-from typing import Tuple, List, Optional, Callable
+from typing import Tuple, List, Optional, Dict, Callable
 
 def load_manual_poll_data(
   sheetkey: str,
@@ -327,3 +327,60 @@ def load_custom_coalitions_from_sheet(
   print(f"Loaded {len(custom_coalitions_list)} custom coalitions.")
   print(f"  Examples: {custom_coalitions_list[:5]}")
   return custom_coalitions_list
+
+
+def load_partner_definitions(
+  sheetkey: str,
+  worksheet_name: str = 'partners'
+) -> Optional[Dict[str, List[str]]]:
+  """
+  Loads main party and potential partner definitions from a Google Sheet.
+  Assumes the first column is the main party and subsequent columns on the same row
+  are its potential partners.
+
+  Args:
+    sheetkey: The key of the Google Spreadsheet.
+    worksheet_name: The name of the worksheet containing the partner definitions.
+
+  Returns:
+    A dictionary where keys are main party names and values are lists of
+    their potential partner names, or None if loading fails or sheet is empty.
+  """
+  print(f"Loading partner definitions from GSheet key: {sheetkey}, worksheet: {worksheet_name}")
+  try:
+    gc = gspread.service_account()
+    sh = gc.open_by_key(sheetkey)
+    ws = sh.worksheet(worksheet_name)
+    # Get all values, including empty strings
+    all_values = ws.get_all_values()
+  except gspread.exceptions.APIError as e:
+      print(f"GSpread API Error: {e}")
+      return None
+  except gspread.exceptions.WorksheetNotFound:
+      print(f"Warning: Partner definitions worksheet '{worksheet_name}' not found. Skipping.")
+      return None
+  except Exception as e:
+      print(f"Error loading partner definitions GSheet: {e}")
+      return None
+
+  if not all_values or len(all_values) <= 1: # Check for header + data
+    print(f"Warning: Partner definitions sheet '{worksheet_name}' appears empty or has only headers. Skipping.")
+    return None
+
+  partner_definitions = {}
+  # Start from second row (index 1) assuming first row is header
+  for row in all_values[1:]:
+    if not row or not row[0].strip(): # Skip empty rows or rows without a main party
+        continue
+    main_party = row[0].strip()
+    # Get partners from subsequent columns, filtering empty strings
+    partners = [cell.strip() for cell in row[1:] if cell.strip()]
+    partner_definitions[main_party] = partners
+
+  if not partner_definitions:
+      print(f"Warning: No valid partner definitions found in '{worksheet_name}'.")
+      return None
+
+  print(f"Loaded partner definitions for {len(partner_definitions)} main parties.")
+  # print(f"  Definitions: {partner_definitions}") # Optional: print dictionary
+  return partner_definitions

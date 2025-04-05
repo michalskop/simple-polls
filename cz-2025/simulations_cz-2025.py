@@ -58,6 +58,7 @@ SHEET_KEY = "1es2J0O_Ig7RfnVHG3bHmX8SBjlMvrPwn4s1imYkxbwg"
 PREF_WORKSHEET = 'preference'
 CORR_WORKSHEET = 'median correlations'
 CUSTOM_COALITIONS_WS = 'vlastní_koalice'
+PARTNERS_WS = 'partneři' # Worksheet for partner definitions/results
 
 # Output Worksheets (matching original script)
 RANKS_AGING_COV_WS = 'pořadí_aktuální_aging_cov'
@@ -120,6 +121,7 @@ ADDITIONAL_POINTS = [] # Add specific points if needed, e.g., [5.0]
 USE_AGING = True # Use the aged sigman for simulation
 ADD_UNIFORM_NOISE = True # Add the extra uniform noise step
 LOAD_CUSTOM_COALITIONS = True # Load custom coalitions from sheet
+LOAD_PARTNERS = True # 
 
 print("Configuration set.")
 
@@ -130,6 +132,8 @@ print("\n--- Loading Auxiliary Seat Calculation Data ---")
 last_regional_results = pd.DataFrame()
 regions_seats = pd.DataFrame()
 choices_data_aux = pd.DataFrame() # For metadata (mps, abbreviation)
+custom_coalitions_list = None
+partner_definitions = None
 try:
   last_regional_results_raw = pd.read_csv(REGIONAL_RESULTS_CSV)
   regions_seats = pd.read_csv(REGIONS_SEATS_CSV)
@@ -153,6 +157,15 @@ try:
     )
   else:
     print("Skipping custom coalitions loading.")
+  
+   # --- Load partner definitions (optional) --- # <-- NEW Section
+  if LOAD_PARTNERS:
+    partner_definitions = manual_data_preparer.load_partner_definitions(
+      sheetkey=SHEET_KEY, worksheet_name=PARTNERS_WS
+    )
+    print(f"Loaded partner definitions: {partner_definitions}")
+  else: print("Skipping partner definitions loading.")
+
 
   print("Auxiliary seat calculation data loaded.")
 except Exception as e:
@@ -495,10 +508,30 @@ if not simulated_polls_final.empty and not preference_df.empty:
 else:
   print("Skipping manual statistics: Final simulated polls not available.")
 
+# %%
+# --- Step 9: Calculate Partner Coalition Probabilities --- # <-- NEW STEP
+print("\n--- 9. Calculating Partner Coalition Probabilities ---")
+partner_probs_df = pd.DataFrame()
+# Need simulated seats and partner definitions
+if not simulated_seats.empty and partner_definitions is not None:
+  try:
+    partner_probs_df = simulation_core.calculate_partner_coalition_probabilities(
+      simulated_seats_df=simulated_seats,
+      partner_definitions=partner_definitions,
+      majority_threshold=MAJORITY_THRESHOLD
+    )
+    print(f"Calculated partner probabilities. Shape: {partner_probs_df.shape}")
+    print(partner_probs_df.head())
+  except Exception as e:
+    print(f"\n>>> Error calculating partner probabilities: {e}")
+    partner_probs_df = pd.DataFrame() # Ensure it's defined even on error
+else:
+    print("Skipping partner probabilities: Missing simulation results or partner definitions.")
+
 
 # %%
-# --- Step 9: Write Results to Google Sheet ---
-print("\n--- 9. Writing Results to Google Sheet ---")
+# --- Step 10: Write Results to Google Sheet ---
+print("\n--- 10. Writing Results to Google Sheet ---")
 try:
   gc = gspread.service_account()
   sh = gc.open_by_key(SHEET_KEY)
@@ -631,6 +664,62 @@ try:
       a1_header_text="Pr [Sum>=101]",  # More descriptive header
       data_start_cell='A2'
     )
+    
+  # --- Write Partner Probabilities ---
+  if not partner_probs_df.empty:
+    try:
+      print(f"  Writing partner probabilities to '{PARTNERS_WS}' sheet...")
+      wsw_partners = sh.worksheet(PARTNERS_WS)
+      # Assuming the sheet already has main_party in col A and partners in B, C...
+      # We need to write the results (partner_0, partner_1, ...) starting from a specific column
+      # Let's find the first empty column header in row 1 or start at a fixed column (e.g., 'D')
+      header_row = wsw_partners.row_values(1)
+      start_col_index = -1
+      # Find 2 columns after "Pr[stačí X]"
+      start_col_index = header_row.index("Pr[stačí X]") + 2
+
+      if start_col_index == -1: # If no empty header found, append after last column
+        start_col_index = len(header_row)
+
+      start_col_letter = gspread.utils.rowcol_to_a1(1, start_col_index + 1)[0] # Get column letter (e.g., 'D')
+      print(f"    Writing partner results starting in column {start_col_letter}")
+
+      # Prepare data for writing (index + columns)
+      partner_probs_to_write = partner_probs_df.reset_index()
+
+      # Get main parties already listed in the sheet (Column A, starting row 2)
+      existing_main_parties = wsw_partners.col_values(1)[1:] # Skip header
+
+      # Create list of lists for update, aligning with existing parties
+      update_values = []
+      # Header first
+      update_values.append(partner_probs_to_write.columns[1:].tolist()) # Header excluding 'main_party' index
+
+      # Data rows
+      for main_party_in_sheet in existing_main_parties:
+        if main_party_in_sheet in partner_probs_to_write['main_party'].values:
+          # Get the corresponding row from calculated results
+          data_row = partner_probs_to_write[partner_probs_to_write['main_party'] == main_party_in_sheet].iloc[0, 1:].tolist()
+          # Convert any remaining floats to rounded strings
+          data_row = ['' if pd.isna(x) else f"{float(x):.4f}" if isinstance(x, (float, np.floating)) else x for x in data_row]
+          update_values.append(data_row)
+        else:
+          # Add empty row if main party exists in sheet but wasn't calculated
+          num_result_cols = len(partner_probs_to_write.columns) - 1
+          update_values.append([''] * num_result_cols) # Placeholder  
+
+      # Write the data block
+      # Start writing from row 2 of the target column
+      update_range = f"{start_col_letter}1"
+      wsw_partners.update(range_name=update_range, values=update_values)
+      print(f"    Successfully wrote partner probabilities.")
+
+    except gspread.exceptions.WorksheetNotFound:
+      print(f"  Error: Worksheet '{PARTNERS_WS}' not found.")
+    except Exception as e_partner:
+      print(f"  Error writing partner probabilities to '{PARTNERS_WS}': {e_partner}")
+  else:
+    print(f"  Skipping write to '{PARTNERS_WS}': No partner probabilities calculated.")
 
   # --- Update Timestamp ---
   try:
