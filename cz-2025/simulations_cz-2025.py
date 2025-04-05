@@ -67,8 +67,8 @@ TOP2_COV_WS = 'top_2_cov'
 NUM_IN_AGING_COV_WS = 'number_in_aging_cov'
 PREF_WRITEBACK_WS = 'preference' # For timestamp
 HISTORY_WRITEBACK_WS = 'history' # For archiving preferences
-COALITIONS_EXCL_WS = 'koalice_excl' # 
-COALITIONS_INCL_WS = 'koalice_inc' # 
+COALITIONS_ALL_WS = 'koalice_all' # Sheet for P(Sum>=Maj AND All>0)
+COALITIONS_ANY_WS = 'koalice_any' # Sheet for P(Sum>=Maj) over all runs
 PROB_IN_WS = 'in' #
 
 # --- PATH CONSTRUCTION ---
@@ -380,29 +380,27 @@ else:
 
 # %%
 # --- Step 7: Calculate Coalition Probabilities (CORE) ---
-# Note: Predefined coalitions are not typically used in this manual analysis, but the function handles it
 print("\n--- 7. Calculating Coalition Probabilities ---")
-coalitions_exclusive = pd.DataFrame()
-coalitions_inclusive = pd.DataFrame()
+# Assign to new variable names
+df_prob_all_members_in = pd.DataFrame() # Holds P(Sum>=Maj | All>0)
+df_prob_any_run = pd.DataFrame()        # Holds P(Sum>=Maj) over all runs
 if not simulated_seats.empty and not stats_df.empty:
-  try:
-    coalitions_exclusive, coalitions_inclusive = simulation_core.calculate_coalition_probabilities(
-      simulated_seats_df=simulated_seats,
-      stats_df=stats_df,
-      majority_threshold=MAJORITY_THRESHOLD,
-      # Use the list loaded from the custom sheet
-      predefined_coalitions_list=custom_coalitions_list # Pass None if not loading predefined
-    )
-    print("Calculated coalition probabilities.")
-    # print("\nExclusive (Top 5):\n", coalitions_exclusive.head())
-    # print("\nInclusive (Top 5):\n", coalitions_inclusive.head())
-  except Exception as e:
-    print(f"\n>>> Error calculating coalition probabilities: {e}")
-    print("Continuing despite coalition probability error.")
-    coalitions_exclusive = pd.DataFrame()
-    coalitions_inclusive = pd.DataFrame()
-else: 
-  print("WARNING: Skipping coalition probabilities due to missing inputs.")
+    try:
+        # Assign results according to the function's return order
+        df_prob_all_members_in, df_prob_any_run = simulation_core.calculate_coalition_probabilities(
+            simulated_seats_df=simulated_seats,
+            stats_df=stats_df,
+            majority_threshold=MAJORITY_THRESHOLD,
+            predefined_coalitions_list=custom_coalitions_list
+        )
+        print("Calculated coalition probabilities.")
+        # print("\nProb All Members In Results:\n", df_prob_all_members_in.head())
+        # print("\nProb Any Run Results:\n", df_prob_any_run.head())
+    except Exception as e:
+        print(f"\n>>> Error calculating coalition probabilities: {e}")
+        df_prob_all_members_in = pd.DataFrame()
+        df_prob_any_run = pd.DataFrame()
+else: print("Skipping: Previous steps failed or required data missing.")
 
 
 # %%
@@ -616,20 +614,23 @@ try:
     # Write header + data starting A1 (assuming sheet clear)
     write_gsheet(NUM_IN_AGING_COV_WS, num_in_stats_final, start_cell='A1', include_header=True, include_index=False)
     
-  # --- Write NEW Coalition Probabilities ---
-    if not coalitions_exclusive.empty:
-      write_gsheet_with_a1(COALITIONS_EXCL_WS, coalitions_exclusive,
-                            "Pr [tato koalice nebo libovolná podmnožina]", data_start_cell='A2')
-    if not coalitions_inclusive.empty:
-      write_gsheet_with_a1(COALITIONS_INCL_WS, coalitions_inclusive,
-                            "Pr [přesně tato koalice]", data_start_cell='A2')
+  # Write "Prob All Members In" (P(Sum>=Maj AND All>0)) results to 'koalice_all' sheet
+  if not df_prob_all_members_in.empty:
+    write_gsheet_with_a1(
+      worksheet_name=COALITIONS_ALL_WS, # Use new constant
+      df=df_prob_all_members_in,        # Use correct DataFrame
+      a1_header_text="Pr [Sum>=101 AND All Members > 0 Seats]", # More descriptive header
+      data_start_cell='A2'
+    )
 
-    # --- Write NEW Probability In ---
-    if not stats_df.empty and 'party' in stats_df.columns and 'in' in stats_df.columns:
-      prob_in_df = stats_df[['party', 'in']].sort_values('in', ascending=False).reset_index(drop=True)
-      write_gsheet_with_a1(PROB_IN_WS, prob_in_df, "Pr[in]", data_start_cell='A2')
-    elif stats_df.empty: print(f"  Skipping write to '{PROB_IN_WS}': stats_df is empty.")
-    else: print(f"  Skipping write to '{PROB_IN_WS}': 'party' or 'in' column missing in stats_df.")
+  # Write "Prob Any Run" (P(Sum>=Maj)) results to 'koalice_any' sheet
+  if not df_prob_any_run.empty:
+    write_gsheet_with_a1(
+      worksheet_name=COALITIONS_ANY_WS,  # Use new constant
+      df=df_prob_any_run,             # Use correct DataFrame
+      a1_header_text="Pr [Sum>=101]",  # More descriptive header
+      data_start_cell='A2'
+    )
 
   # --- Update Timestamp ---
   try:

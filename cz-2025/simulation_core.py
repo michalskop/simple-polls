@@ -317,6 +317,76 @@ def calculate_simulation_stats(
   return stats_final
 
 
+# Helper function defined within or before calculate_coalition_probabilities
+# If defined outside, it doesn't need to be indented further.
+def _get_probabilities(
+  simulated_seats_df: pd.DataFrame,
+  coalition_parties: List[str],
+  majority_threshold: int,
+  num_runs: int,
+  debug_coalition_A: List[str], # Pass debug lists for comparison
+  debug_coalition_B: List[str]
+) -> Tuple[float, float]:
+  """
+  Helper function to calculate the two types of majority probabilities.
+
+  Args:
+    simulated_seats_df: Full DataFrame of simulated seats.
+    coalition_parties: List of party names in the current coalition.
+    majority_threshold: Seat threshold for majority.
+    num_runs: Total number of simulation runs.
+    debug_coalition_A: List of parties for debug coalition A.
+    debug_coalition_B: List of parties for debug coalition B.
+
+
+  Returns:
+    Tuple[float, float]: (prob_all_members_in, prob_any_run)
+      - prob_all_members_in: P(Sum >= Maj AND All Members > 0 Seats) over all runs.
+      - prob_any_run: P(Sum >= Maj) over all runs.
+  """
+  valid_parties = [p for p in coalition_parties if p in simulated_seats_df.columns]
+  if not valid_parties: return 0.0, 0.0
+
+  # --- Prob Any Run (Overall) ---
+  coalition_total_seats_all_runs = simulated_seats_df[valid_parties].sum(axis=1)
+  majority_achieved_any_run = (coalition_total_seats_all_runs >= majority_threshold)
+  prob_any_run = majority_achieved_any_run.mean()
+
+  # --- Prob All Members In (JOINT Probability) ---
+  condition_all_members_in = (simulated_seats_df[valid_parties] > 0).all(axis=1)
+  event_majority_achieved = majority_achieved_any_run
+  joint_event_true = (condition_all_members_in & event_majority_achieved)
+  prob_all_members_in = joint_event_true.mean()
+
+  # --- Debug Prints ---
+  is_debug_A = set(valid_parties) == set(debug_coalition_A)
+  is_debug_B = set(valid_parties) == set(debug_coalition_B)
+  num_runs_condition_met = condition_all_members_in.sum() # For debug comparison
+  num_runs_joint_event_true = joint_event_true.sum() # For debug comparison
+
+  if is_debug_A:
+    print(f"\nDEBUG (Helper): Calculating Probs for Coalition A: {valid_parties}")
+    print(f"  Condition (All Members > 0) met in {num_runs_condition_met} runs")
+    print(f"  Joint Event (All > 0 AND Sum >= Maj) met in {num_runs_joint_event_true} runs")
+    print(f"  P(Sum>=Maj AND All>0) [prob_all_members_in]: {prob_all_members_in:.6f} ({num_runs_joint_event_true}/{num_runs})")
+    print(f"  P(Sum>=Maj) [prob_any_run]:              {prob_any_run:.6f} ({majority_achieved_any_run.sum()}/{num_runs})")
+    # Store boolean series for overlap check - Use global or pass back if needed
+    global majority_A_runs_any
+    majority_A_runs_any = majority_achieved_any_run
+  if is_debug_B:
+    print(f"\nDEBUG (Helper): Calculating Probs for Coalition B: {valid_parties}")
+    print(f"  Condition (All Members > 0) met in {num_runs_condition_met} runs")
+    print(f"  Joint Event (All > 0 AND Sum >= Maj) met in {num_runs_joint_event_true} runs")
+    print(f"  P(Sum>=Maj AND All>0) [prob_all_members_in]: {prob_all_members_in:.6f} ({num_runs_joint_event_true}/{num_runs})")
+    print(f"  P(Sum>=Maj) [prob_any_run]:              {prob_any_run:.6f} ({majority_achieved_any_run.sum()}/{num_runs})")
+    global majority_B_runs_any
+    majority_B_runs_any = majority_achieved_any_run
+  # --- End Debug ---
+
+  # Return Prob_All_Members_In first, then Prob_Any_Run
+  return prob_all_members_in, prob_any_run
+
+
 def calculate_coalition_probabilities(
   simulated_seats_df: pd.DataFrame,
   stats_df: pd.DataFrame,
@@ -325,7 +395,33 @@ def calculate_coalition_probabilities(
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
   """
   Calculates majority probabilities for single parties, pairs, and predefined coalitions.
-  (Same implementation as before)
+
+  Produces two DataFrames:
+  1. Prob All Members In ('df_prob_all_members_in'): Probability that *both*
+     all members of the coalition received > 0 seats AND the sum of their
+     seats meets the majority threshold, calculated over ALL runs.
+     P(Sum(Coalition Seats) >= Majority AND All Coalition Members > 0 Seats)
+  2. Prob Any Run ('df_prob_any_run'): Probability calculated across *all* simulations
+     that the sum of seats for the specified coalition members meets the threshold.
+     P(Sum(Coalition Seats) >= Majority)
+
+  Args:
+    simulated_seats_df: DataFrame of simulated seat outcomes (rows=simulations,
+                        columns=parties).
+    stats_df: DataFrame summarizing simulation statistics. Must contain columns
+              'party' and 'seats' (best estimate seats).
+    majority_threshold: The number of seats required for a majority (e.g., 101).
+    predefined_coalitions_list (optional): A list of strings defining multi-party
+                                           coalitions using '*' as separator
+                                           (e.g., ['SPOLU*Pirati', 'ANO*SPD']).
+                                           Defaults to None.
+
+  Returns:
+    A tuple: (df_prob_all_members_in, df_prob_any_run)
+    - df_prob_all_members_in: DataFrame containing P(Sum>=Maj AND All>0).
+    - df_prob_any_run: DataFrame containing P(Sum>=Maj).
+  Raises:
+      ValueError: If required columns are missing from inputs.
   """
   if simulated_seats_df.empty:
     print("Warning: simulated_seats_df is empty. Cannot calculate coalition probabilities.")
@@ -333,73 +429,117 @@ def calculate_coalition_probabilities(
   if 'party' not in stats_df.columns or 'seats' not in stats_df.columns:
     raise ValueError("stats_df must contain 'party' and 'seats' columns.")
 
+  # --- DEBUG: Check total seats per simulation run ---
+  print("\n--- Debugging Total Seats ---")
+  total_seats_per_run = simulated_seats_df.sum(axis=1)
+  deviating_runs = total_seats_per_run[total_seats_per_run != 200]
+  if not deviating_runs.empty:
+      print(f"WARNING: {len(deviating_runs)} out of {len(simulated_seats_df)} simulation runs do NOT sum to exactly 200 seats!")
+      print("Distribution of total seats:")
+      print(total_seats_per_run.value_counts())
+      # Consider making this fatal if probability integrity is paramount
+      # raise ValueError("Total seats per simulation run inconsistent.")
+  else:
+      print("Verified: All simulation runs sum to exactly 200 seats.")
+  print("--- End Debug ---")
+
   print(f"Calculating coalition probabilities (Majority threshold: {majority_threshold})...")
   num_runs = len(simulated_seats_df)
-  parties = simulated_seats_df.columns.tolist()
-  # Use stats_df directly for lookup, assuming 'party' is unique
-  stats_map = stats_df.set_index('party')['seats']
+  parties = simulated_seats_df.columns.tolist(); stats_map = stats_df.set_index('party')['seats']
+  results_prob_all_members_in = []
+  results_prob_any_run = []
 
-  results_exclusive = []
-  results_inclusive = []
+  # --- Define debug coalitions ---
+  # Ensure these names exactly match columns in simulated_seats_df
+  debug_coalition_A = ['ANO', 'SPD', 'Motoristé', 'Stačilo!']
+  debug_coalition_B = ['SPOLU', 'STAN', 'Piráti']
 
-  # --- Helper ---
-  def _get_probabilities(coalition_parties: List[str]) -> Tuple[float, float]:
-    valid_parties = [p for p in coalition_parties if p in simulated_seats_df.columns]
-    if not valid_parties: return 0.0, 0.0
-
-    coalition_total_seats_all_runs = simulated_seats_df[valid_parties].sum(axis=1)
-    prob_inclusive = (coalition_total_seats_all_runs >= majority_threshold).mean()
-
-    condition = (simulated_seats_df[valid_parties] > 0).all(axis=1)
-    simulated_seats_filtered = simulated_seats_df.loc[condition]
-    if simulated_seats_filtered.empty:
-      prob_exclusive = 0.0
-    else:
-      coalition_total_seats_filtered = simulated_seats_filtered[valid_parties].sum(axis=1)
-      prob_exclusive = (coalition_total_seats_filtered >= majority_threshold).mean()
-    return prob_exclusive, prob_inclusive
-
-  # --- Singles ---
-  print("  Processing single parties...")
-  for party in parties:
-    prob_ex, prob_in = _get_probabilities([party])
-    best_seats = stats_map.get(party, 0)
-    results_exclusive.append({'id': party, 'majority_probability': prob_ex, 'seats': best_seats})
-    results_inclusive.append({'id': party, 'majority_probability': prob_in, 'seats': best_seats})
-
-  # --- Pairs ---
-  print("  Processing pairs of parties...")
-  for p1, p2 in combinations(parties, 2):
-    prob_ex, prob_in = _get_probabilities([p1, p2])
-    best_seats_p1 = stats_map.get(p1, 0); best_seats_p2 = stats_map.get(p2, 0)
-    total_best_seats = best_seats_p1 + best_seats_p2
-    coalition_id = f"{p2}*{p1}" if best_seats_p1 < best_seats_p2 else f"{p1}*{p2}"
-    results_exclusive.append({'id': coalition_id, 'majority_probability': prob_ex, 'seats': total_best_seats})
-    results_inclusive.append({'id': coalition_id, 'majority_probability': prob_in, 'seats': total_best_seats})
-
-  # --- Predefined ---
+  # --- Build list of entities to process ---
+  entities_to_process = []
+  print("  Queueing single parties...")
+  entities_to_process.extend([[p] for p in parties])
+  print("  Queueing pairs of parties...")
+  entities_to_process.extend(list(combinations(parties, 2))) # combinations yields tuples
+  debug_A_added = False; debug_B_added = False
   if predefined_coalitions_list:
-    print("  Processing predefined coalitions...")
+    print("  Queueing predefined coalitions...")
     for coalition_str in predefined_coalitions_list:
-      coalition_parties = coalition_str.split('*')
-      valid_parties_in_coalition = [p for p in coalition_parties if p in stats_map.index]
-      if len(valid_parties_in_coalition) != len(coalition_parties):
-        print(f"    Warning: Skipping predefined coalition '{coalition_str}' due to unknown member parties: {set(coalition_parties) - set(valid_parties_in_coalition)}")
-        continue
-      if not valid_parties_in_coalition: continue
+        coalition_parties = coalition_str.split('*')
+        if set(coalition_parties) == set(debug_coalition_A): debug_A_added = True
+        if set(coalition_parties) == set(debug_coalition_B): debug_B_added = True
+        valid_parties_in_coalition = [p for p in coalition_parties if p in parties]
+        if len(valid_parties_in_coalition) == len(coalition_parties):
+            entities_to_process.append(valid_parties_in_coalition)
+        else:
+            missing = set(coalition_parties) - set(valid_parties_in_coalition)
+            print(f"    Warning: Skipping predefined coalition '{coalition_str}' missing members: {missing}")
+  if not debug_A_added and all(p in parties for p in debug_coalition_A):
+      print("  Manually queueing debug coalition A")
+      entities_to_process.append(debug_coalition_A)
+  if not debug_B_added and all(p in parties for p in debug_coalition_B):
+      print("  Manually queueing debug coalition B")
+      entities_to_process.append(debug_coalition_B)
 
-      prob_ex, prob_in = _get_probabilities(valid_parties_in_coalition)
-      total_best_seats = sum(stats_map.get(p, 0) for p in valid_parties_in_coalition)
-      results_exclusive.append({'id': coalition_str, 'majority_probability': prob_ex, 'seats': total_best_seats})
-      results_inclusive.append({'id': coalition_str, 'majority_probability': prob_in, 'seats': total_best_seats})
+  # --- Calculate probabilities for all entities ---
+  print(f"  Processing {len(entities_to_process)} potential coalitions...")
+  processed_ids = set()
+  for entity_parties_tuple_or_list in entities_to_process:
+      # Ensure it's a list for helper consistency
+      entity_parties = list(entity_parties_tuple_or_list)
+
+      # Determine ID string
+      if len(entity_parties) == 1: coalition_id = entity_parties[0]
+      elif len(entity_parties) == 2:
+           p1, p2 = entity_parties; b1=stats_map.get(p1,0); b2=stats_map.get(p2,0)
+           coalition_id = f"{p2}*{p1}" if b1 < b2 else f"{p1}*{p2}"
+      else: coalition_id = '*'.join(sorted(entity_parties)) # Sort complex ones
+
+      if coalition_id in processed_ids: continue
+      processed_ids.add(coalition_id)
+
+      # --- Call helper ---
+      prob_all_in, prob_any = _get_probabilities(
+          simulated_seats_df=simulated_seats_df,
+          coalition_parties=entity_parties,
+          majority_threshold=majority_threshold,
+          num_runs=num_runs,
+          debug_coalition_A=debug_coalition_A, # Pass debug lists
+          debug_coalition_B=debug_coalition_B
+      )
+
+      # --- Append Debug ---
+      is_current_A = set(entity_parties) == set(debug_coalition_A)
+      is_current_B = set(entity_parties) == set(debug_coalition_B)
+      if is_current_A: print(f"DEBUG APPEND A (ID: {coalition_id}): Appending prob_all_in = {prob_all_in:.6f}, prob_any = {prob_any:.6f}")
+      if is_current_B: print(f"DEBUG APPEND B (ID: {coalition_id}): Appending prob_all_in = {prob_all_in:.6f}, prob_any = {prob_any:.6f}")
+      # --- End Append Debug ---
+
+      # --- Append results ---
+      total_best_seats = sum(stats_map.get(p, 0) for p in entity_parties)
+      results_prob_all_members_in.append({'id': coalition_id, 'majority_probability': prob_all_in, 'seats': total_best_seats})
+      results_prob_any_run.append({'id': coalition_id, 'majority_probability': prob_any, 'seats': total_best_seats})
+
+  # --- Overlap Check using 'any run' results ---
+  print("\n--- Debugging Overlap (Prob Any Run) ---")
+  if 'majority_A_runs_any' in globals() and 'majority_B_runs_any' in globals():
+      overlap_count = (majority_A_runs_any & majority_B_runs_any).sum()
+      if overlap_count > 0:
+          print(f"FATAL DEBUG ERROR: Found {overlap_count} runs where BOTH A and B achieved >= {majority_threshold} (Any Run check)!")
+          overlap_indices = simulated_seats_df.index[majority_A_runs_any & majority_B_runs_any]
+          print(f"Indices with overlap: {overlap_indices.tolist()[:10]}...")
+          raise ValueError("Inconsistent state: Disjoint coalitions achieved majority simultaneously.")
+      else:
+          print("Verified: No overlap found between 'any run' majority events for A and B.")
+  else:
+      print("Could not perform overlap check (debug series not generated). Check if debug coalitions were processed.")
+  print("--- End Debug ---")
 
   # --- Create and Sort DataFrames ---
-  coalitions_exclusive_df = pd.DataFrame(results_exclusive)
-  coalitions_inclusive_df = pd.DataFrame(results_inclusive)
-  if not coalitions_exclusive_df.empty:
-    coalitions_exclusive_df = coalitions_exclusive_df.sort_values(['majority_probability', 'seats'], ascending=[False, False]).reset_index(drop=True)
-  if not coalitions_inclusive_df.empty:
-    coalitions_inclusive_df = coalitions_inclusive_df.sort_values(['majority_probability', 'seats'], ascending=[False, False]).reset_index(drop=True)
+  df_prob_all_members_in = pd.DataFrame(results_prob_all_members_in).drop_duplicates(subset=['id'])
+  df_prob_any_run = pd.DataFrame(results_prob_any_run).drop_duplicates(subset=['id'])
+  if not df_prob_all_members_in.empty: df_prob_all_members_in = df_prob_all_members_in.sort_values(['majority_probability', 'seats'], ascending=[False, False]).reset_index(drop=True)
+  if not df_prob_any_run.empty: df_prob_any_run = df_prob_any_run.sort_values(['majority_probability', 'seats'], ascending=[False, False]).reset_index(drop=True)
 
   print("Coalition probability calculation finished.")
-  return coalitions_exclusive_df, coalitions_inclusive_df
+  # Return Prob_All_Members_In DF first, Prob_Any_Run DF second
+  return df_prob_all_members_in, df_prob_any_run
