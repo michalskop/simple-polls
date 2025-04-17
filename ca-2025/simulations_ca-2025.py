@@ -61,7 +61,7 @@ simulations_aging = pd.DataFrame(columns=dfpreference['party'].to_list())
 aging = aging_coeff(today, election_day)
 for i in range(0, sample):
   p = normal_error(dfpreference, sample_n, dfpreference['volatilita'], 0.9)
-  p = uniform_error(p, sample_n, dfpreference['volatilita'], 1.5 * 0.9 * 0.9)
+  p = uniform_error(p, sample_n, dfpreference['volatilita'], 1.5 * 0.9)
   p['estimate'] = p['normal_error'] + p['uniform_error'] + p['p']
   p['estimate_aging'] = aging * (p['normal_error'] + p['uniform_error']) + p['p']
   simx = dict(zip(dfpreference['party'].to_list(), p['estimate']))
@@ -84,7 +84,7 @@ for c in tt['Median']:
 del tt['Median']
 # simulations
 corr = tt.to_numpy()
-cov = p['sdx'].to_numpy() * corr * p['sdx'].to_numpy().T
+cov = p['sdx'].to_numpy() * corr * p['sdx'].to_numpy().T * 0.9 * 0.9
 try:
   simulations_cov = np.random.multivariate_normal(mean=p['p'], cov=cov, size=sample)
 except RuntimeWarning as warning:
@@ -96,15 +96,15 @@ except RuntimeWarning as warning:
   simulations_cov = np.random.multivariate_normal(mean=p['p'], cov=cov, size=sample)
 
 p['sdxage'] = p['sdx'] * aging
-covage = p['sdxage'].to_numpy() * corr * p['sdxage'].to_numpy().T
+covage = p['sdxage'].to_numpy() * corr * p['sdxage'].to_numpy().T * 0.9 * 0.9
 simulation_aging_cov = np.random.multivariate_normal(mean=p['p'], cov=covage, size=sample)
 simulations_cov = pd.DataFrame(simulations_cov, columns=dfpreference['party'].to_list())
 simulations_aging_cov = pd.DataFrame(simulation_aging_cov, columns=dfpreference['party'].to_list())
 # add uniform error
 for c in simulations_cov.columns:
   sx = p[p['party'] == c]['sdx'].values[0]
-  simulations_cov[c] = simulations_cov[c] + np.random.uniform(low=(-1 * sx * math.sqrt(3)), high=(sx * math.sqrt(3)), size=sample)
-  simulations_aging_cov[c] = simulations_aging_cov[c] + np.random.uniform(low=(-1 * sx * aging * math.sqrt(3)), high=(sx * aging * math.sqrt(3)), size=sample)
+  simulations_cov[c] = simulations_cov[c] + np.random.uniform(low=(-1 * sx * math.sqrt(3) * 0.9), high=(sx * math.sqrt(3) * 0.9 * 0.9), size=sample)
+  simulations_aging_cov[c] = simulations_aging_cov[c] + np.random.uniform(low=(-1 * sx * aging * math.sqrt(3) * 0.9 * 0.9), high=(sx * aging * math.sqrt(3) * 0.9 * 0.9), size=sample)
 
 # rank matrix (somehow did not work directly)
 ranks = simulations.loc[0:sample,:].rank(axis=1, ascending=False)
@@ -309,7 +309,6 @@ wsh.insert_row(historical_row, 2)
 #   t['gain'] = dfpreference[dfpreference['party'] == col]['gain'].values[0]
 #   t['name'] = col
 #   t['datetime'] = d
-#   t['date'] = today.isoformat()
 #   # newly = newly.append(t, ignore_index=True)
 #   newly = pd.concat([newly, pd.DataFrame(t, columns=history.columns)])
 
