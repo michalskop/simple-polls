@@ -225,6 +225,22 @@ nic_aging_cov = number_in_sim_aging_cov.value_counts(sort=False, ascending=True)
 number_in_aging_cov = pd.DataFrame(index=range(0, number_in_sim_aging_cov['number_in'].max() + 1), columns=['p'])
 for i in range(0, nic_aging_cov.index.max()[0] + 1):
   number_in_aging_cov['p'][i] = nic_aging_cov.loc[i:].sum() / sample
+  
+# differences between 2 main parties, probability of first party + x points > second party
+diffs_points = range(-20, 20, 1)
+top2_candidates = dfpreference.iloc[0:2, :]['party'].to_list()
+# prepare df
+diffs_df = pd.DataFrame(columns=['party wins by x or more', top2_candidates[0], top2_candidates[1]])
+diffs_df_cov = pd.DataFrame(columns=['party wins by x or more', top2_candidates[0], top2_candidates[1]])
+# probability of first party + x points > second party
+for diff in diffs_points:
+  p1 = (sum(simulations[top2_candidates[0]] >= simulations[top2_candidates[1]] + diff / 100)) / sample
+  p2 = (sum(simulations[top2_candidates[1]] >= simulations[top2_candidates[0]] + diff / 100)) / sample
+  p1_cov = (sum(simulations_cov[top2_candidates[0]] >= simulations_cov[top2_candidates[1]] + diff / 100)) / sample
+  p2_cov = (sum(simulations_cov[top2_candidates[1]] >= simulations_cov[top2_candidates[0]] + diff / 100)) / sample
+  diffs_df = pd.concat([diffs_df, pd.DataFrame({'party wins by x or more': diff, top2_candidates[0]: p1, top2_candidates[1]: p2}, index=[0])], ignore_index=True)
+  diffs_df_cov = pd.concat([diffs_df_cov, pd.DataFrame({'party wins by x or more': diff, top2_candidates[0]: p1_cov, top2_candidates[1]: p2_cov}, index=[0])], ignore_index=True)
+
 
 # WRITE TO SHEET
 # wsw = sh.worksheet('pořadí_aktuální')
@@ -289,6 +305,12 @@ wsw.update('B2', [top2_statistics_cov.columns.values.tolist()] + top2_statistics
 wsw = sh.worksheet('number_in_aging_cov')
 number_in_aging_cov = number_in_aging_cov.reset_index(drop=False)
 wsw.update(values=number_in_aging_cov.values.tolist(), range_name='A2')
+
+wsw = sh.worksheet('difference_aging')
+wsw.update('A1', [diffs_df.columns.values.tolist()] + diffs_df.values.tolist())
+
+wsw = sh.worksheet('difference_aging_cov')
+wsw.update('A1', [diffs_df_cov.columns.values.tolist()] + diffs_df_cov.values.tolist())
 
 wsw = sh.worksheet('preference')
 d = datetime.datetime.now().isoformat()
