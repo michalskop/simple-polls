@@ -227,17 +227,17 @@ for i in range(0, nic_aging_cov.index.max()[0] + 1):
   number_in_aging_cov['p'][i] = nic_aging_cov.loc[i:].sum() / sample
   
 # differences between 2 main parties, probability of first party + x points > second party
-diffs_points = range(-20, 20, 1)
+diffs_points = range(-20, 21, 1)
 top2_candidates = dfpreference.iloc[0:2, :]['party'].to_list()
 # prepare df
 diffs_df = pd.DataFrame(columns=['party wins by x or more', top2_candidates[0], top2_candidates[1]])
 diffs_df_cov = pd.DataFrame(columns=['party wins by x or more', top2_candidates[0], top2_candidates[1]])
 # probability of first party + x points > second party
 for diff in diffs_points:
-  p1 = (sum(simulations[top2_candidates[0]] >= simulations[top2_candidates[1]] + diff / 100)) / sample
-  p2 = (sum(simulations[top2_candidates[1]] >= simulations[top2_candidates[0]] + diff / 100)) / sample
-  p1_cov = (sum(simulations_cov[top2_candidates[0]] >= simulations_cov[top2_candidates[1]] + diff / 100)) / sample
-  p2_cov = (sum(simulations_cov[top2_candidates[1]] >= simulations_cov[top2_candidates[0]] + diff / 100)) / sample
+  p1 = (sum(simulations_aging[top2_candidates[0]] >= simulations_aging[top2_candidates[1]] + diff / 100)) / sample
+  p2 = (sum(simulations_aging[top2_candidates[1]] >= simulations_aging[top2_candidates[0]] + diff / 100)) / sample
+  p1_cov = (sum(simulations_aging_cov[top2_candidates[0]] >= simulations_aging_cov[top2_candidates[1]] + diff / 100)) / sample
+  p2_cov = (sum(simulations_aging_cov[top2_candidates[1]] >= simulations_aging_cov[top2_candidates[0]] + diff / 100)) / sample
   diffs_df = pd.concat([diffs_df, pd.DataFrame({'party wins by x or more': diff, top2_candidates[0]: p1, top2_candidates[1]: p2}, index=[0])], ignore_index=True)
   diffs_df_cov = pd.concat([diffs_df_cov, pd.DataFrame({'party wins by x or more': diff, top2_candidates[0]: p1_cov, top2_candidates[1]: p2_cov}, index=[0])], ignore_index=True)
 
