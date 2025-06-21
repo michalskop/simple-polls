@@ -70,7 +70,7 @@ PREF_WRITEBACK_WS = 'preference' # For timestamp
 HISTORY_WRITEBACK_WS = 'history' # For archiving preferences
 COALITIONS_ALL_WS = 'koalice_all' # Sheet for P(Sum>=Maj AND All>0)
 COALITIONS_ANY_WS = 'koalice_any' # Sheet for P(Sum>=Maj) over all runs
-PROB_IN_WS = 'in' #
+PROB_IN_WS = 'in' # Sheet for P(Sum>=needed)
 
 # --- PATH CONSTRUCTION ---
 # Get the directory containing this script file
@@ -720,6 +720,16 @@ try:
       print(f"  Error writing partner probabilities to '{PARTNERS_WS}': {e_partner}")
   else:
     print(f"  Skipping write to '{PARTNERS_WS}': No partner probabilities calculated.")
+    
+  # --- Write Prob In ---
+  df_prob_in = stats_df.loc[:, ['party', 'in']]
+  if not df_prob_in.empty:
+    write_gsheet_with_a1(
+      worksheet_name=PROB_IN_WS,
+      df=df_prob_in,
+      a1_header_text="Pr[in]",
+      data_start_cell='A2'
+    )
 
   # --- Update Timestamp ---
   try:

@@ -21,7 +21,7 @@ sheetkey = "1PZ2evJG4Kj_XF6jOayvLQokbArZkmSB4mQdzBhKH8ng"
 path = "ro-2025-2/"
 
 # parameters for the difference
-diffpoints = [-10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+diffpoints = [-20, -19, -18, -17, -16, -15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
 
 # load data from GSheet
 try:
@@ -56,6 +56,7 @@ def get_column_letter(n):
 # for each race:
 for nr in range(0, nraces): # last row returns an error
   print(nr)
+  # break
   # parameters
   election_day = datetime.date.fromisoformat(dfpreference['election date'][nr] if dfpreference['election date'][nr] != "" else dfpreference['election date'][0])
   today = datetime.date.fromisoformat(dfpreference['current date'][nr] if dfpreference['current date'][nr] != "" else dfpreference['current date'][0])
