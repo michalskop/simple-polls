@@ -10,16 +10,16 @@ import re
 import time
 
 # Parameters for the elections
-election_code = "cz-2025"
-election_flag = "🇨🇿"
-election_date = "2025-09-29"
-source_election_code = "pl-2025-2" # to copy from
-wikipedia_link = "https://cs.wikipedia.org/wiki/Volby_do_Poslaneck%C3%A9_sn%C4%9Bmovny_Parlamentu_%C4%8Cesk%C3%A9_republiky_2025"
+election_code = "bo-2025-1-round"
+election_flag = "🇧🇴"
+election_date = "2025-08-17"
+source_election_code = "cz-2025" # to copy from
+wikipedia_link = "https://es.wikipedia.org/wiki/Anexo:Encuestas_de_intenci%C3%B3n_de_voto_para_las_elecciones_generales_de_Bolivia_de_2025"
 
-candidates = ['ANO', 'SPOLU', 'STAN', 'SPD', 'Piráti', 'Stačilo!', 'Motoristé']
-candidates_colors = ['#272A59', '#5e66d5', '#FF1A4A', '#993366', '#111111', '#C5143C', '#1A9FBD']
-candidates_values = [34, 19, 11, 8, 6, 6, 6] #, 19, 5.4, 2.6, 2.4, 0.5, 0.8, 2.2]
-candidates_needs = [5, 11, 5, 5, 5, 5, 5] #, 0, 0, 0, 0, 0, 0, 0]
+candidates = ['Doria Medina', 'Quiroga', 'Rodriguez', 'Paz', 'Manfred', 'Fernández', 'Del Castillo', 'Aracena']
+candidates_colors = ['#ffb848', '#ff0000', '#376c38', '#016167', '#56008c', '#00A8EC', '#0047ab', '#313033']
+candidates_values = [21.1, 20, 5.5, 8.3, 7.7, 2, 1.5, 0.5] #, 19, 5.4, 2.6, 2.4, 0.5, 0.8, 2.2]
+candidates_needs = [0, 0, 0, 0, 0, 0, 0, 0] #, 0, 0, 0, 0, 0, 0, 0]
 # Create html colors by AI:
 # light green in html: #3AAD2E
 # light green in RGB: (58, 173, 46)
