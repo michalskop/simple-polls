@@ -9,7 +9,7 @@ import scipy.stats
 import warnings
 # from matplotlib import pyplot as plt
 
-election_date = '2025-11-22'
+election_date = '2025-10-29'
 election_day = datetime.date.fromisoformat(election_date)
 today = datetime.date.today()   # it changes later !!!
 sample_n = 1000 # used in statistical error
