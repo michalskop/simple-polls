@@ -10,16 +10,16 @@ import re
 import time
 
 # Parameters for the elections
-election_code = "ar-2025"
-election_flag = "🇦🇷"
-election_date = "2025-10-26"
-source_election_code = "bo-2025-1-round" # to copy from
-wikipedia_link = "https://es.wikipedia.org/wiki/Elecciones_legislativas_de_Argentina_de_2025"
+election_code = "no-2025"
+election_flag = "🇳🇴"
+election_date = "2025-09-08"
+source_election_code = "ar-2025" # to copy from
+wikipedia_link = "https://en.wikipedia.org/wiki/2025_Norwegian_parliamentary_election"
 
-candidates = ['La Libertad Avanza', 'Unión por la Patria', 'Peronismo', 'PRO', 'UCR', 'Frente de Izquierda']
-candidates_colors = ['#6C4C99', '#009FE3', '#19BC9D', '#FFD700', '#E10019', '#F65058']
-candidates_values = [38.7, 27.5, 4, 6.5, 3.9, 2.6] #, 19, 5.4, 2.6, 2.4, 0.5, 0.8, 2.2]
-candidates_needs = [0, 0, 0, 0, 0, 0] #, 0, 0, 0, 0, 0, 0, 0]
+candidates = ['Ap', 'FrP', 'H', 'R', 'SV', 'MDG', 'Sp', 'V', 'KrF', 'INP']
+candidates_colors = ['#E11926', '#004F80', '#0065F1', '#EA0000', '#B5317C', '#6A9325', '#00843D', '#006666', '#FDED34', '#01B0CF']
+candidates_values = [26.9, 23.9, 13.2, 5.7, 5.5, 3.7, 5.6, 5.1, 5.6, 0.8] #, 19, 5.4, 2.6, 2.4, 0.5, 0.8, 2.2]
+candidates_needs = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] #, 0, 0, 0, 0, 0, 0, 0]
 # Create html colors by AI:
 # light green in html: #3AAD2E
 # light green in RGB: (58, 173, 46)
