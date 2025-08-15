@@ -10,16 +10,16 @@ import re
 import time
 
 # Parameters for the elections
-election_code = "no-2025"
-election_flag = "🇳🇴"
-election_date = "2025-09-08"
+election_code = "nl-2025"
+election_flag = "🇳🇱"
+election_date = "2025-11-22"
 source_election_code = "ar-2025" # to copy from
-wikipedia_link = "https://en.wikipedia.org/wiki/2025_Norwegian_parliamentary_election"
+wikipedia_link = "https://en.wikipedia.org/wiki/2025_Dutch_general_election#Opinion_polls"
 
-candidates = ['Ap', 'FrP', 'H', 'R', 'SV', 'MDG', 'Sp', 'V', 'KrF', 'INP']
-candidates_colors = ['#E11926', '#004F80', '#0065F1', '#EA0000', '#B5317C', '#6A9325', '#00843D', '#006666', '#FDED34', '#01B0CF']
-candidates_values = [26.9, 23.9, 13.2, 5.7, 5.5, 3.7, 5.6, 5.1, 5.6, 0.8] #, 19, 5.4, 2.6, 2.4, 0.5, 0.8, 2.2]
-candidates_needs = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] #, 0, 0, 0, 0, 0, 0, 0]
+candidates = ['PVV', 'GL-PvdA', 'VVD', 'NSC', 'D66', 'BBB', 'CDA', 'SP', 'Denk', 'PvdD', 'FvD', 'SGP', 'CU', 'Volt', 'JA21']
+candidates_colors = ['#012758', '#DC1F26', '#0A2CCA', '#F0C400', '#00AE41', '#94C11F', '#2CC84D', '#F60000', '#00B7B2', '#006B2D', '#841818', '#EA5B0B', '#00A7EB', '#582c83', '#242B57']
+candidates_values = [28, 28, 16, 0, 11, 6, 24, 8, 4, 4, 4, 4, 3, 3, 7] #, 19, 5.4, 2.6, 2.4, 0.5, 0.8, 2.2]
+candidates_needs = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] #, 0, 0, 0, 0, 0, 0, 0]
 # Create html colors by AI:
 # light green in html: #3AAD2E
 # light green in RGB: (58, 173, 46)
@@ -302,9 +302,9 @@ with open (path + '.github/workflows/' + 'run-simulations-' + source_election_co
 # replace the election code
 content = content.replace(source_election_code, election_code)
 # replace the pretty name
-election_code_pretty_noflag = election_code.upper().replace(re.findall(r'\d+', election_code)[0], ' ' + re.findall(r'\d+', election_code)[0])
-source_election_code_pretty_noflag = source_election_code.upper().replace(re.findall(r'\d+', source_election_code)[0], ' ' + re.findall(r'\d+', source_election_code)[0])
-content = content.replace(source_election_code_pretty_noflag, election_code_pretty_noflag)
+election_code_pretty_noflag_space = election_code.upper().replace(re.findall(r'\d+', election_code)[0], re.findall(r'\d+', election_code)[0]).replace('-', ' ')
+source_election_code_pretty_noflag_space = source_election_code.upper().replace(re.findall(r'\d+', source_election_code)[0], re.findall(r'\d+', source_election_code)[0]).replace('-', ' ')
+content = content.replace(source_election_code_pretty_noflag_space, election_code_pretty_noflag_space)
 
 # save
 with open (path + '.github/workflows/' + 'run-simulations-' + election_code + '.yml', 'w') as f:
@@ -327,7 +327,9 @@ with open (path + source_election_code + '/simulations_' + source_election_code 
   content = f.read()
 # replace the election code
 content = content.replace(source_election_code, election_code)
-content = content.replace(source_election_code_pretty_noflag, election_code_pretty_noflag)
+election_code_pretty_noflag = election_code.upper().replace(re.findall(r'\d+', election_code)[0], re.findall(r'\d+', election_code)[0])
+source_election_code_pretty_noflag = source_election_code.upper().replace(re.findall(r'\d+', source_election_code)[0], re.findall(r'\d+', source_election_code)[0])
+content = content.replace(source_election_code_pretty_noflag, election_code_pretty_noflag) 
 # replace election date
 content = content.replace(re.findall('election_date = \'[0-9]{4}-[0-9]{2}-[0-9]{2}\'', content)[0], 'election_date = \'' + election_date + '\'')
 # replace sheetkey
