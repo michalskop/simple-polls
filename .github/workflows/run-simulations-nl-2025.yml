@@ -1,4 +1,4 @@
-name: Run simulations AR 2025 elections
+name: Run simulations NL 2025 elections
 
 on:
   # push: # Keep commented out if you commit back changes to avoid loops
