@@ -10,16 +10,16 @@ import re
 import time
 
 # Parameters for the elections
-election_code = "nl-2025"
-election_flag = "🇳🇱"
-election_date = "2025-11-22"
+election_code = "cl-2025"
+election_flag = "🇨🇱"
+election_date = "2025-11-16"
 source_election_code = "ar-2025" # to copy from
-wikipedia_link = "https://en.wikipedia.org/wiki/2025_Dutch_general_election#Opinion_polls"
+wikipedia_link = "https://es.wikipedia.org/wiki/Anexo:Sondeos_de_intenci%C3%B3n_de_voto_para_la_elecci%C3%B3n_presidencial_de_Chile_de_2025"
 
-candidates = ['PVV', 'GL-PvdA', 'VVD', 'NSC', 'D66', 'BBB', 'CDA', 'SP', 'Denk', 'PvdD', 'FvD', 'SGP', 'CU', 'Volt', 'JA21']
-candidates_colors = ['#012758', '#DC1F26', '#0A2CCA', '#F0C400', '#00AE41', '#94C11F', '#2CC84D', '#F60000', '#00B7B2', '#006B2D', '#841818', '#EA5B0B', '#00A7EB', '#582c83', '#242B57']
-candidates_values = [28, 28, 16, 0, 11, 6, 24, 8, 4, 4, 4, 4, 3, 3, 7] #, 19, 5.4, 2.6, 2.4, 0.5, 0.8, 2.2]
-candidates_needs = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] #, 0, 0, 0, 0, 0, 0, 0]
+candidates = ['Kast', 'Jara', 'Matthei', 'Parisi', 'Kaiser']
+candidates_colors = ['#31446C', '#e23636', '#000080', '#181644', '#F28500']
+candidates_values = [28, 26, 15, 9, 7] #, 19, 5.4, 2.6, 2.4, 0.5, 0.8, 2.2]
+candidates_needs = [0, 0, 0, 0, 0] #, 0, 0, 0, 0, 0, 0, 0]
 # Create html colors by AI:
 # light green in html: #3AAD2E
 # light green in RGB: (58, 173, 46)
