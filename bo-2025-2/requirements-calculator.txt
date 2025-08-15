@@ -1,0 +1,12 @@
+      
+# requirements.txt
+
+# Core data manipulation and numerical operations
+pandas>=1.0.0
+numpy>=1.18.0
+
+# Scientific computing library (used for LinAlgError, stats functions if added later)
+scipy>=1.4.0
+
+# For interacting with Google Sheets
+gspread>=5.0.0
