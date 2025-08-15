@@ -10,16 +10,16 @@ import re
 import time
 
 # Parameters for the elections
-election_code = "bo-2025-1-round"
-election_flag = "🇧🇴"
-election_date = "2025-08-17"
-source_election_code = "cz-2025" # to copy from
-wikipedia_link = "https://es.wikipedia.org/wiki/Anexo:Encuestas_de_intenci%C3%B3n_de_voto_para_las_elecciones_generales_de_Bolivia_de_2025"
+election_code = "ar-2025"
+election_flag = "🇦🇷"
+election_date = "2025-10-26"
+source_election_code = "bo-2025-1-round" # to copy from
+wikipedia_link = "https://es.wikipedia.org/wiki/Elecciones_legislativas_de_Argentina_de_2025"
 
-candidates = ['Doria Medina', 'Quiroga', 'Rodriguez', 'Paz', 'Manfred', 'Fernández', 'Del Castillo', 'Aracena']
-candidates_colors = ['#ffb848', '#ff0000', '#376c38', '#016167', '#56008c', '#00A8EC', '#0047ab', '#313033']
-candidates_values = [21.1, 20, 5.5, 8.3, 7.7, 2, 1.5, 0.5] #, 19, 5.4, 2.6, 2.4, 0.5, 0.8, 2.2]
-candidates_needs = [0, 0, 0, 0, 0, 0, 0, 0] #, 0, 0, 0, 0, 0, 0, 0]
+candidates = ['La Libertad Avanza', 'Unión por la Patria', 'Peronismo', 'PRO', 'UCR', 'Frente de Izquierda']
+candidates_colors = ['#6C4C99', '#009FE3', '#19BC9D', '#FFD700', '#E10019', '#F65058']
+candidates_values = [38.7, 27.5, 4, 6.5, 3.9, 2.6] #, 19, 5.4, 2.6, 2.4, 0.5, 0.8, 2.2]
+candidates_needs = [0, 0, 0, 0, 0, 0] #, 0, 0, 0, 0, 0, 0, 0]
 # Create html colors by AI:
 # light green in html: #3AAD2E
 # light green in RGB: (58, 173, 46)
@@ -27,13 +27,13 @@ candidates_needs = [0, 0, 0, 0, 0, 0, 0, 0] #, 0, 0, 0, 0, 0, 0, 0]
 path = "./"
 
 # pretty name, from xyz2024 to "XYZ 2024"
-election_code_pretty = election_code.upper().replace(re.findall(r'\d+', election_code)[0], ' ' + re.findall(r'\d+', election_code)[0] + ' ' + election_flag)
+election_code_pretty = election_code.upper().replace(re.findall(r'\d+', election_code)[0], re.findall(r'\d+', election_code)[0])
 
 # connect to Google Sheets
 gc = gspread.service_account(path + "secret/credentials.json")
 
 # Create a new GSheet:
-sh = gc.create("Výpočet chyby, simulace - " + election_code_pretty)
+sh = gc.create(election_flag + " Výpočet chyby, simulace - " + election_code_pretty)
 sh.id
 # Share the Gsheet with me
 # Valid values are 'reader', 'commenter', 'writer', 'fileOrganizer', 'organizer', and 'owner'
@@ -244,6 +244,8 @@ time.sleep(5)
 
 # sheet 12: median correlations
 worksheet = sh.add_worksheet(title="median correlations", rows=(len(candidates) + 1), cols=(len(candidates) + 1))
+# or get them by title
+# worksheet = sh.worksheet("median correlations")
 time.sleep(1)
 # add the first cell
 worksheet.update('A1', [['Median']])
