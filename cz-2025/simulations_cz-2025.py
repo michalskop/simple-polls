@@ -591,35 +591,54 @@ try:
 
   # Probabilities (pravděpodobnosti_aktuální_aging_cov) - Index is Pr, Columns are parties
   if not probs_stats_final.empty and not probs_interval_final.empty:
-    # Write interval points to column A first
+    # Clear only the specific ranges we're about to write to
     try:
-      wsw_prob = sh.worksheet(PROBS_AGING_COV_WS)
-      wsw_prob.clear()
-      wsw_prob.update(range_name='A2', values=probs_interval_final.values.tolist())
-      print(f"  Wrote interval points to '{PROBS_AGING_COV_WS}' column A.")
-      # Then write the probabilities starting from B1 (header + data)
-      write_gsheet(PROBS_AGING_COV_WS, probs_stats_final, start_cell='B1', include_header=True, include_index=False, clear_before_write=False)
+        ws_percentages = sh.worksheet(PROBS_AGING_COV_WS)
+        
+        # Clear the simulation data range before writing
+        try:
+            ws_percentages.batch_clear(['B2:I100'])  # Adjust the row range as needed
+            print("  Cleared old simulation data from B2:I200")
+        except Exception as e:
+            print(f"  Warning: Could not clear simulation range: {e}")
+        # Write interval points to column A first
+        wsw_prob = sh.worksheet(PROBS_AGING_COV_WS)
+        wsw_prob.update(range_name='A2', values=probs_interval_final.values.tolist())
+        print(f"  Wrote interval points to '{PROBS_AGING_COV_WS}' column A.")
+        # Then write the probabilities starting from B1 (header + data)
+        write_gsheet(PROBS_AGING_COV_WS, probs_stats_final, start_cell='B1', include_header=True, include_index=False, clear_before_write=False)
     except Exception as e_prob: print(f" Error writing probabilities: {e_prob}")
 
 
   # Duels (duely_aging_cov) - Index is party, Columns are party
   if not duels_stats_final.empty:
-    # Write index (row headers) to A3:
     try:
       wsw_duel = sh.worksheet(DUELS_AGING_COV_WS)
-      wsw_duel.clear()
-      row_headers = [[h] for h in duels_stats_final.index.tolist()] # List of lists
-      wsw_duel.update(range_name='A3', values=row_headers)
-      print(f"  Wrote row headers to '{DUELS_AGING_COV_WS}' column A.")
-      # Write data + column headers starting B2
-      write_gsheet(DUELS_AGING_COV_WS, duels_stats_final, start_cell='B2', include_header=True, include_index=False)
+
+      # Define the area to clear: from A1 to the bottom-right of the data table.
+      num_parties = len(duels_stats_final.index)
+      end_row = 2 + num_parties # A1, headers, plus data rows
+      end_col_letter = gspread.utils.col_to_a1(1 + num_parties + 1) # Index col, data cols
+      clear_range = f'A1:{end_col_letter}{end_row}'
+      
+      print(f"  Clearing range {clear_range} in '{DUELS_AGING_COV_WS}'...")
+      wsw_duel.batch_clear([clear_range])
+
       # Write to A1 "Pr[row >= column]"
       wsw_duel.update(range_name='A1', values=[['Pr[row >= column]']])
-      # Write starting A3 down the name of the parties in one write
+
+      # Write party names as row headers starting from A3
       party_names = duels_stats_final.index.tolist()
-      parties_to_write = [[party_names[i]] for i in range(len(party_names))]
-      wsw_duel.update(range_name='A3', values=parties_to_write)
-    except Exception as e_duel: print(f" Error writing duels: {e_duel}")
+      row_headers = [[party] for party in party_names]
+      wsw_duel.update(range_name=f'A3:A{3 + len(row_headers) - 1}', values=row_headers)
+      print(f"  Wrote row headers to '{DUELS_AGING_COV_WS}' column A.")
+
+      # Write the duel statistics data (including column headers) starting from B2
+      # This function will now NOT clear the sheet, only write data.
+      write_gsheet(DUELS_AGING_COV_WS, duels_stats_final, start_cell='B2', include_header=True, include_index=False, clear_before_write=False)
+
+    except Exception as e_duel: 
+      print(f" Error writing duels: {e_duel}")
 
   # Top 2 (top_2_cov) - Index is party, Columns are party
   if not top2_stats_final.empty:
