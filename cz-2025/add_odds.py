@@ -414,3 +414,183 @@ try:
 except Exception as e:
     print(f"Error updating Google Sheets: {e}")
     print("Please check your Google Sheets permissions and try again")
+
+# Write "less_than" percentage data to Google Sheet
+print("\n" + "="*60)
+print("WRITING LESS_THAN PERCENTAGE DATA TO GOOGLE SHEET:")
+print("="*60)
+
+try:
+    # Get the percentage worksheet
+    ws_percentages = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
+    
+    # Prepare "less_than" data for writing (limits as rows, parties as columns)
+    # Start at AP2, each limit gets one row
+    less_than_data = []
+    
+    for i, limit in enumerate(limits):
+        limit_row = []
+        
+        for party in candidates:
+            # Check if we have a mapping for this limit
+            if limit in limit_to_threshold:
+                data_threshold = limit_to_threshold[limit]
+                key = f"less_than_{data_threshold}"
+                
+                if party in percentage_data and key in percentage_data[party]:
+                    limit_row.append(percentage_data[party][key])
+                else:
+                    limit_row.append('')  # Empty if no data
+            else:
+                limit_row.append('')  # Empty if no mapping found
+        
+        less_than_data.append(limit_row)
+    
+    # Calculate the range: AP2 to the last column for all limits
+    # AP is column 42, so for 8 parties: AP(42), AQ(43), AR(44), AS(45), AT(46), AU(47), AV(48), AW(49)
+    start_col_num = 42  # AP
+    end_col_num = start_col_num + len(candidates) - 1  # 42 + 8 - 1 = 49
+
+    # Convert column numbers to letters
+    def num_to_col(num):
+        result = ""
+        while num > 0:
+            num -= 1
+            result = chr(65 + (num % 26)) + result
+            num //= 26
+        return result
+
+    end_col = num_to_col(end_col_num)
+    end_row = 2 + len(limits) - 1
+    range_name = f'AP2:{end_col}{end_row}'
+    
+    print(f"Writing less_than data to range: {range_name}")
+    print(f"Data shape: {len(less_than_data)} limits x {len(candidates)} parties")
+    
+    # Write the data
+    ws_percentages.update(values=less_than_data, range_name=range_name)
+    
+    print("Successfully updated 'pravděpodobnosti_aktuální_aging_cov' worksheet with less_than percentage data!")
+    
+except Exception as e:
+    print(f"Error updating Google Sheets with less_than data: {e}")
+    print("Please check your Google Sheets permissions and try again")
+
+##############################################################
+# Extract duel odds data
+print("\n" + "="*60)
+print("EXTRACTING DUEL ODDS DATA:")
+print("="*60)
+
+# Create duel odds matrix
+duel_odds = {}
+
+for i, party1 in enumerate(candidates):
+    for j, party2 in enumerate(candidates):
+        if i != j:  # Skip same party duels
+            tipsport_name1 = mappingt[party1]
+            tipsport_name2 = mappingt[party2]
+            
+            # Try both possible event name formats
+            event_name1 = f"Kdo získá více hlasů ({tipsport_name1} x {tipsport_name2})"
+            event_name2 = f"Kdo získá více hlasů ({tipsport_name2} x {tipsport_name1})"
+            
+            # Find the odds for party1 beating party2
+            duel_data1 = dft[dft['event_name'] == event_name1]
+            duel_data2 = dft[dft['event_name'] == event_name2]
+            
+            found_odds = None
+            
+            # Try first format
+            if len(duel_data1) > 0:
+                party1_odds = duel_data1[duel_data1['name'] == tipsport_name1]['odd'].values
+                if len(party1_odds) > 0:
+                    found_odds = party1_odds[0]
+                    print(f"{party1} vs {party2}: {found_odds} (format 1)")
+            
+            # Try second format if first didn't work
+            if found_odds is None and len(duel_data2) > 0:
+                party1_odds = duel_data2[duel_data2['name'] == tipsport_name1]['odd'].values
+                if len(party1_odds) > 0:
+                    found_odds = party1_odds[0]
+                    print(f"{party1} vs {party2}: {found_odds} (format 2)")
+            
+            if found_odds is not None:
+                duel_odds[(party1, party2)] = found_odds
+            else:
+                print(f"No odds found for {party1} vs {party2}")
+
+# Create the duel matrix for Google Sheet
+print("\n" + "="*60)
+print("PREPARING DUEL MATRIX FOR GOOGLE SHEET:")
+print("="*60)
+
+duel_matrix = []
+
+for party1 in candidates:
+    row = []
+    for party2 in candidates:
+        if party1 == party2:
+            # Diagonal: party vs itself (empty or 1.0)
+            row.append('')
+        else:
+            # Get odds for party1 beating party2
+            if (party1, party2) in duel_odds:
+                row.append(duel_odds[(party1, party2)])
+            else:
+                row.append('')  # Empty if no data
+    duel_matrix.append(row)
+
+# Print the matrix
+print("Duel matrix (Row beats Column):")
+print("Party", end="")
+for party in candidates:
+    print(f"\t{party}", end="")
+print()
+
+for i, party in enumerate(candidates):
+    print(party, end="")
+    for j, value in enumerate(duel_matrix[i]):
+        print(f"\t{value}", end="")
+    print()
+
+print(f"\nMatrix size: {len(duel_matrix)} x {len(duel_matrix[0]) if duel_matrix else 0}")
+
+# Write duel data to Google Sheet
+print("\n" + "="*60)
+print("WRITING DUEL DATA TO GOOGLE SHEET:")
+print("="*60)
+
+try:
+    # Get the duel worksheet
+    ws_duels = sh.worksheet('duely_aging_cov')
+    
+    # Calculate the range: B26 to the last column for all parties
+    # B is column 2, so for 8 parties: B(2), C(3), D(4), E(5), F(6), G(7), H(8), I(9)
+    start_col_num = 2  # B
+    end_col_num = start_col_num + len(candidates) - 1  # 2 + 8 - 1 = 9
+
+    # Convert column numbers to letters
+    def num_to_col(num):
+        result = ""
+        while num > 0:
+            num -= 1
+            result = chr(65 + (num % 26)) + result
+            num //= 26
+        return result
+
+    end_col = num_to_col(end_col_num)
+    end_row = 26 + len(candidates) - 1  # 26 + 8 - 1 = 33
+    range_name = f'B26:{end_col}{end_row}'
+    
+    print(f"Writing duel data to range: {range_name}")
+    print(f"Data shape: {len(duel_matrix)} parties x {len(duel_matrix[0]) if duel_matrix else 0} parties")
+    
+    # Write the data
+    ws_duels.update(values=duel_matrix, range_name=range_name)
+    
+    print("Successfully updated 'duely_aging_cov' worksheet with duel data!")
+    
+except Exception as e:
+    print(f"Error updating Google Sheets with duel data: {e}")
+    print("Please check your Google Sheets permissions and try again")
