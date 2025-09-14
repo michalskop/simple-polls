@@ -24,14 +24,22 @@ jobs:
         python -m pip install --upgrade pip
         pip install pandas gspread oauth2client
         
+    # Creates the directory where gspread looks for credentials by default
+    - name: Create gspread config directory
+      run: mkdir -p /home/runner/.config/gspread
+        
+    - name: Populate gspread credentials
+      run: |
+        echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > /home/runner/.config/gspread/service_account.json
+        
     - name: Run add_odds.py
       run: |
         cd cz-2025
         python add_odds.py
-      env:
-        # You'll need to add your Google Sheets service account credentials
-        # as a repository secret named GOOGLE_SHEETS_CREDENTIALS
-        GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_SHEETS_CREDENTIALS }}
+        
+    # Clean up credentials
+    - name: Clean up gspread credentials
+      run: rm /home/runner/.config/gspread/service_account.json
         
     - name: Commit and push changes (if any)
       run: |
