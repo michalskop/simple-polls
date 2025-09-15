@@ -3,6 +3,7 @@
 from py_clob_client.client import ClobClient
 import gspread
 import pandas as pd
+import os
 
 # Connect to Polymarket
 host: str = "https://clob.polymarket.com"
