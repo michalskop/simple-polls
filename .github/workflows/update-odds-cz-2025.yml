@@ -22,7 +22,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pandas gspread oauth2client
+        pip install pandas gspread oauth2client py_clob_client
         
     # Creates the directory where gspread looks for credentials by default
     - name: Create gspread config directory
@@ -36,6 +36,14 @@ jobs:
       run: |
         cd cz-2025
         python add_odds.py
+
+    - name: Run add_polymarket.py
+      env:
+        POLYMARKET_PRIVATE_KEY: ${{ secrets.POLYMARKET_PRIVATE_KEY }}
+        POLYMARKET_PROXY_ADDRESS: ${{ secrets.POLYMARKET_PROXY_ADDRESS }}
+      run: |
+        cd cz-2025
+        python add_polymarket.py
         
     # Clean up credentials
     - name: Clean up gspread credentials
