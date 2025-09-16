@@ -1,0 +1,4 @@
+python-dotenv
+gspread
+pandas
+py-clob-client
