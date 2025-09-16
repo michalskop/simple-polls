@@ -31,7 +31,7 @@ markets = [
     "name": "Motoristé",
     "sheet": "pravděpodobnosti_aktuální_aging_cov",
     "first_cell_yes": "AB131",
-    "first_cell_no": "AB143",
+    "first_cell_no": "AB145",
     "opportunities": [
       {
         "token_id": "5339302639488186206423482663378985926379574222367204383163355334647101043020",
@@ -59,14 +59,14 @@ markets = [
     "name": "ANO",
     "sheet": "pravděpodobnosti_aktuální_aging_cov",
     "first_cell_yes": "V131",
-    "first_cell_no": "V143",
+    "first_cell_no": "V145",
     "opportunities": [
       {
         "token_id": "44893441083851309543247599835897759553567448471307820476136084578988482128269",
         "label": "<27",
       },
       {
-        "token_id": "64104997506099880061918851752583666958945335823947132440135386658993573929787",
+        "token_id": "87431817244026722495737949919931462567528851069674635128999158040557460436388",
         "label": "27-30",
       },
       {
@@ -87,7 +87,7 @@ markets = [
     "name": "Přísaha",
     "sheet": "pravděpodobnosti_aktuální_aging_cov",
     "first_cell_yes": "AC131",
-    "first_cell_no": "AC143",
+    "first_cell_no": "AC145",
     "opportunities": [
       {
         "token_id": "114715839910304061869573169086462305887241502021064197825758119448304812699266",
@@ -115,7 +115,7 @@ markets = [
     "name": "Stačilo!",
     "sheet": "pravděpodobnosti_aktuální_aging_cov",
     "first_cell_yes": "AA131",
-    "first_cell_no": "AA143",
+    "first_cell_no": "AA145",
     "opportunities": [
       {
         "token_id": "42371473909219837771569014442357108002574564749341504257846807310667536186826",
@@ -143,7 +143,7 @@ markets = [
     "name": "SPOLU",
     "sheet": "pravděpodobnosti_aktuální_aging_cov",
     "first_cell_yes": "W131",
-    "first_cell_no": "W143",
+    "first_cell_no": "W145",
     "opportunities": [
       {
         "token_id": "12578390775922436388108189929377176721364218439347460687051764264703203724980",
@@ -171,7 +171,7 @@ markets = [
     "name": "STAN",
     "sheet": "pravděpodobnosti_aktuální_aging_cov",
     "first_cell_yes": "X131",
-    "first_cell_no": "X143",
+    "first_cell_no": "X145",
     "opportunities": [
       {
         "token_id": "111943627264740261356789062811417174889179791399413802499979950804119546249142",
@@ -199,7 +199,7 @@ markets = [
     "name": "SPD",
     "sheet": "pravděpodobnosti_aktuální_aging_cov",
     "first_cell_yes": "Y131",
-    "first_cell_no": "Y143",
+    "first_cell_no": "Y145",
     "opportunities": [
       {
         "token_id": "20123190064354353070813080184323403881092090729921037653466403833843022591002",
@@ -227,7 +227,7 @@ markets = [
     "name": "Piráti",
     "sheet": "pravděpodobnosti_aktuální_aging_cov",
     "first_cell_yes": "Z131",
-    "first_cell_no": "Z143",
+    "first_cell_no": "Z145",
     "opportunities": [
       {
         "token_id": "92089723743128084434183282586999127078883887330437135736698988959942372634019",
