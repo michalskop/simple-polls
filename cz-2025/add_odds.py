@@ -98,6 +98,26 @@ for party in candidates:
         odds_data[party]['Ano'][4] = odds_4th_ano[0]
     if len(odds_4th_ne) > 0:
         odds_data[party]['Ne'][4] = odds_4th_ne[0]
+        
+    # 5th place
+    event_name_5th = f"Umístění {tipsport_name} do 5. místa podle počtu hlasů"
+    odds_5th_ano = dft[(dft['event_name'] == event_name_5th) & (dft['name'] == 'Ano')]['odd'].values
+    odds_5th_ne = dft[(dft['event_name'] == event_name_5th) & (dft['name'] == 'Ne')]['odd'].values
+    
+    if len(odds_5th_ano) > 0:
+        odds_data[party]['Ano'][5] = odds_5th_ano[0]
+    if len(odds_5th_ne) > 0:
+        odds_data[party]['Ne'][5] = odds_5th_ne[0]
+    
+    # 6th place
+    event_name_6th = f"Umístění {tipsport_name} do 6. místa podle počtu hlasů"
+    odds_6th_ano = dft[(dft['event_name'] == event_name_6th) & (dft['name'] == 'Ano')]['odd'].values
+    odds_6th_ne = dft[(dft['event_name'] == event_name_6th) & (dft['name'] == 'Ne')]['odd'].values
+    
+    if len(odds_6th_ano) > 0:
+        odds_data[party]['Ano'][6] = odds_6th_ano[0]
+    if len(odds_6th_ne) > 0:
+        odds_data[party]['Ne'][6] = odds_6th_ne[0]
 
 # Print the extracted odds data
 print("Extracted odds data:")
@@ -105,14 +125,14 @@ print("=" * 50)
 for party in candidates:
     print(f"\n{party}:")
     print("  Ano:")
-    for rank in [1, 2, 3, 4]:
+    for rank in [1, 2, 3, 4, 5, 6]:
         if rank in odds_data[party]['Ano']:
             print(f"    {rank}. místo: {odds_data[party]['Ano'][rank]}")
         else:
             print(f"    {rank}. místo: N/A")
     
     print("  Ne:")
-    for rank in [1, 2, 3, 4]:
+    for rank in [1, 2, 3, 4, 5, 6]:
         if rank in odds_data[party]['Ne']:
             print(f"    {rank}. místo: {odds_data[party]['Ne'][rank]}")
         else:
@@ -130,7 +150,7 @@ try:
     ano_data_rows = []
     
     # Create data rows for each rank
-    for rank in [1, 2, 3, 4]:
+    for rank in [1, 2, 3, 4, 5, 6]:
         row = []
         for party in candidates:
             if rank in odds_data[party]['Ano']:
@@ -146,7 +166,7 @@ try:
     ne_data_rows = []
     
     # Create data rows for each rank
-    for rank in [1, 2, 3, 4]:
+    for rank in [1, 2, 3, 4, 5, 6]:
         row = []
         for party in candidates:
             if rank in odds_data[party]['Ne']:
