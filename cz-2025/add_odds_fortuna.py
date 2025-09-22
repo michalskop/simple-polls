@@ -4,6 +4,7 @@ import datetime
 import gspread
 import pandas as pd
 import re
+import time
 
 # source sheet
 sheetkey = "1es2J0O_Ig7RfnVHG3bHmX8SBjlMvrPwn4s1imYkxbwg"
