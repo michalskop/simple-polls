@@ -114,8 +114,8 @@ TOTAL_LAST_VOTES = 5375090
 MAJORITY_THRESHOLD = 101
 
 # Interval Calculation Parameters
-INTERVAL_MAX = 60
-ADDITIONAL_POINTS = [] # Add specific points if needed, e.g., [5.0]
+INTERVAL_MAX = 50
+ADDITIONAL_POINTS = [6.34, 8.66, 11.1, 27.78] # Add specific points if needed, e.g., [5.0]
 
 # Control Flags
 USE_AGING = True # Use the aged sigman for simulation

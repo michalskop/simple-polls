@@ -37,6 +37,11 @@ jobs:
         cd cz-2025
         python add_odds.py
 
+    - name: Run add_odds_fortuna.py
+      run: |
+        cd cz-2025
+        python add_odds_fortuna.py
+
     - name: Run add_polymarket.py
       env:
         POLYMARKET_PRIVATE_KEY: ${{ secrets.POLYMARKET_PRIVATE_KEY }}
