@@ -57,7 +57,7 @@ client.set_api_creds(creds)
 def get_extremes(orderbook):
     bids = [float(bid.price) for bid in orderbook.bids]
     asks = [float(ask.price) for ask in orderbook.asks]
-    return max(bids), min(asks)
+    return max(bids, default=0), min(asks, default=1)
 
 # Get order book data
 extremes = {}
