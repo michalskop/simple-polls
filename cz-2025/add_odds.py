@@ -285,32 +285,20 @@ print(f"Data thresholds: {all_thresholds[:10]}...")
 matches = []
 used_thresholds = set()  # Keep track of used thresholds
 
-for limit in limits:
-    # Check if there's a data threshold that's exactly 0.01 bigger
+# Sort limits to process them in order
+sorted_limits = sorted(limits)
+
+for limit in sorted_limits:
+    # Look for exact 0.01 difference
     expected_threshold = limit + 0.01
-    
     if expected_threshold in all_thresholds and expected_threshold not in used_thresholds:
         matches.append((limit, expected_threshold))
         used_thresholds.add(expected_threshold)
         print(f"Matched Google Sheet limit {limit}% with data threshold {expected_threshold}%")
     else:
-        # Fallback to closest match if exact 0.01 difference not found
-        best_match = None
-        best_diff = float('inf')
-        
-        for threshold in all_thresholds:
-            if threshold in used_thresholds:
-                continue  # Skip already used thresholds
-            
-            diff = abs(limit - threshold)
-            if diff < best_diff and diff < 0.5:  # Allow up to 0.5% difference
-                best_match = threshold
-                best_diff = diff
-        
-        if best_match:
-            matches.append((limit, best_match))
-            used_thresholds.add(best_match)
-            print(f"Matched Google Sheet limit {limit}% with data threshold {best_match}% (fallback)")
+        print(f"ERROR: No exact match found for GS limit {limit}% -> expected {expected_threshold}%")
+        print(f"Available thresholds: {sorted(all_thresholds)}")
+        print(f"Used thresholds: {sorted(used_thresholds)}")
 
 print(f"\nTotal matches found: {len(matches)}")
 print(f"Used thresholds: {sorted(used_thresholds)}")
@@ -397,7 +385,11 @@ try:
                 key = f"more_than_{data_threshold}"
                 
                 if party in percentage_data and key in percentage_data[party]:
-                    limit_row.append(percentage_data[party][key])
+                    value = percentage_data[party][key]
+                    limit_row.append(value)
+                    # Debug: print the mapping for first few limits
+                    if i < 5:
+                        print(f"Row {i+2}: GS limit {limit}% -> Data {data_threshold}% -> {party}: {value}")
                 else:
                     limit_row.append('')  # Empty if no data
             else:
