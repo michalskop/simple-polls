@@ -284,13 +284,29 @@ for market in markets:
     token_id = opportunity["token_id"]
     orderbook = client.get_order_book(token_id)
     asks = [float(ask.price) for ask in orderbook.asks]
-    ask = min(asks)
     bids = [float(bid.price) for bid in orderbook.bids]
-    bid = 1 - max(bids)
+    
+    # Handle empty orderbook cases
+    if asks:
+      ask = min(asks)
+    else:
+      ask = None
+      print(f"Warning: No asks available for {opportunity['label']}")
+    
+    if bids:
+      bid = 1 - max(bids)
+    else:
+      bid = None
+      print(f"Warning: No bids available for {opportunity['label']}")
+    
     opportunity["ask"] = ask
     opportunity["bid"] = bid
-    asks_to_write.extend([[opportunity['label']], [ask]])
-    bids_to_write.extend([[opportunity['label']], [bid]])
+    
+    # Only write data if we have valid prices
+    if ask is not None:
+      asks_to_write.extend([[opportunity['label']], [ask]])
+    if bid is not None:
+      bids_to_write.extend([[opportunity['label']], [bid]])
 
   # and write them to GSheet
   sheet.update(asks_to_write, market["first_cell_yes"])
