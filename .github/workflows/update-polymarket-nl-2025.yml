@@ -34,6 +34,6 @@ jobs:
         
     - name: Run add_polymarket_2.py
       env:
-        POLYMARKET_PRIVATE_KEY: ${{ secrets.POLYMARKET_PRIVATE_KEY }}
-        POLYMARKET_PROXY_ADDRESS: ${{ secrets.POLYMARKET_PROXY_ADDRESS }}
+        POLYMARKET_PRIVATE_KEY: ${{ secrets.POLYMARKET_PRIVATE_KEY_4 }}
+        POLYMARKET_PROXY_ADDRESS: ${{ secrets.POLYMARKET_PROXY_ADDRESS_4 }}
       run: python cz-2025/add_polymarket_2.py
