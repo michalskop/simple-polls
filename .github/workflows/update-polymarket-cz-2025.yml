@@ -1,7 +1,7 @@
 name: Update Polymarket Spreads CZ 2025
 
 on:
-  schedule:
+  # schedule:
     # Run every 1 hour
     # - cron: '3 * * * *'
   workflow_dispatch:  # Allow manual triggering
