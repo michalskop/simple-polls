@@ -8,9 +8,9 @@ import time
 
 # Connect to Polymarket
 host: str = "https://clob.polymarket.com"
-key: str = os.getenv('POLYMARKET_PRIVATE_KEY_4')
+key: str = os.getenv('POLYMARKET_PRIVATE_KEY')
 chain_id: int = 137
-POLYMARKET_PROXY_ADDRESS: str = os.getenv('POLYMARKET_PROXY_ADDRESS_4')
+POLYMARKET_PROXY_ADDRESS: str = os.getenv('POLYMARKET_PROXY_ADDRESS')
 
 # Initialize client
 client = ClobClient(host, key=key, chain_id=chain_id, signature_type=2, funder=POLYMARKET_PROXY_ADDRESS)
