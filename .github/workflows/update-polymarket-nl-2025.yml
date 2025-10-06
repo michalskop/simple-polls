@@ -32,8 +32,8 @@ jobs:
       run: |
         echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > /home/runner/.config/gspread/service_account.json
         
-    - name: Run add_polymarket_2.py
+    - name: Run add_polymarket.py
       env:
         POLYMARKET_PRIVATE_KEY: ${{ secrets.POLYMARKET_PRIVATE_KEY_4 }}
         POLYMARKET_PROXY_ADDRESS: ${{ secrets.POLYMARKET_PROXY_ADDRESS_4 }}
-      run: python cz-2025/add_polymarket_2.py
+      run: python nl-2025/add_polymarket.py
