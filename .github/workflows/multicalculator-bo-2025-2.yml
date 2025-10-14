@@ -27,7 +27,7 @@ jobs:
             ${{ runner.os }}-pip-
       - name: Install Python dependencies
         run: |
-          pip install -r cl-2025-2/requirements-calculator.txt
+          pip install -r bo-2025-2/requirements-calculator.txt
 
       # /home/runner/work/simple-polls/simple-polls
       - name: gspread credentials 1
@@ -48,7 +48,7 @@ jobs:
       #     ls /home/runner/.config/gspread/
       
       - name: Run simulations
-        run: python cl-2025-2/calculator.py
+        run: python bo-2025-2/calculator.py
 
       - name: gspread credentials 3
         run: |
