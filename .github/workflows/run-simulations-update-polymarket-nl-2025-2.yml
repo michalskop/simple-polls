@@ -36,6 +36,7 @@ jobs:
         run: |
           # Ensure this path is correct relative to the repo root
           pip install -r nl-2025/requirements_simulations.txt
+          pip install pandas gspread oauth2client py_clob_client python-dotenv
 
       # Creates the directory where gspread looks for credentials by default
       - name: Create gspread config directory
