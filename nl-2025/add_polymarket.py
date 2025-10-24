@@ -5,6 +5,7 @@ import gspread
 import pandas as pd
 import os
 import time
+from datetime import datetime
 
 # Connect to Polymarket
 host: str = "https://clob.polymarket.com"
@@ -134,6 +135,12 @@ for i, row in enumerate(no_data):
 print("\nWriting to Google Sheets...")
 
 try:
+    # Write current timestamp to B38
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"Writing timestamp to B38: {current_time}")
+    sheet.update([[current_time]], range_name='B38')
+    print("✓ Timestamp written successfully")
+    
     # Write YES data starting at B41
     yes_range = f"B41:{chr(ord('B') + len(party_order) - 1)}{41 + len(all_ranks) - 1}"
     print(f"Writing YES data to range: {yes_range}")

@@ -168,34 +168,55 @@ print(f"- NO data written to rows 32-{32 + len(all_ranks) - 1}")
 # --- New Logic for Top5 and Intervals ---
 print("\n--- Starting Top5 and Intervals Update ---")
 
-# 1. Load new token data
-new_csv_path = "nl-2025/token_ids_2.csv"
-df_new_tokens = pd.read_csv(new_csv_path)
-print(f"Loaded {len(df_new_tokens)} new market definitions.")
+try:
+    # 1. Load new token data
+    new_csv_path = "nl-2025/token_ids_2.csv"
+    df_new_tokens = pd.read_csv(new_csv_path)
+    print(f"Loaded {len(df_new_tokens)} new market definitions.")
+except Exception as e:
+    print(f"❌ Error loading token_ids_2.csv: {e}")
+    print("Skipping Top5 and Intervals Update")
+    exit(0)
 
 # 2. Prepare for batch updates
 top5_updates = []
 intervals_updates = []
 duels_updates = []
 
-intervals_sheet = sh.worksheet("intervals")
-top5_sheet = sh.worksheet("top5")
-duels_sheet = sh.worksheet("duels")
+try:
+    intervals_sheet = sh.worksheet("intervals")
+    top5_sheet = sh.worksheet("top5")
+    duels_sheet = sh.worksheet("duels")
+    print("✓ Successfully connected to all sheets")
+except Exception as e:
+    print(f"❌ Error connecting to sheets: {e}")
+    print("Skipping Top5 and Intervals Update")
+    exit(0)
 
-# Get party order from the top5 sheet header (B1 to Z1 for safety)
-party_order = top5_sheet.get('B1:Z1')[0]
+try:
+    # Get party order from the top5 sheet header (B1 to Z1 for safety)
+    party_order = top5_sheet.get('B1:Z1')[0]
+    print(f"✓ Got party order from top5 sheet: {party_order}")
 
-# Get all data from sheets for matching
-all_intervals_data = intervals_sheet.get_all_values()
-intervals_header = all_intervals_data[0]
-intervals_data = all_intervals_data[1:]
+    # Get all data from sheets for matching
+    all_intervals_data = intervals_sheet.get_all_values()
+    intervals_header = all_intervals_data[0]
+    intervals_data = all_intervals_data[1:]
+    print(f"✓ Got intervals data: {len(intervals_data)} rows")
 
-duels_data = duels_sheet.get_all_records() # get_all_records is fine here if headers are unique
+    duels_data = duels_sheet.get_all_records() # get_all_records is fine here if headers are unique
+    print(f"✓ Got duels data: {len(duels_data)} rows")
 
-# Find column indexes from the header
-party_col_idx = intervals_header.index('party')
-type_col_idx = intervals_header.index('type')
-limits_col_idx = intervals_header.index('limits')
+    # Find column indexes from the header
+    party_col_idx = intervals_header.index('party')
+    type_col_idx = intervals_header.index('type')
+    limits_col_idx = intervals_header.index('limits')
+    print(f"✓ Found column indexes: party={party_col_idx}, type={type_col_idx}, limits={limits_col_idx}")
+    
+except Exception as e:
+    print(f"❌ Error getting sheet data: {e}")
+    print("Skipping Top5 and Intervals Update")
+    exit(0)
 
 # 3. Fetch data and prepare cell updates
 for index, row in df_new_tokens.iterrows():
