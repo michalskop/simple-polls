@@ -352,7 +352,7 @@ def calculate_and_print_interval_probabilities(seats_df, props_df, simulation_ty
         update_values = [[p] if p is not None else [''] for p in probabilities]
         
         # Update the column cells, starting from the second row
-        ws.update(f'{gspread.utils.rowcol_to_a1(2, col_index)}', update_values)
+        ws.update(update_values, range_name=f'{gspread.utils.rowcol_to_a1(2, col_index)}')
         print(f"Successfully wrote probabilities to column '{output_column_name}' in tab '{INTERVAL_TAB_NAME}'.")
 
     except Exception as e:
@@ -634,7 +634,7 @@ def calculate_and_write_duels(seats_cov_df, seats_std_df, sheet_key, tab_name):
             # Prepare column data for update
             update_values = [[val] if pd.notna(val) else [''] for val in results_df[col_name]]
             if update_values:
-                ws.update(f'{gspread.utils.rowcol_to_a1(2, col_index)}', update_values)
+                ws.update(update_values, range_name=f'{gspread.utils.rowcol_to_a1(2, col_index)}')
         
         print(f"Successfully wrote duel probabilities to tab '{tab_name}'.")
 
@@ -703,6 +703,28 @@ def test_seat_allocation():
     print(final_seats.iloc[0].to_string())
     print(f"Total final seats: {final_seats.iloc[0].sum()}")
     print("--- End of Seat Allocation Test ---")
+
+
+# --- Step 18: Write Timestamp to Preference Tab ---
+def write_timestamp_to_preference_tab(sheet_key, tab_name):
+    """Writes current timestamp to the preference tab, column E, row 2."""
+    print(f"\n--- Step 18: Writing Timestamp to Tab '{tab_name}' ---")
+    
+    try:
+        gc = gspread.service_account()
+        sh = gc.open_by_key(sheet_key)
+        ws = sh.worksheet(tab_name)
+        
+        # Get current time in GMT
+        current_time = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S GMT")
+        
+        # Write to column E, row 2 (E2)
+        ws.update('E2', [[current_time]])
+        
+        print(f"✓ Successfully wrote timestamp to {tab_name} tab: {current_time}")
+        
+    except Exception as e:
+        print(f"❌ Error writing timestamp to Google Sheets: {e}")
 
 
 # --- Execution ---
@@ -805,6 +827,8 @@ if __name__ == "__main__":
             # --- Step 17: Calculate and Write Duels (Both Sims) ---
             calculate_and_write_duels(final_seats_cov_df, final_seats_std_df, SHEET_KEY, DUELS_TAB_NAME)
 
+            # --- Step 18: Write Current Time to Preference Tab ---
+            write_timestamp_to_preference_tab(SHEET_KEY, TAB_NAME)
 
         # Run the seat allocation test (now disabled)
         # test_seat_allocation()
