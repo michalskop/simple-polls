@@ -1,4 +1,4 @@
-name: Update Polymarket Ranks NL 2025
+name: Update Polymarket Ranks and Others NL 2025
 
 on:
   schedule:
@@ -37,3 +37,9 @@ jobs:
         POLYMARKET_PRIVATE_KEY: ${{ secrets.POLYMARKET_PRIVATE_KEY_4 }}
         POLYMARKET_PROXY_ADDRESS: ${{ secrets.POLYMARKET_PROXY_ADDRESS_4 }}
       run: python nl-2025/add_polymarket.py
+    
+    - name: Run add_polymarket.py
+      env:
+        POLYMARKET_PRIVATE_KEY: ${{ secrets.POLYMARKET_PRIVATE_KEY_4 }}
+        POLYMARKET_PROXY_ADDRESS: ${{ secrets.POLYMARKET_PROXY_ADDRESS_4 }}
+      run: python nl-2025/add_polymarket-2.py
