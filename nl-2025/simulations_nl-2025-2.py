@@ -523,8 +523,9 @@ def calculate_and_write_summary_stats(final_seats_cov_df, hare_seats_cov_df, fin
     # 1. Calculate all statistics
     # Covariance model stats
     stats_cov = pd.DataFrame({
-        'media': final_seats_cov_df.mean(),
+        'average - 1st scrutiny': hare_seats_cov_df.mean(),
         'median - 1st scrutiny': hare_seats_cov_df.median(),
+        'average - 2nd scrutiny': final_seats_cov_df.mean(),
         'median - 2nd scrutiny': final_seats_cov_df.median(),
         '95% interval lower': final_seats_cov_df.quantile(0.025),
         '95% interval upper': final_seats_cov_df.quantile(0.975),
