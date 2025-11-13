@@ -226,67 +226,6 @@ number_in_aging_cov = pd.DataFrame(index=range(0, number_in_sim_aging_cov['numbe
 for i in range(0, nic_aging_cov.index.max()[0] + 1):
   number_in_aging_cov['p'][i] = nic_aging_cov.loc[i:].sum() / sample
 
-  
-# COALLITION probabilities, hardcoded for now
-# Coallition Red: R+SV+MDG+Ap+Sp
-# Coallition Blue: V+KrF+H+FrP
-coallitions = {
-  "red": ["R", "SV", "MDG", "Ap", "Sp"],
-  "blue": ["V", "KrF", "H", "FrP"],
-}
-# add them to the simulations
-for key in coallitions.keys():
-  simulations[key] = simulations[coallitions[key]].sum(axis=1)
-  simulations_aging[key] = simulations_aging[coallitions[key]].sum(axis=1)
-  simulations_cov[key] = simulations_cov[coallitions[key]].sum(axis=1)
-  simulations_aging_cov[key] = simulations_aging_cov[coallitions[key]].sum(axis=1)
-
-# pravděpodobnosti_aktuální_aging and pravděpodobnosti_aktuální_aging_cov
-# the same way as for the parties' probabilities
-for key in coallitions.keys():
-  interval_statistics[key] = pd.DataFrame(columns=[key])
-  interval_statistics_aging[key] = pd.DataFrame(columns=[key])
-  interval_statistics_cov[key] = pd.DataFrame(columns=[key])
-  interval_statistics_aging_cov[key] = pd.DataFrame(columns=[key])
-  for index, i in enumerate(arr):
-    interval_statistics.loc[index, key] = (simulations[key] > (i / 100)).sum() / sample
-    interval_statistics_aging.loc[index, key] = (simulations_aging[key] > (i / 100)).sum() / sample
-    interval_statistics_cov.loc[index, key] = (simulations_cov[key] > (i / 100)).sum() / sample
-    interval_statistics_aging_cov.loc[index, key] = (simulations_aging_cov[key] > (i / 100)).sum() / sample
-
-# add ranks for coallitions, only between coalitions (1 or 2), add them to the ranks_statistics
-ranks_statistics = ranks_statistics.T
-ranks_statistics_aging = ranks_statistics_aging.T
-ranks_statistics_cov = ranks_statistics_cov.T
-ranks_statistics_aging_cov = ranks_statistics_aging_cov.T
-for key in coallitions.keys():
-  ranks_statistics[key] = ranks[coallitions[key]].sum(axis=1).fillna(0).astype(int)
-  ranks_statistics_aging[key] = ranks_aging[coallitions[key]].sum(axis=1).fillna(0).astype(int)
-  ranks_statistics_cov[key] = ranks_cov[coallitions[key]].sum(axis=1).fillna(0).astype(int)
-  ranks_statistics_aging_cov[key] = ranks_aging_cov[coallitions[key]].sum(axis=1).fillna(0).astype(int)
-
-ranks_statistics.loc['1', 'red'] = (simulations[coallitions['red']].sum(axis=1) > simulations[coallitions['blue']].sum(axis=1)).sum() / sample
-ranks_statistics.loc['1', 'blue'] = 1 - ranks_statistics.loc['1', 'red']
-ranks_statistics.loc['2', 'red'] = ranks_statistics.loc['1', 'blue']
-ranks_statistics.loc['2', 'blue'] = ranks_statistics.loc['1', 'red']
-ranks_statistics_aging.loc['1', 'red'] = (simulations_aging[coallitions['red']].sum(axis=1) > simulations_aging[coallitions['blue']].sum(axis=1)).sum() / sample
-ranks_statistics_aging.loc['1', 'blue'] = 1 - ranks_statistics_aging.loc['1', 'red']
-ranks_statistics_aging.loc['2', 'red'] = ranks_statistics_aging.loc['1', 'blue']
-ranks_statistics_aging.loc['2', 'blue'] = ranks_statistics_aging.loc['1', 'red']
-ranks_statistics_cov.loc['1', 'red'] = (simulations_cov[coallitions['red']].sum(axis=1) > simulations_cov[coallitions['blue']].sum(axis=1)).sum() / sample
-ranks_statistics_cov.loc['1', 'blue'] = 1 - ranks_statistics_cov.loc['1', 'red']
-ranks_statistics_cov.loc['2', 'red'] = ranks_statistics_cov.loc['1', 'blue']
-ranks_statistics_cov.loc['2', 'blue'] = ranks_statistics_cov.loc['1', 'red']
-ranks_statistics_aging_cov.loc['1', 'red'] = (simulations_aging_cov[coallitions['red']].sum(axis=1) > simulations_aging_cov[coallitions['blue']].sum(axis=1)).sum() / sample
-ranks_statistics_aging_cov.loc['1', 'blue'] = 1 - ranks_statistics_aging_cov.loc['1', 'red']
-ranks_statistics_aging_cov.loc['2', 'red'] = ranks_statistics_aging_cov.loc['1', 'blue']
-ranks_statistics_aging_cov.loc['2', 'blue'] = ranks_statistics_aging_cov.loc['1', 'red']
-
-ranks_statistics = ranks_statistics.T.fillna(0)
-ranks_statistics_aging = ranks_statistics_aging.T.fillna(0)
-ranks_statistics_cov = ranks_statistics_cov.T.fillna(0)
-ranks_statistics_aging_cov = ranks_statistics_aging_cov.T.fillna(0)
-
 # WRITE TO SHEET
 # wsw = sh.worksheet('pořadí_aktuální')
 # wsw.update('B1', [ranks_statistics.transpose().columns.values.tolist()] + ranks_statistics.transpose().values.tolist())
