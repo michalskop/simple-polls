@@ -1,5 +1,7 @@
 """Create a new GSheet and workflow + analysis + requirements files."""
 
+# NOTE: it stopped to create the sheet itself, so I have to create the sheet manually first and share it with all.
+
 import os
 # import sys
 import datetime
@@ -10,16 +12,20 @@ import re
 import time
 
 # Parameters for the elections
-election_code = "cl-2025"
-election_flag = "🇨🇱"
-election_date = "2025-11-16"
-source_election_code = "ar-2025" # to copy from
-wikipedia_link = "https://es.wikipedia.org/wiki/Anexo:Sondeos_de_intenci%C3%B3n_de_voto_para_la_elecci%C3%B3n_presidencial_de_Chile_de_2025"
+election_code = "ro-mayor-bucuresti-2025"
+election_flag = "🇷🇴"
+election_date = "2025-11-23"
+source_election_code = "ro-2025" # to copy from
+wikipedia_link = "https://ro.wikipedia.org/wiki/Alegeri_locale_%C3%AEn_Bucure%C8%99ti,_2025#Sondaje"
 
-candidates = ['Kast', 'Jara', 'Matthei', 'Parisi', 'Kaiser']
-candidates_colors = ['#31446C', '#e23636', '#000080', '#181644', '#F28500']
-candidates_values = [28, 26, 15, 9, 7] #, 19, 5.4, 2.6, 2.4, 0.5, 0.8, 2.2]
+candidates = ['Daniel Băluță', 'Ciprian Ciucu', 'Cătălin Drulă', 'Anca Alexandrescu', 'Ana Ciceală']
+candidates_colors = ['#31446C', '#FAE800', '#002A59', '#FCC224', '#a2da5a']
+candidates_values = [24, 21, 20, 17, 4] #, 19, 5.4, 2.6, 2.4, 0.5, 0.8, 2.2]
 candidates_needs = [0, 0, 0, 0, 0] #, 0, 0, 0, 0, 0, 0, 0]
+
+# SHEET KEY
+sheetkey = "1tqV-b3IOpxIO5yUA1-8P0v94e3ggIMj-TcvfXYzVedM"
+
 # Create html colors by AI:
 # light green in html: #3AAD2E
 # light green in RGB: (58, 173, 46)
@@ -33,12 +39,13 @@ election_code_pretty = election_code.upper().replace(re.findall(r'\d+', election
 gc = gspread.service_account(path + "secret/credentials.json")
 
 # Create a new GSheet:
-sh = gc.create(election_flag + " Výpočet chyby, simulace - " + election_code_pretty)
+# sh = gc.create(election_flag + " Výpočet chyby, simulace - " + election_code_pretty)
+sh = gc.open_by_key(sheetkey)
 sh.id
 # Share the Gsheet with me
 # Valid values are 'reader', 'commenter', 'writer', 'fileOrganizer', 'organizer', and 'owner'
-secrets = json.load(open(path + "secret/secrets.json"))
-sh.share(secrets['email'], perm_type='user', role='writer')
+# secrets = json.load(open(path + "secret/secrets.json"))
+# sh.share(secrets['email'], perm_type='user', role='writer')
 
 
 def hex_to_rgb(hexa):

@@ -1,0 +1,76 @@
+name: Run simulations RO MAYOR BUCURESTI 2025 elections
+
+on:
+  # push: # Keep commented out if you commit back changes to avoid loops
+  #   branches:
+  #     - main
+  workflow_dispatch: # Allows manual triggering - Good!
+  # schedule: # Good for regular runs
+  #   - cron: '15 * * * *' # Runs at 15 mins past every hour - adjust if needed
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v3 # Consider using v3 or v4 for latest features/fixes
+        # Add fetch-depth: 0 if your script needs full git history, otherwise default is fine
+        # with:
+        #   fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4 # Consider using v4 or v5
+        with:
+          python-version: '3.10' # Python 3.8 is nearing end-of-life. Consider 3.9, 3.10, or 3.11 if compatible.
+
+      - uses: actions/cache@v3
+        name: Configure pip caching
+        with:
+          path: ~/.cache/pip
+          # Ensure this path EXACTLY matches where your requirements file is
+          key: ${{ runner.os }}-pip-${{ hashFiles('ro-mayor-bucuresti-2025/requirements_simulations.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Python dependencies
+        run: |
+          # Ensure this path is correct relative to the repo root
+          pip install -r ro-mayor-bucuresti-2025/requirements_simulations.txt
+
+      # Creates the directory where gspread looks for credentials by default
+      - name: Create gspread config directory
+        run: mkdir -p /home/runner/.config/gspread
+        # Alternative: mkdir -p ~/.config/gspread (uses shell expansion)
+
+      - name: Populate gspread credentials
+        run: |
+          echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > /home/runner/.config/gspread/service_account.json
+
+      # Optional: Debug step to verify credential file exists
+      # - name: Verify credentials file
+      #   run: ls -l /home/runner/.config/gspread/
+
+      - name: Run simulations
+        # Make sure this path and filename are EXACTLY correct
+        # Your text says "simulation_ro-mayor-bucuresti-2025.py", the code runs "simulations_ro-mayor-bucuresti-2025.py"
+        run: python ro-mayor-bucuresti-2025/simulations_ro-mayor-bucuresti-2025.py #<-- VERIFY FILENAME
+
+      # Optional: Safer cleanup, only remove the specific file
+      - name: Clean up gspread credentials
+        run: rm /home/runner/.config/gspread/service_account.json
+
+      # Committing back changes - Requires write permissions for the GITHUB_TOKEN
+      - name: Commit and push if it changed
+        run: |-
+          git config user.name "Automated Runner" # Slightly more descriptive
+          git config user.email "actions@users.noreply.github.com"
+          # Maybe be more specific if you know what files the script changes?
+          # Example: git add ro-mayor-bucuresti-2025/output_data/* or path/to/specific/file.csv
+          git add -A
+          timestamp=$(date -u)
+          # Commit only if there are changes staged
+          git commit -m "Automated data update: ${timestamp}" || echo "No changes to commit"
+          # Push only if the commit succeeded (i.e., there were changes)
+          if [ $? -eq 0 ]; then
+            git push
+          fi
