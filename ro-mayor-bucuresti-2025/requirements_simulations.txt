@@ -11,4 +11,5 @@ scipy>=1.4.0
 # For interacting with Google Sheets
 gspread>=5.0.0
 
-    
+# For interacting with Polymarket
+py_clob_client>=0.1.0
