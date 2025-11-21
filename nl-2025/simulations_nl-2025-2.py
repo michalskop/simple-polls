@@ -708,24 +708,34 @@ def test_seat_allocation():
 
 # --- Step 18: Write Timestamp to Preference Tab ---
 def write_timestamp_to_preference_tab(sheet_key, tab_name):
-    """Writes current timestamp to the preference tab, column E, row 2."""
-    print(f"\n--- Step 18: Writing Timestamp to Tab '{tab_name}' ---")
+    """Writes current timestamp to the preference tab and pořadí_aktuální_aging tab, column E, row 2."""
+    print(f"\n--- Step 18: Writing Timestamp to Tabs ---")
     
     try:
         gc = gspread.service_account()
         sh = gc.open_by_key(sheet_key)
-        ws = sh.worksheet(tab_name)
         
         # Get current time in GMT
         current_time = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S GMT")
         
-        # Write to column E, row 2 (E2)
-        ws.update('E2', [[current_time]])
+        # Write to preference tab
+        try:
+            ws = sh.worksheet(tab_name)
+            ws.update([[current_time]], range_name='E2')
+            print(f"✓ Successfully wrote timestamp to {tab_name} tab: {current_time}")
+        except Exception as e:
+            print(f"❌ Error writing timestamp to {tab_name} tab: {e}")
         
-        print(f"✓ Successfully wrote timestamp to {tab_name} tab: {current_time}")
+        # Write to pořadí_aktuální_aging tab
+        try:
+            ws_ranks = sh.worksheet('pořadí_aktuální_aging')
+            ws_ranks.update([[current_time]], range_name='E2')
+            print(f"✓ Successfully wrote timestamp to pořadí_aktuální_aging tab: {current_time}")
+        except Exception as e:
+            print(f"❌ Error writing timestamp to pořadí_aktuální_aging tab: {e}")
         
     except Exception as e:
-        print(f"❌ Error writing timestamp to Google Sheets: {e}")
+        print(f"❌ Error connecting to Google Sheets: {e}")
 
 
 # --- Execution ---

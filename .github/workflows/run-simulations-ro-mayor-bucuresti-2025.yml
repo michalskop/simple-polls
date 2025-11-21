@@ -55,6 +55,12 @@ jobs:
         # Your text says "simulation_ro-mayor-bucuresti-2025.py", the code runs "simulations_ro-mayor-bucuresti-2025.py"
         run: python ro-mayor-bucuresti-2025/simulations_ro-mayor-bucuresti-2025.py #<-- VERIFY FILENAME
 
+      - name: Update Polymarket 2025 elections
+        env:
+          POLYMARKET_PRIVATE_KEY: ${{ secrets.POLYMARKET_PRIVATE_KEY_4 }}
+          POLYMARKET_PROXY_ADDRESS: ${{ secrets.POLYMARKET_PROXY_ADDRESS_4 }}
+        run: python ro-mayor-bucuresti-2025/add_polymarket.py
+
       # Optional: Safer cleanup, only remove the specific file
       - name: Clean up gspread credentials
         run: rm /home/runner/.config/gspread/service_account.json
