@@ -6,6 +6,10 @@ import pandas as pd
 import os
 import time
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables from .env file if it exists
+load_dotenv(dotenv_path=".env")
 
 # Connect to Polymarket
 host: str = "https://clob.polymarket.com"
@@ -165,3 +169,117 @@ print(f"- {len(all_ranks)} ranks: {all_ranks}")
 print(f"- {len([p for p in party_order if p])} parties: {[p for p in party_order if p]}")
 print(f"- YES data written to rows 41-{41 + len(all_ranks) - 1}")
 print(f"- NO data written to rows 51-{51 + len(all_ranks) - 1}")
+
+# --- New functionality starts here ---
+
+print("\nStarting new functionality: Writing prices based on ro_token_ids.csv")
+
+sheet = sh.worksheet("pravděpodobnosti_aktuální_aging_cov")
+
+# Load the correct token IDs CSV
+ro_csv_path = "ro-mayor-bucuresti-2025/ro_token_ids.csv"
+df_ro_tokens = pd.read_csv(ro_csv_path)
+
+print("Loaded ro_token_ids.csv data:")
+print(df_ro_tokens.head())
+
+# Get headers from the sheet for name matching (AB1:AL1)
+headers = sheet.get('AB1:AL1')[0]
+yes_headers = headers[:5]  # AB to AF
+no_headers = headers[6:]   # AH to AL
+
+# Create a mapping from name to column index
+yes_name_to_col = {name: 'A' + chr(ord('B') + i) for i, name in enumerate(yes_headers)}
+no_name_to_col = {name: 'A' + chr(ord('H') + i) for i, name in enumerate(no_headers)}
+
+print(f"YES column mapping: {yes_name_to_col}")
+print(f"NO column mapping: {no_name_to_col}")
+
+# Get lo/hi ranges from the sheet (columns H and I)
+sheet_ranges = sheet.get('H2:I50') # Assuming max 50 rows
+
+# Prepare batch update requests
+yes_price_updates = []
+no_price_updates = []
+
+print("\nFetching prices for markets in ro_token_ids.csv...")
+
+for index, row in df_ro_tokens.iterrows():
+    name = row['name']
+    lo = row['lo']
+    hi = row['hi']
+    yes_token_id = row['yes_token_id']
+    no_token_id = row['no_token_id']
+
+    # Find the corresponding row in the Google Sheet
+    target_row_index = -1
+    for i, sheet_row in enumerate(sheet_ranges):
+        try:
+            sheet_lo = int(sheet_row[0])
+            sheet_hi = int(sheet_row[1])
+            if sheet_lo == lo and sheet_hi == hi:
+                target_row_index = i + 2  # 1-based index, and data starts from row 2
+                break
+        except (ValueError, IndexError):
+            continue
+
+    if target_row_index == -1:
+        print(f"Warning: No matching row found for {name} with range {lo}-{hi}")
+        continue
+
+    # Fetch YES price
+    yes_price = ''
+    try:
+        orderbook = client.get_order_book(yes_token_id)
+        _, yes_ask = get_extremes(orderbook)
+        if yes_ask < 1:
+            yes_price = f"{yes_ask:.4f}"
+    except Exception as e:
+        print(f"Could not fetch YES price for {name} ({lo}-{hi}): {e}")
+
+    # Fetch NO price
+    no_price = ''
+    try:
+        orderbook = client.get_order_book(no_token_id)
+        _, no_ask = get_extremes(orderbook)
+        if no_ask < 1:
+            no_price = f"{no_ask:.4f}"
+    except Exception as e:
+        print(f"Could not fetch NO price for {name} ({lo}-{hi}): {e}")
+
+    # Find column and prepare update
+    if name in yes_name_to_col:
+        col = yes_name_to_col[name]
+        cell = f"{col}{target_row_index}"
+        yes_price_updates.append({'range': cell, 'values': [[yes_price]]})
+        print(f"  Prepared YES update for {name} ({lo}-{hi}) at {cell}: {yes_price}")
+
+    if name in no_name_to_col:
+        col = no_name_to_col[name]
+        cell = f"{col}{target_row_index}"
+        no_price_updates.append({'range': cell, 'values': [[no_price]]})
+        print(f"  Prepared NO update for {name} ({lo}-{hi}) at {cell}: {no_price}")
+
+    time.sleep(0.5) # Be respectful to the API
+
+# Execute batch updates
+print("\nExecuting batch updates to Google Sheets...")
+
+try:
+    if yes_price_updates:
+        sheet.batch_update(yes_price_updates)
+        print(f"✓ Successfully updated {len(yes_price_updates)} YES prices.")
+    else:
+        print("No YES prices to update.")
+
+    if no_price_updates:
+        sheet.batch_update(no_price_updates)
+        print(f"✓ Successfully updated {len(no_price_updates)} NO prices.")
+    else:
+        print("No NO prices to update.")
+
+    print("\n🎉 New functionality executed successfully!")
+
+except Exception as e:
+    print(f"❌ Error during batch update: {e}")
+
