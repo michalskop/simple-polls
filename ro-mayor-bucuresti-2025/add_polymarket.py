@@ -283,3 +283,118 @@ try:
 except Exception as e:
     print(f"❌ Error during batch update: {e}")
 
+
+# --- New functionality for victory tokens ---
+
+print("\nStarting new functionality: Writing prices based on ro_victory_token_ids.csv")
+
+# Select the correct worksheet for victory margins
+victory_sheet = sh.worksheet('victory_margin_aging_cov')
+
+# Load the correct token IDs CSV
+victory_csv_path = "ro-mayor-bucuresti-2025/ro_victory_token_ids.csv"
+df_victory_tokens = pd.read_csv(victory_csv_path)
+
+print("Loaded ro_victory_token_ids.csv data:")
+print(df_victory_tokens.head())
+
+# Get headers from the sheet for name matching
+yes_headers_vic = victory_sheet.get('U1:Y1')[0]
+no_headers_vic = victory_sheet.get('AA1:AE1')[0]
+
+# Create a mapping from name to column index
+yes_name_to_col_vic = {name: chr(ord('U') + i) for i, name in enumerate(yes_headers_vic)}
+no_name_to_col_vic = {name: 'A' + chr(ord('A') + i) for i, name in enumerate(no_headers_vic)}
+
+print(f"Victory YES column mapping: {yes_name_to_col_vic}")
+print(f"Victory NO column mapping: {no_name_to_col_vic}")
+
+# Get lo/hi ranges from the sheet (columns A and B)
+sheet_ranges_vic = victory_sheet.get('A2:B50') # Assuming max 50 rows
+
+# Prepare batch update requests
+yes_price_updates_vic = []
+no_price_updates_vic = []
+
+print("\nFetching prices for markets in ro_victory_token_ids.csv...")
+
+for index, row in df_victory_tokens.iterrows():
+    name = row['name']
+    lo = row['lo']
+    hi = row['hi']
+    yes_token_id = row['yes_token_id']
+    no_token_id = row['no_token_id']
+
+    # Find the corresponding row in the Google Sheet
+    target_row_index = -1
+    for i, sheet_row in enumerate(sheet_ranges_vic):
+        try:
+            sheet_lo = int(sheet_row[0])
+            sheet_hi = int(sheet_row[1])
+            if sheet_lo == lo and sheet_hi == hi:
+                target_row_index = i + 2  # 1-based index, and data starts from row 2
+                break
+        except (ValueError, IndexError):
+            continue
+
+    if target_row_index == -1:
+        print(f"Warning: No matching row found for {name} with victory range {lo}-{hi}")
+        continue
+
+    # Fetch YES price
+    yes_price = ''
+    try:
+        orderbook = client.get_order_book(yes_token_id)
+        _, yes_ask = get_extremes(orderbook)
+        if yes_ask < 1:
+            yes_price = f"{yes_ask:.4f}"
+    except Exception as e:
+        print(f"Could not fetch YES price for {name} ({lo}-{hi}): {e}")
+
+    # Fetch NO price
+    no_price = ''
+    try:
+        orderbook = client.get_order_book(no_token_id)
+        _, no_ask = get_extremes(orderbook)
+        if no_ask < 1:
+            no_price = f"{no_ask:.4f}"
+    except Exception as e:
+        print(f"Could not fetch NO price for {name} ({lo}-{hi}): {e}")
+
+    # Find column and prepare update
+    if name in yes_name_to_col_vic:
+        col = yes_name_to_col_vic[name]
+        cell = f"{col}{target_row_index}"
+        yes_price_updates_vic.append({'range': cell, 'values': [[yes_price]]})
+        print(f"  Prepared Victory YES update for {name} ({lo}-{hi}) at {cell}: {yes_price}")
+
+    if name in no_name_to_col_vic:
+        col = no_name_to_col_vic[name]
+        cell = f"{col}{target_row_index}"
+        no_price_updates_vic.append({'range': cell, 'values': [[no_price]]})
+        print(f"  Prepared Victory NO update for {name} ({lo}-{hi}) at {cell}: {no_price}")
+
+    time.sleep(0.5) # Be respectful to the API
+
+# Execute batch updates
+print("\nExecuting batch updates for victory tokens to Google Sheets...")
+
+try:
+    if yes_price_updates_vic:
+        victory_sheet.batch_update(yes_price_updates_vic)
+        print(f"✓ Successfully updated {len(yes_price_updates_vic)} Victory YES prices.")
+    else:
+        print("No Victory YES prices to update.")
+
+    if no_price_updates_vic:
+        victory_sheet.batch_update(no_price_updates_vic)
+        print(f"✓ Successfully updated {len(no_price_updates_vic)} Victory NO prices.")
+    else:
+        print("No Victory NO prices to update.")
+
+    print("\n🎉 Victory token functionality executed successfully!")
+
+except Exception as e:
+    print(f"❌ Error during victory token batch update: {e}")
+
+

@@ -226,6 +226,64 @@ number_in_aging_cov = pd.DataFrame(index=range(0, number_in_sim_aging_cov['numbe
 for i in range(0, nic_aging_cov.index.max()[0] + 1):
   number_in_aging_cov['p'][i] = nic_aging_cov.loc[i:].sum() / sample
 
+# --- New functionality: Victory Margin Calculation ---
+
+print("\nCalculating victory margin probabilities...")
+
+# Get the worksheet for victory margins
+victory_ws = sh.worksheet('victory_margin_aging_cov')
+
+# Get candidate names from C1:G1
+candidate_names = victory_ws.get('C1:G1')[0]
+
+# Get intervals from columns A and B (lo and hi)
+intervals_data = victory_ws.get('A2:B50') # Assuming max 50 rows
+intervals = [(float(row[0]), float(row[1])) for row in intervals_data if row]
+
+# Initialize a DataFrame to store the counts
+victory_margin_counts = pd.DataFrame(0, index=range(len(intervals)), columns=candidate_names)
+
+# Iterate through each simulation run
+for i in range(sample):
+    # Get the results for the current simulation
+    run = simulations_aging_cov.iloc[i].sort_values(ascending=False)
+    
+    # Identify winner and runner-up
+    winner_name = run.index[0]
+    winner_score = run.iloc[0]
+    runner_up_score = run.iloc[1]
+    
+    # Calculate margin of victory in percentage points
+    margin = (winner_score - runner_up_score) * 100
+    
+    # Check if the winner is one of the candidates we are tracking
+    if winner_name in candidate_names:
+        # Find which interval the margin falls into
+        for interval_idx, (lo, hi) in enumerate(intervals):
+            if lo <= margin < hi:
+                victory_margin_counts.loc[interval_idx, winner_name] += 1
+                break
+
+# Calculate probabilities
+victory_margin_probabilities = victory_margin_counts / sample
+
+# Prepare data for batch update
+update_values = victory_margin_probabilities.values.tolist()
+
+# Define the range to update in the sheet (e.g., 'C2')
+start_cell = 'C2'
+end_col = chr(ord(start_cell[0]) + len(candidate_names) - 1)
+end_row = int(start_cell[1:]) + len(intervals) - 1
+update_range = f"{start_cell}:{end_col}{end_row}"
+
+# Batch update the sheet
+print(f"Writing victory margin probabilities to range: {update_range}")
+try:
+    victory_ws.update(update_values, range_name=update_range)
+    print("✓ Victory margin probabilities written successfully.")
+except Exception as e:
+    print(f"❌ Error writing victory margin probabilities: {e}")
+
 # WRITE TO SHEET
 # wsw = sh.worksheet('pořadí_aktuální')
 # wsw.update('B1', [ranks_statistics.transpose().columns.values.tolist()] + ranks_statistics.transpose().values.tolist())
