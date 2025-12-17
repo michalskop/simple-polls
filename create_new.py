@@ -12,19 +12,19 @@ import re
 import time
 
 # Parameters for the elections
-election_code = "ro-mayor-bucuresti-2025"
-election_flag = "🇷🇴"
-election_date = "2025-11-23"
-source_election_code = "ro-2025" # to copy from
-wikipedia_link = "https://ro.wikipedia.org/wiki/Alegeri_locale_%C3%AEn_Bucure%C8%99ti,_2025#Sondaje"
+election_code = "pt-2026"
+election_flag = "🇵🇹"
+election_date = "2026-01-18"
+source_election_code = "cl-2025" # to copy from
+wikipedia_link = "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2026_Portuguese_presidential_election"
 
-candidates = ['Daniel Băluță', 'Ciprian Ciucu', 'Cătălin Drulă', 'Anca Alexandrescu', 'Ana Ciceală']
-candidates_colors = ['#31446C', '#FAE800', '#002A59', '#FCC224', '#a2da5a']
-candidates_values = [24, 21, 20, 17, 4] #, 19, 5.4, 2.6, 2.4, 0.5, 0.8, 2.2]
-candidates_needs = [0, 0, 0, 0, 0] #, 0, 0, 0, 0, 0, 0, 0]
+candidates = ['Gouveia e Melo', 'Marques Mendes', 'António José Seguro', 'André Ventura', 'Cotrim Figueiredo', 'Catarina Martins', 'António Filipe', 'Jorge Pinto']
+candidates_colors = ['#777777', '#FF9900', '#FF66FF', '#202056', '#00ADEF', '#FF0000', '#0066FF', '#0066FF']
+candidates_values = [18.8, 20.2, 13.4,21.7, 12.8, 4.7, 3.1, 2] #
+candidates_needs = [0, 0, 0, 0, 0, 0, 0, 0] #
 
 # SHEET KEY
-sheetkey = "1tqV-b3IOpxIO5yUA1-8P0v94e3ggIMj-TcvfXYzVedM"
+sheetkey = "1hhRprFQjeQAFp435YUFBjqKCzxFp1q85J7TWAaWZ2JE"
 
 # Create html colors by AI:
 # light green in html: #3AAD2E
@@ -300,8 +300,11 @@ print("Sheet 13: history created.")
 sh.share(None, perm_type='anyone', role='writer')
 
 # transfer ownership to me
-permissions = sh.list_permissions()
-sh.transfer_ownership(permissions[1].get('id'))
+try:
+  permissions = sh.list_permissions()
+  sh.transfer_ownership(permissions[1].get('id'))
+except:
+  print("Transfer ownership failed.")
 
 # CREATE THE WORKFLOW FILE
 with open (path + '.github/workflows/' + 'run-simulations-' + source_election_code + '.yml') as f:
