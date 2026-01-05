@@ -23,7 +23,7 @@ creds = client.derive_api_key()
 client.set_api_creds(creds)
 
 # Load token IDs from CSV
-csv_path = "pt-2026-2/pt_token_ids.csv"
+csv_path = "pt-2026-2/pt_victory_token_ids.csv"
 df_tokens = pd.read_csv(csv_path)
 
 print("Loaded token data:")

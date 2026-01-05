@@ -231,10 +231,10 @@ for i in range(0, nic_aging_cov.index.max()[0] + 1):
 # wsw.update('B1', [ranks_statistics.transpose().columns.values.tolist()] + ranks_statistics.transpose().values.tolist())
 
 wsw = sh.worksheet('pořadí_aktuální_aging')
-wsw.update('B1', [ranks_statistics_aging.transpose().columns.values.tolist()] + ranks_statistics_aging.transpose().values.tolist())
+wsw.update([ranks_statistics_aging.transpose().columns.values.tolist()] + ranks_statistics_aging.transpose().values.tolist(), range_name='B1')
 
 wsw = sh.worksheet('pořadí_aktuální_aging_cov')
-wsw.update('B1', [ranks_statistics_aging_cov.transpose().columns.values.tolist()] + ranks_statistics_aging_cov.transpose().values.tolist())
+wsw.update([ranks_statistics_aging_cov.transpose().columns.values.tolist()] + ranks_statistics_aging_cov.transpose().values.tolist(), range_name='B1')
 
 # wsw = sh.worksheet('pořadí_aktuální_aging_cov_seats')
 # wsw.update('B1', [ranks_statistics_aging_cov_seats.transpose().columns.values.tolist()] + ranks_statistics_aging_cov_seats.transpose().values.tolist())
@@ -246,12 +246,12 @@ wsw = sh.worksheet('pravděpodobnosti_aktuální_aging')
 arr2 = []
 for item in arr:
   arr2.append([item])
-wsw.update('A2', arr2)
-wsw.update('B1', [interval_statistics_aging.columns.values.tolist()] + interval_statistics_aging.values.tolist())
+wsw.update(arr2, range_name='A2')
+wsw.update([interval_statistics_aging.columns.values.tolist()] + interval_statistics_aging.values.tolist(), range_name='B1')
 
 wsw = sh.worksheet('pravděpodobnosti_aktuální_aging_cov')
-wsw.update('A2', arr2)
-wsw.update('B1', [interval_statistics_aging_cov.columns.values.tolist()] + interval_statistics_aging_cov.values.tolist())
+wsw.update(arr2, range_name='A2')
+wsw.update([interval_statistics_aging_cov.columns.values.tolist()] + interval_statistics_aging_cov.values.tolist(), range_name='B1')
 
 # wsw = sh.worksheet('duely')
 # wsw.update('B2', [duels.columns.values.tolist()] + duels.values.tolist())
@@ -260,23 +260,23 @@ wsw = sh.worksheet('duely_aging')
 arrd = []
 for item in duels_aging.columns:
   arrd.append([item])
-wsw.update('A3', arrd)
-wsw.update('B2', [duels_aging.columns.values.tolist()] + duels_aging.values.tolist())
+wsw.update(arrd, range_name='A3')
+wsw.update([duels_aging.columns.values.tolist()] + duels_aging.values.tolist(), range_name='B2')
 
 wsw = sh.worksheet('duely_aging_cov')
 arrd = []
 for item in duels_aging_cov.columns:
   arrd.append([item])
-wsw.update('A3', arrd)
-wsw.update('B2', [duels_aging_cov.columns.values.tolist()] + duels_aging_cov.values.tolist())
+wsw.update(arrd, range_name='A3')
+wsw.update([duels_aging_cov.columns.values.tolist()] + duels_aging_cov.values.tolist(), range_name='B2')
 
 wsw = sh.worksheet('top_2')
-wsw.update('A3', arrd)
-wsw.update('B2', [top2_statistics.columns.values.tolist()] + top2_statistics.values.tolist())
+wsw.update(arrd, range_name='A3')
+wsw.update([top2_statistics.columns.values.tolist()] + top2_statistics.values.tolist(), range_name='B2')
 
 wsw = sh.worksheet('top_2_cov')
-wsw.update('A3', arrd)
-wsw.update('B2', [top2_statistics_cov.columns.values.tolist()] + top2_statistics_cov.values.tolist())
+wsw.update(arrd, range_name='A3')
+wsw.update([top2_statistics_cov.columns.values.tolist()] + top2_statistics_cov.values.tolist(), range_name='B2')
 
 # wsw = sh.worksheet('number_in')
 # number_in = number_in.reset_index(drop=False)
@@ -293,6 +293,139 @@ wsw.update(values=number_in_aging_cov.values.tolist(), range_name='A2')
 wsw = sh.worksheet('preference')
 d = datetime.datetime.now().isoformat()
 wsw.update(values=[[d]], range_name='E2')
+
+# --- New functionality: Victory Margin Calculation ---
+
+print("\nCalculating victory margin probabilities...")
+
+try:
+    # Get the worksheet for victory margins
+    victory_ws = sh.worksheet('victory_margin_aging_cov')
+    
+    # Find columns with "lower" and "upper" headers dynamically
+    header_row = victory_ws.get('1:1')[0]
+    lower_col_idx = None
+    upper_col_idx = None
+    
+    for i, header in enumerate(header_row):
+        if header and 'lower' in str(header).lower():
+            lower_col_idx = i
+        if header and 'upper' in str(header).lower():
+            upper_col_idx = i
+    
+    if lower_col_idx is None or upper_col_idx is None:
+        print("❌ Error: Could not find 'lower' and/or 'upper' columns in victory_margin_aging_cov sheet")
+        print("Skipping victory margin calculation")
+    else:
+        # Helper function to convert column number to letter
+        def num_to_col(num):
+            result = ""
+            while num > 0:
+                num -= 1
+                result = chr(65 + (num % 26)) + result
+                num //= 26
+            return result
+        
+        lower_col_letter = num_to_col(lower_col_idx + 1)
+        upper_col_letter = num_to_col(upper_col_idx + 1)
+        
+        # Get intervals from lower and upper columns
+        lower_values = victory_ws.get(f'{lower_col_letter}2:{lower_col_letter}50')
+        upper_values = victory_ws.get(f'{upper_col_letter}2:{upper_col_letter}50')
+        
+        # Combine into intervals
+        intervals = []
+        max_rows = max(len(lower_values), len(upper_values))
+        for i in range(max_rows):
+            try:
+                lower_val = float(lower_values[i][0]) if i < len(lower_values) and len(lower_values[i]) > 0 and lower_values[i][0] else None
+                upper_val = float(upper_values[i][0]) if i < len(upper_values) and len(upper_values[i]) > 0 and upper_values[i][0] else None
+                if lower_val is not None and upper_val is not None:
+                    intervals.append((lower_val, upper_val))
+            except (ValueError, TypeError, IndexError):
+                continue
+        
+        print(f"Found {len(intervals)} victory margin intervals")
+        
+        # Get candidate names from the sheet headers (columns C-G typically)
+        # Get headers from C1 to G1 (or wider range if needed)
+        candidate_headers = victory_ws.get('C1:G1')[0]
+        
+        # Create mapping from candidate name to column letter
+        candidate_name_to_col = {}
+        for i, header in enumerate(candidate_headers):
+            if header and header.strip():
+                col_letter = num_to_col(3 + i)  # C is column 3
+                candidate_name_to_col[header] = col_letter
+        
+        print(f"Found candidate columns: {candidate_name_to_col}")
+        
+        # Get candidate names from simulations (these are the actual party names)
+        simulation_candidates = simulations_aging_cov.columns.tolist()
+        print(f"Simulation candidates: {simulation_candidates}")
+        
+        if not candidate_name_to_col or not intervals:
+            print("❌ Error: Could not find candidate columns or intervals")
+            print("Skipping victory margin calculation")
+        else:
+            # Initialize a DataFrame to store the counts
+            # Use the candidate names from the sheet headers as columns
+            sheet_candidate_names = list(candidate_name_to_col.keys())
+            victory_margin_counts = pd.DataFrame(0, index=range(len(intervals)), columns=sheet_candidate_names)
+            
+            # Iterate through each simulation run
+            for i in range(sample):
+                # Get the results for the current simulation
+                run = simulations_aging_cov.iloc[i].sort_values(ascending=False)
+                
+                # Identify winner and runner-up
+                winner_name = run.index[0]
+                winner_score = run.iloc[0]
+                runner_up_score = run.iloc[1]
+                
+                # Calculate margin of victory in percentage points
+                margin = (winner_score - runner_up_score) * 100
+                
+                # Check if the winner matches any candidate name in the sheet
+                # Try exact match first, then partial match
+                matched_candidate = None
+                for sheet_candidate in sheet_candidate_names:
+                    if winner_name == sheet_candidate or winner_name in str(sheet_candidate) or str(sheet_candidate) in winner_name:
+                        matched_candidate = sheet_candidate
+                        break
+                
+                if matched_candidate:
+                    # Find which intervals the margin falls into (cumulative - can match multiple intervals)
+                    for interval_idx, (lo, hi) in enumerate(intervals):
+                        # Handle special case where hi >= 100 means "at least lo"
+                        if hi >= 100:
+                            if margin >= lo:
+                                victory_margin_counts.loc[interval_idx, matched_candidate] += 1
+                        else:
+                            # Normal interval: margin must be >= lo and < hi
+                            if lo <= margin < hi:
+                                victory_margin_counts.loc[interval_idx, matched_candidate] += 1
+            
+            # Calculate probabilities
+            victory_margin_probabilities = victory_margin_counts / sample
+            
+            # Write each candidate's column separately to avoid overwriting
+            print(f"Writing victory margin probabilities to columns: {list(candidate_name_to_col.values())}")
+            try:
+                for candidate_name, col_letter in candidate_name_to_col.items():
+                    if candidate_name in victory_margin_probabilities.columns:
+                        col_data = [[val] for val in victory_margin_probabilities[candidate_name].values]
+                        update_range = f"{col_letter}2:{col_letter}{2 + len(intervals) - 1}"
+                        victory_ws.update(col_data, range_name=update_range)
+                        print(f"  ✓ Wrote {candidate_name} probabilities to column {col_letter}")
+                print("✓ Victory margin probabilities written successfully.")
+            except Exception as e:
+                print(f"❌ Error writing victory margin probabilities: {e}")
+
+except Exception as e:
+    print(f"❌ Error during victory margin calculation: {e}")
+    import traceback
+    traceback.print_exc()
 
 # save to history initial preferences
 historical_row = [d] + [dfpreference['date'][0]] + dfpreference['gain'].to_list() + [''] + dfpreference['volatilita'].to_list()

@@ -23,7 +23,7 @@ creds = client.derive_api_key()
 client.set_api_creds(creds)
 
 # Load token IDs from CSV
-csv_path = "pt-2026/pt_token_ids.csv"
+csv_path = "pt-2026/pt_victory_token_ids.csv"
 df_tokens = pd.read_csv(csv_path)
 
 print("Loaded token data:")
@@ -172,229 +172,415 @@ print(f"- NO data written to rows 38-{38 + len(all_ranks) - 1}")
 
 # --- Functionality starts here: pravděpodobnosti_aktuální_aging_cov ---
 
-# print("\nStarting new functionality: Writing prices based on pt_token_ids.csv")
+print("\nStarting new functionality: Writing prices based on pt_token_ids.csv")
 
-# sheet = sh.worksheet("pravděpodobnosti_aktuální_aging_cov")
+prob_sheet = sh.worksheet("pravděpodobnosti_aktuální_aging_cov")
 
-# # Load the correct token IDs CSV
-# pt_csv_path = "pt-2026/pt_token_ids.csv"
-# df_pt_tokens = pd.read_csv(pt_csv_path)
+# Load the correct token IDs CSV
+pt_csv_path = "pt-2026/pt_token_ids.csv"
+df_pt_tokens = pd.read_csv(pt_csv_path)
 
-# print("Loaded pt_token_ids.csv data:")
-# print(df_pt_tokens.head())
+print("Loaded pt_token_ids.csv data:")
+print(df_pt_tokens.head())
 
-# # Get headers from the sheet for name matching (AB1:AL1)
-# headers = sheet.get('AB1:AL1')[0]
-# yes_headers = headers[:5]  # AB to AF
-# no_headers = headers[6:]   # AH to AL
+# Helper function to convert column number to letter (1 = A, 27 = AA, 31 = AE, etc.)
+def num_to_col(num):
+    """Convert column number to Excel column letter(s)."""
+    result = ""
+    while num > 0:
+        num -= 1
+        result = chr(65 + (num % 26)) + result
+        num //= 26
+    return result
 
-# # Create a mapping from name to column index
-# yes_name_to_col = {name: 'A' + chr(ord('B') + i) for i, name in enumerate(yes_headers)}
-# no_name_to_col = {name: 'A' + chr(ord('H') + i) for i, name in enumerate(no_headers)}
+# Starting column is AE (column 31)
+start_col_num = 31  # AE
+# Get headers from the sheet for name matching (AE1:AL1 or similar range)
+# Assuming we have up to 5 candidates for YES and 5 for NO
+headers = prob_sheet.get(f'{num_to_col(start_col_num)}1:{num_to_col(start_col_num + 9)}1')[0]
+yes_headers = headers[:5]  # First 5 columns for YES
+no_headers = headers[5:10]  # Next 5 columns for NO
 
-# print(f"YES column mapping: {yes_name_to_col}")
-# print(f"NO column mapping: {no_name_to_col}")
+# Create a mapping from name to column letter
+yes_name_to_col = {}
+for i, name in enumerate(yes_headers):
+    if name:  # Skip empty headers
+        col_letter = num_to_col(start_col_num + i)
+        yes_name_to_col[name] = col_letter
 
-# # Get lo/hi ranges from the sheet (columns H and I)
-# sheet_ranges = sheet.get('H2:I50') # Assuming max 50 rows
+no_name_to_col = {}
+for i, name in enumerate(no_headers):
+    if name:  # Skip empty headers
+        col_letter = num_to_col(start_col_num + 5 + i)
+        no_name_to_col[name] = col_letter
 
-# # Prepare batch update requests
-# yes_price_updates = []
-# no_price_updates = []
+print(f"YES column mapping: {yes_name_to_col}")
+print(f"NO column mapping: {no_name_to_col}")
 
-# print("\nFetching prices for markets in pt_token_ids.csv...")
+# Find columns with "lower" and "upper" headers
+header_row = prob_sheet.get('1:1')[0]  # Get first row
+lower_col_idx = None
+upper_col_idx = None
 
-# for index, row in df_pt_tokens.iterrows():
-#     name = row['name']
-#     lo = row['lo']
-#     hi = row['hi']
-#     yes_token_id = row['yes_token_id']
-#     no_token_id = row['no_token_id']
+for i, header in enumerate(header_row):
+    if header and 'lower' in str(header).lower():
+        lower_col_idx = i
+        lower_col_letter = num_to_col(i + 1)  # Convert to 1-based column number
+        print(f"Found 'lower' column at index {i} (column {lower_col_letter})")
+    if header and 'upper' in str(header).lower():
+        upper_col_idx = i
+        upper_col_letter = num_to_col(i + 1)  # Convert to 1-based column number
+        print(f"Found 'upper' column at index {i} (column {upper_col_letter})")
 
-#     # Find the corresponding row in the Google Sheet
-#     target_row_index = -1
-#     for i, sheet_row in enumerate(sheet_ranges):
-#         try:
-#             sheet_lo = int(sheet_row[0])
-#             sheet_hi = int(sheet_row[1])
-#             if sheet_lo == lo and sheet_hi == hi:
-#                 target_row_index = i + 2  # 1-based index, and data starts from row 2
-#                 break
-#         except (ValueError, IndexError):
-#             continue
+if lower_col_idx is None or upper_col_idx is None:
+    print("❌ Error: Could not find 'lower' and/or 'upper' columns in the sheet header")
+    print("Available headers:", [h for h in header_row if h])
+    exit(1)
 
-#     if target_row_index == -1:
-#         print(f"Warning: No matching row found for {name} with range {lo}-{hi}")
-#         continue
+# Get lo/hi ranges from the sheet using the found columns
+lower_col_letter = num_to_col(lower_col_idx + 1)
+upper_col_letter = num_to_col(upper_col_idx + 1)
 
-#     # Fetch YES price
-#     yes_price = ''
-#     try:
-#         orderbook = client.get_order_book(yes_token_id)
-#         _, yes_ask = get_extremes(orderbook)
-#         if yes_ask < 1:
-#             yes_price = f"{yes_ask:.4f}"
-#     except Exception as e:
-#         print(f"Could not fetch YES price for {name} ({lo}-{hi}): {e}")
+# Read columns separately in case they're not adjacent
+lower_values = prob_sheet.get(f'{lower_col_letter}2:{lower_col_letter}50')  # Assuming max 50 rows
+upper_values = prob_sheet.get(f'{upper_col_letter}2:{upper_col_letter}50')  # Assuming max 50 rows
 
-#     # Fetch NO price
-#     no_price = ''
-#     try:
-#         orderbook = client.get_order_book(no_token_id)
-#         _, no_ask = get_extremes(orderbook)
-#         if no_ask < 1:
-#             no_price = f"{no_ask:.4f}"
-#     except Exception as e:
-#         print(f"Could not fetch NO price for {name} ({lo}-{hi}): {e}")
+# Combine into pairs
+sheet_ranges = []
+max_rows = max(len(lower_values), len(upper_values))
+for i in range(max_rows):
+    lower_val = lower_values[i][0] if i < len(lower_values) and len(lower_values[i]) > 0 else None
+    upper_val = upper_values[i][0] if i < len(upper_values) and len(upper_values[i]) > 0 else None
+    sheet_ranges.append([lower_val, upper_val])
 
-#     # Find column and prepare update
-#     if name in yes_name_to_col:
-#         col = yes_name_to_col[name]
-#         cell = f"{col}{target_row_index}"
-#         yes_price_updates.append({'range': cell, 'values': [[yes_price]]})
-#         print(f"  Prepared YES update for {name} ({lo}-{hi}) at {cell}: {yes_price}")
+# Debug: Print first few rows to understand the format
+print(f"\nDebug: First 5 rows from columns {lower_col_letter} (lower) and {upper_col_letter} (upper):")
+for i, sheet_row in enumerate(sheet_ranges[:5]):
+    lower_val = sheet_row[0] if len(sheet_row) > 0 else 'N/A'
+    upper_val = sheet_row[1] if len(sheet_row) > 1 else 'N/A'
+    print(f"  Row {i+2}: lower={lower_val}, upper={upper_val}")
 
-#     if name in no_name_to_col:
-#         col = no_name_to_col[name]
-#         cell = f"{col}{target_row_index}"
-#         no_price_updates.append({'range': cell, 'values': [[no_price]]})
-#         print(f"  Prepared NO update for {name} ({lo}-{hi}) at {cell}: {no_price}")
+# Prepare batch update requests
+yes_price_updates = []
+no_price_updates = []
 
-#     time.sleep(0.5) # Be respectful to the API
+print("\nFetching prices for markets in pt_token_ids.csv...")
 
-# # Execute batch updates
-# print("\nExecuting batch updates to Google Sheets...")
+for index, row in df_pt_tokens.iterrows():
+    name = row['name']
+    lo = row['lo']
+    hi = row['hi']
+    yes_token_id = row['yes_token_id']
+    no_token_id = row['no_token_id']
 
-# try:
-#     if yes_price_updates:
-#         sheet.batch_update(yes_price_updates)
-#         print(f"✓ Successfully updated {len(yes_price_updates)} YES prices.")
-#     else:
-#         print("No YES prices to update.")
+    # Find the corresponding row in the Google Sheet
+    target_row_index = -1
+    for i, sheet_row in enumerate(sheet_ranges):
+        try:
+            if len(sheet_row) >= 2:
+                sheet_lo = int(float(sheet_row[0])) if sheet_row[0] else None
+                sheet_hi = int(float(sheet_row[1])) if sheet_row[1] else None
+                if sheet_lo == lo and sheet_hi == hi:
+                    target_row_index = i + 2  # 1-based index, and data starts from row 2
+                    break
+        except (ValueError, IndexError, TypeError):
+            continue
 
-#     if no_price_updates:
-#         sheet.batch_update(no_price_updates)
-#         print(f"✓ Successfully updated {len(no_price_updates)} NO prices.")
-#     else:
-#         print("No NO prices to update.")
+    if target_row_index == -1:
+        print(f"Warning: No matching row found for {name} with range {lo}-{hi}")
+        continue
 
-#     print("\n🎉 New functionality executed successfully!")
+    # Fetch YES price
+    yes_price = ''
+    try:
+        orderbook = client.get_order_book(yes_token_id)
+        _, yes_ask = get_extremes(orderbook)
+        if yes_ask < 1:
+            yes_price = yes_ask
+    except Exception as e:
+        print(f"Could not fetch YES price for {name} ({lo}-{hi}): {e}")
 
-# except Exception as e:
-#     print(f"❌ Error during batch update: {e}")
+    # Fetch NO price (derived from YES token: 1 - max(bid))
+    no_price = ''
+    try:
+        orderbook = client.get_order_book(yes_token_id)
+        yes_bid, _ = get_extremes(orderbook)
+        if yes_bid > 0:
+            no_price = 1 - yes_bid
+    except Exception as e:
+        print(f"Could not fetch NO price for {name} ({lo}-{hi}): {e}")
+
+    # Find column and prepare update
+    if name in yes_name_to_col and yes_price:
+        col = yes_name_to_col[name]
+        cell = f"{col}{target_row_index}"
+        yes_price_updates.append({'range': cell, 'values': [[yes_price]]})
+        print(f"  Prepared YES update for {name} ({lo}-{hi}) at {cell}: {yes_price:.4f}")
+
+    # For NO prices, check if name is in mapping, or use the same index as YES if available
+    if no_price:
+        if name in no_name_to_col:
+            col = no_name_to_col[name]
+            cell = f"{col}{target_row_index}"
+            no_price_updates.append({'range': cell, 'values': [[no_price]]})
+            print(f"  Prepared NO update for {name} ({lo}-{hi}) at {cell}: {no_price:.4f}")
+        elif name in yes_name_to_col:
+            # If NO column doesn't have the name, try to find corresponding NO column
+            # by using the same index offset (YES starts at AE=31, NO starts at AK=37 which is +6)
+            yes_col_num = start_col_num + list(yes_name_to_col.keys()).index(name)
+            no_col_letter = num_to_col(start_col_num + 6 + list(yes_name_to_col.keys()).index(name))
+            cell = f"{no_col_letter}{target_row_index}"
+            no_price_updates.append({'range': cell, 'values': [[no_price]]})
+            print(f"  Prepared NO update for {name} ({lo}-{hi}) at {cell}: {no_price:.4f} (using offset)")
+        else:
+            print(f"  Warning: Could not find NO column for {name} ({lo}-{hi}), NO price: {no_price:.4f}")
+
+    time.sleep(0.5)  # Be respectful to the API
+
+# Execute batch updates
+print("\nExecuting batch updates to Google Sheets...")
+
+try:
+    if yes_price_updates:
+        prob_sheet.batch_update(yes_price_updates)
+        print(f"✓ Successfully updated {len(yes_price_updates)} YES prices.")
+    else:
+        print("No YES prices to update.")
+
+    if no_price_updates:
+        prob_sheet.batch_update(no_price_updates)
+        print(f"✓ Successfully updated {len(no_price_updates)} NO prices.")
+    else:
+        print("No NO prices to update.")
+
+    print("\n🎉 New functionality executed successfully!")
+
+except Exception as e:
+    print(f"❌ Error during batch update: {e}")
 
 
-# --- New functionality for victory tokens ---
+# --- New functionality for victory margin tokens ---
 
-# print("\nStarting new functionality: Writing prices based on ro_victory_token_ids.csv")
+print("\n--- Starting Victory Margin Update ---")
 
-# # Select the correct worksheet for victory margins
-# victory_sheet = sh.worksheet('victory_margin_aging_cov')
+try:
+    # Select the correct worksheet for victory margins
+    victory_sheet = sh.worksheet('victory_margin_aging_cov')
+    print("✓ Successfully connected to victory_margin_aging_cov sheet")
+except Exception as e:
+    print(f"❌ Error connecting to victory_margin_aging_cov sheet: {e}")
+    print("Skipping Victory Margin Update")
+    exit(0)
 
-# # Load the correct token IDs CSV
-# victory_csv_path = "ro-mayor-bucuresti-2025/ro_victory_token_ids.csv"
-# df_victory_tokens = pd.read_csv(victory_csv_path)
+try:
+    # Load the correct token IDs CSV
+    victory_csv_path = "pt-2026/pt_margin_token.ids.csv"
+    df_victory_tokens = pd.read_csv(victory_csv_path)
+    print(f"Loaded {len(df_victory_tokens)} victory margin market definitions.")
+    print("Loaded pt_margin_token.ids.csv data:")
+    print(df_victory_tokens.head())
+except Exception as e:
+    print(f"❌ Error loading pt_margin_token.ids.csv: {e}")
+    print("Skipping Victory Margin Update")
+    exit(0)
 
-# print("Loaded ro_victory_token_ids.csv data:")
-# print(df_victory_tokens.head())
+try:
+    # Find columns with "lower" and "upper" headers dynamically
+    header_row = victory_sheet.get('1:1')[0]
+    lower_col_idx_vic = None
+    upper_col_idx_vic = None
 
-# # Get headers from the sheet for name matching
-# yes_headers_vic = victory_sheet.get('U1:Y1')[0]
-# no_headers_vic = victory_sheet.get('AA1:AE1')[0]
+    for i, header in enumerate(header_row):
+        if header and 'lower' in str(header).lower():
+            lower_col_idx_vic = i
+            lower_col_letter_vic = num_to_col(i + 1)
+            print(f"Found 'lower' column at index {i} (column {lower_col_letter_vic})")
+        if header and 'upper' in str(header).lower():
+            upper_col_idx_vic = i
+            upper_col_letter_vic = num_to_col(i + 1)
+            print(f"Found 'upper' column at index {i} (column {upper_col_letter_vic})")
 
-# # Create a mapping from name to column index
-# yes_name_to_col_vic = {name: chr(ord('U') + i) for i, name in enumerate(yes_headers_vic)}
-# no_name_to_col_vic = {name: 'A' + chr(ord('A') + i) for i, name in enumerate(no_headers_vic)}
+    if lower_col_idx_vic is None or upper_col_idx_vic is None:
+        print("❌ Error: Could not find 'lower' and/or 'upper' columns in victory_margin_aging_cov sheet header")
+        print("Available headers:", [h for h in header_row if h])
+        exit(0)
 
-# print(f"Victory YES column mapping: {yes_name_to_col_vic}")
-# print(f"Victory NO column mapping: {no_name_to_col_vic}")
+    # Read columns separately
+    lower_values_vic = victory_sheet.get(f'{lower_col_letter_vic}2:{lower_col_letter_vic}50')
+    upper_values_vic = victory_sheet.get(f'{upper_col_letter_vic}2:{upper_col_letter_vic}50')
 
-# # Get lo/hi ranges from the sheet (columns A and B)
-# sheet_ranges_vic = victory_sheet.get('A2:B50') # Assuming max 50 rows
+    # Combine into pairs
+    sheet_ranges_vic = []
+    max_rows_vic = max(len(lower_values_vic), len(upper_values_vic))
+    for i in range(max_rows_vic):
+        lower_val = lower_values_vic[i][0] if i < len(lower_values_vic) and len(lower_values_vic[i]) > 0 else None
+        upper_val = upper_values_vic[i][0] if i < len(upper_values_vic) and len(upper_values_vic[i]) > 0 else None
+        sheet_ranges_vic.append([lower_val, upper_val])
 
-# # Prepare batch update requests
-# yes_price_updates_vic = []
-# no_price_updates_vic = []
+    print(f"✓ Got victory margin ranges: {len(sheet_ranges_vic)} rows")
 
-# print("\nFetching prices for markets in ro_victory_token_ids.csv...")
+    # Find YES and NO header columns dynamically
+    # Look for columns that might contain candidate names
+    # Try to find a pattern - usually YES columns come before NO columns
+    # We'll search for columns that contain candidate names from our data
+    candidate_names = df_victory_tokens['name'].unique()
+    print(f"Candidates in data: {candidate_names}")
 
-# for index, row in df_victory_tokens.iterrows():
-#     name = row['name']
-#     lo = row['lo']
-#     hi = row['hi']
-#     yes_token_id = row['yes_token_id']
-#     no_token_id = row['no_token_id']
+    # Get a wider range of headers to find YES/NO columns
+    # Assuming YES columns are before NO columns, search from column U onwards
+    wide_headers = victory_sheet.get('U1:AZ1')[0]  # Search from U to AZ
+    
+    # Find YES columns (first occurrence of candidate names)
+    yes_start_col_idx = None
+    yes_headers_vic = []
+    for i, header in enumerate(wide_headers):
+        if header and any(name in str(header) for name in candidate_names):
+            if yes_start_col_idx is None:
+                yes_start_col_idx = i + 21  # U is column 21 (1-based)
+            yes_headers_vic.append(header)
+            if len(yes_headers_vic) >= 5:  # Assuming max 5 candidates
+                break
 
-#     # Find the corresponding row in the Google Sheet
-#     target_row_index = -1
-#     for i, sheet_row in enumerate(sheet_ranges_vic):
-#         try:
-#             sheet_lo = int(sheet_row[0])
-#             sheet_hi = int(sheet_row[1])
-#             if sheet_lo == lo and sheet_hi == hi:
-#                 target_row_index = i + 2  # 1-based index, and data starts from row 2
-#                 break
-#         except (ValueError, IndexError):
-#             continue
+    # Find NO columns (after YES columns, skip any separator columns)
+    no_start_col_idx = yes_start_col_idx + len(yes_headers_vic) + 1 if yes_start_col_idx else None
+    no_headers_vic = []
+    if no_start_col_idx:
+        for i in range(no_start_col_idx - 21, min(no_start_col_idx - 21 + 10, len(wide_headers))):
+            if i < len(wide_headers) and wide_headers[i]:
+                header = wide_headers[i]
+                if any(name in str(header) for name in candidate_names) or 'NO' in str(header).upper():
+                    no_headers_vic.append(header)
+                    if len(no_headers_vic) >= 5:
+                        break
 
-#     if target_row_index == -1:
-#         print(f"Warning: No matching row found for {name} with victory range {lo}-{hi}")
-#         continue
+    if not yes_headers_vic:
+        print("❌ Error: Could not find YES header columns in victory_margin_aging_cov sheet")
+        print("Available headers from U onwards:", [h for h in wide_headers if h])
+        exit(0)
 
-#     # Fetch YES price
-#     yes_price = ''
-#     try:
-#         orderbook = client.get_order_book(yes_token_id)
-#         _, yes_ask = get_extremes(orderbook)
-#         if yes_ask < 1:
-#             yes_price = f"{yes_ask:.4f}"
-#     except Exception as e:
-#         print(f"Could not fetch YES price for {name} ({lo}-{hi}): {e}")
+    # Create mappings
+    yes_name_to_col_vic = {}
+    for i, header in enumerate(yes_headers_vic):
+        if header:
+            col_letter = num_to_col(yes_start_col_idx + i)
+            # Try to match candidate name from header
+            for name in candidate_names:
+                if name in str(header):
+                    yes_name_to_col_vic[name] = col_letter
+                    break
 
-#     # Fetch NO price
-#     no_price = ''
-#     try:
-#         orderbook = client.get_order_book(no_token_id)
-#         _, no_ask = get_extremes(orderbook)
-#         if no_ask < 1:
-#             no_price = f"{no_ask:.4f}"
-#     except Exception as e:
-#         print(f"Could not fetch NO price for {name} ({lo}-{hi}): {e}")
+    no_name_to_col_vic = {}
+    if no_start_col_idx and no_headers_vic:
+        for i, header in enumerate(no_headers_vic):
+            if header:
+                col_letter = num_to_col(no_start_col_idx + i)
+                # Try to match candidate name from header
+                for name in candidate_names:
+                    if name in str(header):
+                        no_name_to_col_vic[name] = col_letter
+                        break
 
-#     # Find column and prepare update
-#     if name in yes_name_to_col_vic:
-#         col = yes_name_to_col_vic[name]
-#         cell = f"{col}{target_row_index}"
-#         yes_price_updates_vic.append({'range': cell, 'values': [[yes_price]]})
-#         print(f"  Prepared Victory YES update for {name} ({lo}-{hi}) at {cell}: {yes_price}")
+    print(f"Victory YES column mapping: {yes_name_to_col_vic}")
+    print(f"Victory NO column mapping: {no_name_to_col_vic}")
 
-#     if name in no_name_to_col_vic:
-#         col = no_name_to_col_vic[name]
-#         cell = f"{col}{target_row_index}"
-#         no_price_updates_vic.append({'range': cell, 'values': [[no_price]]})
-#         print(f"  Prepared Victory NO update for {name} ({lo}-{hi}) at {cell}: {no_price}")
+except Exception as e:
+    print(f"❌ Error getting sheet data: {e}")
+    print("Skipping Victory Margin Update")
+    exit(0)
 
-#     time.sleep(0.5) # Be respectful to the API
+# Prepare batch update requests
+yes_price_updates_vic = []
+no_price_updates_vic = []
 
-# # Execute batch updates
-# print("\nExecuting batch updates for victory tokens to Google Sheets...")
+print("\nFetching prices for markets in pt_margin_token.ids.csv...")
 
-# try:
-#     if yes_price_updates_vic:
-#         victory_sheet.batch_update(yes_price_updates_vic)
-#         print(f"✓ Successfully updated {len(yes_price_updates_vic)} Victory YES prices.")
-#     else:
-#         print("No Victory YES prices to update.")
+for index, row in df_victory_tokens.iterrows():
+    name = row['name']
+    lo = row['lo']
+    hi = row['hi']
+    yes_token_id = row['yes_token_id']
+    no_token_id = row['no_token_id']
 
-#     if no_price_updates_vic:
-#         victory_sheet.batch_update(no_price_updates_vic)
-#         print(f"✓ Successfully updated {len(no_price_updates_vic)} Victory NO prices.")
-#     else:
-#         print("No Victory NO prices to update.")
+    # Find the corresponding row in the Google Sheet
+    target_row_index = -1
+    for i, sheet_row in enumerate(sheet_ranges_vic):
+        try:
+            if len(sheet_row) >= 2:
+                sheet_lo = int(float(sheet_row[0])) if sheet_row[0] else None
+                sheet_hi = int(float(sheet_row[1])) if sheet_row[1] else None
+                if sheet_lo == lo and sheet_hi == hi:
+                    target_row_index = i + 2  # 1-based index, and data starts from row 2
+                    break
+        except (ValueError, IndexError, TypeError):
+            continue
 
-#     print("\n🎉 Victory token functionality executed successfully!")
+    if target_row_index == -1:
+        print(f"Warning: No matching row found for {name} with victory range {lo}-{hi}")
+        continue
 
-# except Exception as e:
-#     print(f"❌ Error during victory token batch update: {e}")
+    # Fetch YES price
+    yes_price = ''
+    try:
+        orderbook = client.get_order_book(yes_token_id)
+        _, yes_ask = get_extremes(orderbook)
+        if yes_ask < 1:
+            yes_price = yes_ask
+    except Exception as e:
+        print(f"Could not fetch YES price for {name} ({lo}-{hi}): {e}")
+
+    # Fetch NO price (derived from YES token: 1 - max(bid))
+    no_price = ''
+    try:
+        orderbook = client.get_order_book(yes_token_id)
+        yes_bid, _ = get_extremes(orderbook)
+        if yes_bid > 0:
+            no_price = 1 - yes_bid
+    except Exception as e:
+        print(f"Could not fetch NO price for {name} ({lo}-{hi}): {e}")
+
+    # Find column and prepare update
+    if name in yes_name_to_col_vic and yes_price:
+        col = yes_name_to_col_vic[name]
+        cell = f"{col}{target_row_index}"
+        yes_price_updates_vic.append({'range': cell, 'values': [[yes_price]]})
+        print(f"  Prepared Victory YES update for {name} ({lo}-{hi}) at {cell}: {yes_price:.4f}")
+
+    # For NO prices, check if name is in mapping, or use offset
+    if no_price:
+        if name in no_name_to_col_vic:
+            col = no_name_to_col_vic[name]
+            cell = f"{col}{target_row_index}"
+            no_price_updates_vic.append({'range': cell, 'values': [[no_price]]})
+            print(f"  Prepared Victory NO update for {name} ({lo}-{hi}) at {cell}: {no_price:.4f}")
+        elif name in yes_name_to_col_vic and yes_start_col_idx:
+            # Calculate NO column using offset
+            yes_col_idx = list(yes_name_to_col_vic.keys()).index(name)
+            no_col_letter = num_to_col(no_start_col_idx + yes_col_idx if no_start_col_idx else yes_start_col_idx + len(yes_headers_vic) + yes_col_idx)
+            cell = f"{no_col_letter}{target_row_index}"
+            no_price_updates_vic.append({'range': cell, 'values': [[no_price]]})
+            print(f"  Prepared Victory NO update for {name} ({lo}-{hi}) at {cell}: {no_price:.4f} (using offset)")
+
+    time.sleep(0.5)  # Be respectful to the API
+
+# Execute batch updates
+print("\nExecuting batch updates for victory tokens to Google Sheets...")
+
+try:
+    if yes_price_updates_vic:
+        victory_sheet.batch_update(yes_price_updates_vic)
+        print(f"✓ Successfully updated {len(yes_price_updates_vic)} Victory YES prices.")
+    else:
+        print("No Victory YES prices to update.")
+
+    if no_price_updates_vic:
+        victory_sheet.batch_update(no_price_updates_vic)
+        print(f"✓ Successfully updated {len(no_price_updates_vic)} Victory NO prices.")
+    else:
+        print("No Victory NO prices to update.")
+
+    print("\n🎉 Victory margin token functionality executed successfully!")
+
+except Exception as e:
+    print(f"❌ Error during victory token batch update: {e}")
 
 
