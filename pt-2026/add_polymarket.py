@@ -95,7 +95,7 @@ print(f"\nCollected data for {len(orderbook_data)} markets")
 print("\nPreparing data for Google Sheets...")
 
 # Create matrices for YES and NO data
-# Rows: ranks (1, 2, 12) - 12 is the 1st or 2nd place
+# Rows: ranks (1, 2, 12, 3, 4) - 12 is the 1st or 2nd place
 # Columns: parties (in order from Google Sheets)
 
 yes_data = []
