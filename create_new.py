@@ -12,19 +12,19 @@ import re
 import time
 
 # Parameters for the elections
-election_code = "pt-2026"
-election_flag = "🇵🇹"
-election_date = "2026-01-18"
-source_election_code = "cl-2025" # to copy from
-wikipedia_link = "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2026_Portuguese_presidential_election"
+election_code = "hu-2026"
+election_flag = "🇭🇺"
+election_date = "2026-04-12"
+source_election_code = "pt-2026" # to copy from
+wikipedia_link = "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2026_Hungarian_parliamentary_election"
 
-candidates = ['Gouveia e Melo', 'Marques Mendes', 'António José Seguro', 'André Ventura', 'Cotrim Figueiredo', 'Catarina Martins', 'António Filipe', 'Jorge Pinto']
-candidates_colors = ['#777777', '#FF9900', '#FF66FF', '#202056', '#00ADEF', '#FF0000', '#0066FF', '#0066FF']
-candidates_values = [18.8, 20.2, 13.4,21.7, 12.8, 4.7, 3.1, 2] #
-candidates_needs = [0, 0, 0, 0, 0, 0, 0, 0] #
+candidates = ['Fidesz', 'Tisza', 'MH', 'DK', 'MKKP']
+candidates_colors = ['#FF6A00', '#88E8FF', '#688D1B', '#2A61A4', '#808080']
+candidates_values = [39, 47, 6, 3, 5] #
+candidates_needs = [5, 5, 5, 5, 5] #
 
 # SHEET KEY
-sheetkey = "1hhRprFQjeQAFp435YUFBjqKCzxFp1q85J7TWAaWZ2JE"
+sheetkey = "1a3i0HfphGxlz-6_E04wYq30tG-gGvWQcyUc4-pNwI9U"
 
 # Create html colors by AI:
 # light green in html: #3AAD2E
