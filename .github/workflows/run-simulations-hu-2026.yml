@@ -55,11 +55,11 @@ jobs:
         # Your text says "simulation_hu-2026.py", the code runs "simulations_hu-2026.py"
         run: python hu-2026/simulations_hu-2026.py #<-- VERIFY FILENAME
 
-      - name: Update Polymarket 2026 elections
-        env:
-          POLYMARKET_PRIVATE_KEY: ${{ secrets.POLYMARKET_PRIVATE_KEY_4 }}
-          POLYMARKET_PROXY_ADDRESS: ${{ secrets.POLYMARKET_PROXY_ADDRESS_4 }}
-        run: python hu-2026/add_polymarket.py
+      # - name: Update Polymarket 2026 elections
+      #   env:
+      #      POLYMARKET_PRIVATE_KEY: ${{ secrets.POLYMARKET_PRIVATE_KEY_4 }}
+      #     POLYMARKET_PROXY_ADDRESS: ${{ secrets.POLYMARKET_PROXY_ADDRESS_4 }}
+      #    run: python hu-2026/add_polymarket.py
 
       # Optional: Safer cleanup, only remove the specific file
       - name: Clean up gspread credentials
