@@ -1,4 +1,4 @@
-name: Run simulations US TX 2026 Republican elections
+name: Run simulations US TX 2026 Democratic elections
 
 on:
   # push: # Keep commented out if you commit back changes to avoid loops
@@ -28,14 +28,14 @@ jobs:
         with:
           path: ~/.cache/pip
           # Ensure this path EXACTLY matches where your requirements file is
-          key: ${{ runner.os }}-pip-${{ hashFiles('us-tx-2026-republican/requirements_simulations.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('us-tx-2026-democratic/requirements_simulations.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
       - name: Install Python dependencies
         run: |
           # Ensure this path is correct relative to the repo root
-          pip install -r us-tx-2026-republican/requirements_simulations.txt
+          pip install -r us-tx-2026-democratic/requirements_simulations.txt
 
       # Creates the directory where gspread looks for credentials by default
       - name: Create gspread config directory
@@ -53,7 +53,7 @@ jobs:
       - name: Run simulations
         # Make sure this path and filename are EXACTLY correct
         # Your text says "simulation_hu-2026.py", the code runs "simulations_hu-2026.py"
-        run: python us-tx-2026-republican/simulations_us-tx-2026-republican.py #<-- VERIFY FILENAME
+        run: python us-tx-2026-democratic/simulations_us-tx-2026-democratic.py #<-- VERIFY FILENAME
 
       # - name: Update Polymarket 2026 elections
       #   env:
