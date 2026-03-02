@@ -12,19 +12,19 @@ import re
 import time
 
 # Parameters for the elections
-election_code = "hu-2026"
-election_flag = "🇭🇺"
-election_date = "2026-04-12"
+election_code = "us-tx-2026-democratic"
+election_flag = "🇺🇸"
+election_date = "2026-03-03"
 source_election_code = "pt-2026" # to copy from
-wikipedia_link = "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2026_Hungarian_parliamentary_election"
+wikipedia_link = "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Texas#Democratic_primary"
 
-candidates = ['Fidesz', 'Tisza', 'MH', 'DK', 'MKKP']
-candidates_colors = ['#FF6A00', '#88E8FF', '#688D1B', '#2A61A4', '#808080']
-candidates_values = [39, 47, 6, 3, 5] #
-candidates_needs = [5, 5, 5, 5, 5] #
+candidates = ['Talarico', 'Crockett', 'Allred']
+candidates_colors = ['#4040FF', '#6060FF', '#8080FF']
+candidates_values = [45, 47, 3]
+candidates_needs = [0, 0, 0]
 
 # SHEET KEY
-sheetkey = "1a3i0HfphGxlz-6_E04wYq30tG-gGvWQcyUc4-pNwI9U"
+sheetkey = "1MyNLHnA1r024oV7W9POOJvohJkFUSleDdoSPqmypcF0"
 
 # Create html colors by AI:
 # light green in html: #3AAD2E
