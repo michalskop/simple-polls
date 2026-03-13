@@ -12,19 +12,19 @@ import re
 import time
 
 # Parameters for the elections
-election_code = "us-tx-2026-democratic"
-election_flag = "🇺🇸"
-election_date = "2026-03-03"
+election_code = "si-2026"
+election_flag = "🇸🇮"
+election_date = "2026-03-22"
 source_election_code = "pt-2026" # to copy from
-wikipedia_link = "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Texas#Democratic_primary"
+wikipedia_link = "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2026_Slovenian_parliamentary_election"
 
-candidates = ['Talarico', 'Crockett', 'Allred']
-candidates_colors = ['#4040FF', '#6060FF', '#8080FF']
-candidates_values = [45, 47, 3]
-candidates_needs = [0, 0, 0]
+candidates = ['GS', 'SDS', 'NSi/SLS/FOKUS', 'SD', 'Levica/Vesna', 'RES', 'PIR', 'SNS', 'DEM', 'PVP']
+candidates_colors = ['#00569d', '#FCDC00', '#009AC7', '#E3000F', '#ff4d4d', '#7C5199', '#000000', '#221F1F', '#444444', '#6e288f']
+candidates_values = [22.5, 27.8, 7.7, 9, 7.6, 4.4, 2.6, 2.1, 8.8, 3.6]
+candidates_needs = [4] * len(candidates)
 
 # SHEET KEY
-sheetkey = "1MyNLHnA1r024oV7W9POOJvohJkFUSleDdoSPqmypcF0"
+sheetkey = "1BQ9xPjRZQNG9PDA_A9Z5ArfTnRhO9GKr1f5rCSatyhI"
 
 # Create html colors by AI:
 # light green in html: #3AAD2E
@@ -76,14 +76,14 @@ worksheet = sh.get_worksheet(0)
 worksheet.update_title('info')
 time.sleep(1)
 # set the values
-worksheet.update('A11',[['Viz']])
-worksheet.update('A12', [['https://docs.google.com/spreadsheets/d/1QCOLhcvmC04hiaFikqXGVFTtJ_dttsYxPfS-HQoK6FQ/edit#gid=850346774']], value_input_option='USER_ENTERED')
+worksheet.update(range_name='A11', values=[['Viz']])
+worksheet.update(range_name='A12', values=[['https://docs.google.com/spreadsheets/d/1QCOLhcvmC04hiaFikqXGVFTtJ_dttsYxPfS-HQoK6FQ/edit#gid=850346774']], value_input_option='USER_ENTERED')
 time.sleep(1)
-worksheet.update('A14', [['Run:']])
-worksheet.update('A15', [['https://github.com/michalskop/simple-polls/actions/workflows/run-simulations-' + election_code + '.yml']], value_input_option='USER_ENTERED')
+worksheet.update(range_name='A14', values=[['Run:']])
+worksheet.update(range_name='A15', values=[['https://github.com/michalskop/simple-polls/actions/workflows/run-simulations-' + election_code + '.yml']], value_input_option='USER_ENTERED')
 time.sleep(1)
-worksheet.update('A17', [['Wiki:']])
-worksheet.update('A18', [[wikipedia_link]], value_input_option='USER_ENTERED')
+worksheet.update(range_name='A17', values=[['Wiki:']])
+worksheet.update(range_name='A18', values=[[wikipedia_link]], value_input_option='USER_ENTERED')
 time.sleep(1)
 # formats
 worksheet.format('A11:A12', {"textFormat": {"fontSize": 7}})
@@ -92,7 +92,7 @@ time.sleep(1)
 gspread_formatting.set_column_width(worksheet, 'A', 20)
 time.sleep(1)
 # flag
-worksheet.update('B2', [[election_flag]])
+worksheet.update(range_name='B2', values=[[election_flag]])
 worksheet.format('B2', {"textFormat": {"fontSize": 150}})
 print("Sheet 1: info created.")
 
@@ -102,12 +102,12 @@ worksheet = sh.add_worksheet(title="preference", rows=20, cols=20)
 # freeze and set the first row values
 worksheet.freeze(rows=1)
 row = ['party', 'gain', 'date', 'volatilita', 'last update - computed (GMT)', 'needed']
-worksheet.update('A1', [row])
+worksheet.update(range_name='A1', values=[row])
 time.sleep(1)
 # set the values
 for i in range(len(candidates)):
   row = [candidates[i], candidates_values[i], '', 1, '', candidates_needs[i]]
-  worksheet.update('A' + str(i + 2), [row])
+  worksheet.update(range_name='A' + str(i + 2), values=[row])
   # formats
   color = hex_to_rgb(candidates_colors[i])
   worksheet.format('A' + str(i + 2), {'backgroundColor': {'red': color[0]/255, 'green': color[1]/255, 'blue': color[2]/255}})
@@ -118,7 +118,7 @@ for i in range(len(candidates)):
   time.sleep(1)
 # add dates
 todate = datetime.datetime.today().isoformat()[:10]
-worksheet.update('C2', [[todate]])
+worksheet.update(range_name='C2', values=[[todate]])
 worksheet.format('E2', {"textFormat": {"bold": True}})
 # add color
 worksheet.update_tab_color(rgb_to_hex((58 / 255, 173 / 255, 46 / 255)))
@@ -137,8 +137,8 @@ worksheet.freeze(rows=1)
 worksheet2.freeze(rows=1)
 time.sleep(1)
 row = ['Pořadí'] + candidates
-worksheet.update('A1', [row])
-worksheet2.update('A1', [row])
+worksheet.update(range_name='A1', values=[row])
+worksheet2.update(range_name='A1', values=[row])
 time.sleep(1)
 # set the ranks
 col = []
@@ -154,18 +154,18 @@ for i in range(len(candidates)):
     worksheet.format(chr(66 + i) + '1', {"textFormat": {"foregroundColor": {"red": 1, "green": 1, "blue": 1}}})
     worksheet2.format(chr(66 + i) + '1', {"textFormat": {"foregroundColor": {"red": 1, "green": 1, "blue": 1}}})
     time.sleep(2)
-worksheet.update('A2', col)
-worksheet2.update('A2', col)
+worksheet.update(range_name='A2', values=col)
+worksheet2.update(range_name='A2', values=col)
 time.sleep(1)
 # set Fair price part
-worksheet.update('A' + str(len(candidates) + 3), [['Fair price']])
-worksheet2.update('A' + str(len(candidates) + 3), [['Fair price']])
+worksheet.update(range_name='A' + str(len(candidates) + 3), values=[['Fair price']])
+worksheet2.update(range_name='A' + str(len(candidates) + 3), values=[['Fair price']])
 time.sleep(2)
-worksheet.update('A' + str(len(candidates) + 4), [['Pořadí']])
-worksheet2.update('A' + str(len(candidates) + 4), [['Pořadí']])
+worksheet.update(range_name='A' + str(len(candidates) + 4), values=[['Pořadí']])
+worksheet2.update(range_name='A' + str(len(candidates) + 4), values=[['Pořadí']])
 time.sleep(2)
-worksheet.update('A' + str(len(candidates) + 5), col)
-worksheet2.update('A' + str(len(candidates) + 5), col)
+worksheet.update(range_name='A' + str(len(candidates) + 5), values=col)
+worksheet2.update(range_name='A' + str(len(candidates) + 5), values=col)
 time.sleep(2)
 # set the Fair price equation
 rng = []
@@ -175,8 +175,8 @@ for i in range(len(candidates)):
     item = '=1/' + chr(66 + j) + (str(i + 2))
     row.append(item)
   rng.append(row)
-worksheet.update('B' + str(len(candidates) + 5), rng, value_input_option='USER_ENTERED')
-worksheet2.update('B' + str(len(candidates) + 5), rng, value_input_option='USER_ENTERED')
+worksheet.update(range_name='B' + str(len(candidates) + 5), values=rng, value_input_option='USER_ENTERED')
+worksheet2.update(range_name='B' + str(len(candidates) + 5), values=rng, value_input_option='USER_ENTERED')
 # done
 print("Sheet 3 + 4: pořadí aktuální created.")
 time.sleep(15)
@@ -193,8 +193,8 @@ worksheet.freeze(rows=1)
 worksheet2.freeze(rows=1)
 time.sleep(1)
 row = ['Pr[zisk > x %]'] + candidates
-worksheet.update('A1', [row])
-worksheet2.update('A1', [row])
+worksheet.update(range_name='A1', values=[row])
+worksheet2.update(range_name='A1', values=[row])
 time.sleep(1)
 # set the colors
 for i in range(len(candidates)):
@@ -218,8 +218,8 @@ time.sleep(2)
 # worksheet = sh.worksheet("duely_aging")
 # worksheet2 = sh.worksheet("duely_aging_cov")
 # add the first cell
-worksheet.update('A1', [['Pr[row >= column]']])
-worksheet2.update('A1', [['Pr[row >= column]']])
+worksheet.update(range_name='A1', values=[['Pr[row >= column]']])
+worksheet2.update(range_name='A1', values=[['Pr[row >= column]']])
 time.sleep(1)
 # done
 print("Sheet 7 + 8: duely aging created.")
@@ -233,8 +233,8 @@ time.sleep(2)
 # worksheet = sh.worksheet("top_2")
 # worksheet2 = sh.worksheet("top_2_cov")
 # add the first cell
-worksheet.update('A1', [['Pr[TOP 2]']])
-worksheet2.update('A1', [['Pr[TOP 2]']])
+worksheet.update(range_name='A1', values=[['Pr[TOP 2]']])
+worksheet2.update(range_name='A1', values=[['Pr[TOP 2]']])
 time.sleep(1)
 # done
 print("Sheet 9 + 10: top 2 aging created.")
@@ -244,7 +244,7 @@ time.sleep(5)
 worksheet = sh.add_worksheet(title="number_in_aging_cov", rows=(len(candidates) + 2), cols=10)
 time.sleep(1)
 # add the first cell
-worksheet.update('A1', [['Number in', 'Pr']])
+worksheet.update(range_name='A1', values=[['Number in', 'Pr']])
 # done
 print("Sheet 11: number_in_aging_cov created.")
 time.sleep(5)
@@ -255,11 +255,11 @@ worksheet = sh.add_worksheet(title="median correlations", rows=(len(candidates) 
 # worksheet = sh.worksheet("median correlations")
 time.sleep(1)
 # add the first cell
-worksheet.update('A1', [['Median']])
+worksheet.update(range_name='A1', values=[['Median']])
 # fill names to row and column
-worksheet.update('B1', [candidates])
+worksheet.update(range_name='B1', values=[candidates])
 col = [[x] for x in candidates]
-worksheet.update('A2', col)
+worksheet.update(range_name='A2', values=col)
 time.sleep(2)
 # fill colors
 for i in range(len(candidates)):
@@ -281,7 +281,7 @@ for i in range(len(candidates)):
     else:
       row.append(0)
   rng.append(row)
-worksheet.update('B2', rng)
+worksheet.update(range_name='B2', values=rng)
 # done
 print("Sheet 12: median correlations created.")
 
@@ -290,7 +290,7 @@ worksheet = sh.add_worksheet(title="history", rows=20, cols=(2 * len(candidates)
 time.sleep(1)
 # add the first row and freeze
 row = ['date_running', 'date'] + candidates + [''] + ['volatilita_' + x for x in candidates]
-worksheet.update('A1', [row])
+worksheet.update(range_name='A1', values=[row])
 worksheet.freeze(rows=1)
 time.sleep(1)
 # done
