@@ -55,6 +55,25 @@ def uniform_error(p, n, volatility, coef = 1):
   p['uniform_error'] = scipy.stats.uniform.rvs(loc=(-1 * p['sdx'] * math.sqrt(3)), scale=(2 * p['sdx'] * math.sqrt(3)))
   return p
 
+def allocate_seats_largest_remainder(gains, total_seats=88, threshold=0.04):
+  gains = gains.clip(lower=0)
+  qualifying = gains[gains > threshold]
+  seats = pd.Series(0, index=gains.index, dtype=int)
+  s = qualifying.sum()
+  if s <= 0:
+    return seats
+  q = s / total_seats
+  exact = qualifying / q
+  base = np.floor(exact).astype(int)
+  seats.loc[base.index] = base
+  remaining = int(total_seats - int(seats.sum()))
+  if remaining <= 0:
+    return seats
+  remainders = (exact - base).sort_values(ascending=False, kind='mergesort')
+  for party in remainders.index[:remaining]:
+    seats.loc[party] += 1
+  return seats
+
 # simulations
 simulations = pd.DataFrame(columns=dfpreference['party'].to_list())
 simulations_aging = pd.DataFrame(columns=dfpreference['party'].to_list())
@@ -293,6 +312,22 @@ wsw.update(values=number_in_aging_cov.values.tolist(), range_name='A2')
 wsw = sh.worksheet('preference')
 d = datetime.datetime.now().isoformat()
 wsw.update(values=[[d]], range_name='E2')
+
+seats_simulations_aging_cov = pd.DataFrame(0, index=range(sample), columns=simulations_aging_cov.columns, dtype=int)
+for i in range(sample):
+  seats_simulations_aging_cov.iloc[i] = allocate_seats_largest_remainder(simulations_aging_cov.iloc[i])
+
+seat_max = 88
+seats_prob_aging_cov = pd.DataFrame(index=range(0, seat_max + 1), columns=simulations_aging_cov.columns, dtype=float)
+for party in seats_simulations_aging_cov.columns:
+  counts = seats_simulations_aging_cov[party].value_counts(sort=False)
+  for x in range(0, seat_max + 1):
+    seats_prob_aging_cov.loc[x, party] = counts.get(x, 0) / sample
+
+wsw = sh.worksheet('seats_aging_cov')
+header = ['Pr[S=x]'] + seats_prob_aging_cov.columns.values.tolist()
+table = [header] + [[x] + seats_prob_aging_cov.loc[x].values.tolist() for x in seats_prob_aging_cov.index]
+wsw.update(values=table, range_name='A1')
 
 # --- New functionality: Victory Margin Calculation ---
 
