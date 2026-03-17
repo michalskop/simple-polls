@@ -1,0 +1,645 @@
+{
+  "national": {
+    "fidesz": 52.52,
+    "opposition": 38.1,
+    "others": 9.38
+  },
+  "districts": [
+    {
+      "id": "01-01",
+      "fidesz": 41.4,
+      "opposition": 51.33,
+      "others": 7.27
+    },
+    {
+      "id": "01-02",
+      "fidesz": 42.11,
+      "opposition": 48.6,
+      "others": 9.29
+    },
+    {
+      "id": "01-03",
+      "fidesz": 41.79,
+      "opposition": 50.17,
+      "others": 8.04
+    },
+    {
+      "id": "01-04",
+      "fidesz": 40.73,
+      "opposition": 52.42,
+      "others": 6.85
+    },
+    {
+      "id": "01-05",
+      "fidesz": 31.67,
+      "opposition": 60.22,
+      "others": 8.11
+    },
+    {
+      "id": "01-06",
+      "fidesz": 37.91,
+      "opposition": 53.69,
+      "others": 8.4
+    },
+    {
+      "id": "01-07",
+      "fidesz": 39.33,
+      "opposition": 51.91,
+      "others": 8.76
+    },
+    {
+      "id": "01-08",
+      "fidesz": 41.21,
+      "opposition": 48.29,
+      "others": 10.5
+    },
+    {
+      "id": "01-09",
+      "fidesz": 41.11,
+      "opposition": 48.89,
+      "others": 10.0
+    },
+    {
+      "id": "01-10",
+      "fidesz": 41.46,
+      "opposition": 50.26,
+      "others": 8.28
+    },
+    {
+      "id": "01-11",
+      "fidesz": 41.08,
+      "opposition": 50.49,
+      "others": 8.43
+    },
+    {
+      "id": "01-12",
+      "fidesz": 38.28,
+      "opposition": 53.19,
+      "others": 8.53
+    },
+    {
+      "id": "01-13",
+      "fidesz": 40.78,
+      "opposition": 49.3,
+      "others": 9.92
+    },
+    {
+      "id": "01-14",
+      "fidesz": 45.22,
+      "opposition": 45.74,
+      "others": 9.04
+    },
+    {
+      "id": "01-15",
+      "fidesz": 44.96,
+      "opposition": 45.21,
+      "others": 9.83
+    },
+    {
+      "id": "01-16",
+      "fidesz": 43.63,
+      "opposition": 45.79,
+      "others": 10.58
+    },
+    {
+      "id": "02-01",
+      "fidesz": 41.78,
+      "opposition": 44.83,
+      "others": 13.39
+    },
+    {
+      "id": "02-02",
+      "fidesz": 44.41,
+      "opposition": 42.4,
+      "others": 13.19
+    },
+    {
+      "id": "02-03",
+      "fidesz": 60.44,
+      "opposition": 31.71,
+      "others": 7.85
+    },
+    {
+      "id": "02-04",
+      "fidesz": 61.08,
+      "opposition": 29.47,
+      "others": 9.45
+    },
+    {
+      "id": "03-01",
+      "fidesz": 59.02,
+      "opposition": 28.98,
+      "others": 12.0
+    },
+    {
+      "id": "03-02",
+      "fidesz": 53.0,
+      "opposition": 34.28,
+      "others": 12.72
+    },
+    {
+      "id": "03-03",
+      "fidesz": 59.7,
+      "opposition": 33.17,
+      "others": 7.13
+    },
+    {
+      "id": "03-04",
+      "fidesz": 62.97,
+      "opposition": 26.57,
+      "others": 10.46
+    },
+    {
+      "id": "03-05",
+      "fidesz": 60.16,
+      "opposition": 30.03,
+      "others": 9.81
+    },
+    {
+      "id": "03-06",
+      "fidesz": 57.26,
+      "opposition": 33.56,
+      "others": 9.18
+    },
+    {
+      "id": "04-01",
+      "fidesz": 48.27,
+      "opposition": 40.97,
+      "others": 10.76
+    },
+    {
+      "id": "04-02",
+      "fidesz": 57.71,
+      "opposition": 30.41,
+      "others": 11.88
+    },
+    {
+      "id": "04-03",
+      "fidesz": 55.76,
+      "opposition": 35.16,
+      "others": 9.08
+    },
+    {
+      "id": "04-04",
+      "fidesz": 49.82,
+      "opposition": 40.12,
+      "others": 10.06
+    },
+    {
+      "id": "05-01",
+      "fidesz": 46.54,
+      "opposition": 43.41,
+      "others": 10.05
+    },
+    {
+      "id": "05-02",
+      "fidesz": 43.79,
+      "opposition": 44.0,
+      "others": 12.21
+    },
+    {
+      "id": "05-03",
+      "fidesz": 58.93,
+      "opposition": 27.63,
+      "others": 13.44
+    },
+    {
+      "id": "05-04",
+      "fidesz": 54.39,
+      "opposition": 35.12,
+      "others": 10.49
+    },
+    {
+      "id": "05-05",
+      "fidesz": 60.6,
+      "opposition": 30.56,
+      "others": 8.84
+    },
+    {
+      "id": "05-06",
+      "fidesz": 59.0,
+      "opposition": 38.05,
+      "others": 2.95
+    },
+    {
+      "id": "05-07",
+      "fidesz": 60.42,
+      "opposition": 28.16,
+      "others": 11.42
+    },
+    {
+      "id": "06-01",
+      "fidesz": 35.49,
+      "opposition": 52.85,
+      "others": 11.66
+    },
+    {
+      "id": "06-02",
+      "fidesz": 46.56,
+      "opposition": 39.43,
+      "others": 14.01
+    },
+    {
+      "id": "06-03",
+      "fidesz": 54.74,
+      "opposition": 32.76,
+      "others": 12.5
+    },
+    {
+      "id": "06-04",
+      "fidesz": 51.75,
+      "opposition": 41.0,
+      "others": 7.25
+    },
+    {
+      "id": "07-01",
+      "fidesz": 51.55,
+      "opposition": 37.68,
+      "others": 10.77
+    },
+    {
+      "id": "07-02",
+      "fidesz": 53.42,
+      "opposition": 34.7,
+      "others": 11.88
+    },
+    {
+      "id": "07-03",
+      "fidesz": 56.74,
+      "opposition": 34.17,
+      "others": 9.09
+    },
+    {
+      "id": "07-04",
+      "fidesz": 46.61,
+      "opposition": 44.8,
+      "others": 8.59
+    },
+    {
+      "id": "07-05",
+      "fidesz": 64.75,
+      "opposition": 24.89,
+      "others": 10.36
+    },
+    {
+      "id": "08-01",
+      "fidesz": 50.44,
+      "opposition": 40.54,
+      "others": 9.02
+    },
+    {
+      "id": "08-02",
+      "fidesz": 60.13,
+      "opposition": 33.01,
+      "others": 6.86
+    },
+    {
+      "id": "08-03",
+      "fidesz": 71.22,
+      "opposition": 22.8,
+      "others": 5.98
+    },
+    {
+      "id": "08-04",
+      "fidesz": 57.35,
+      "opposition": 35.37,
+      "others": 7.28
+    },
+    {
+      "id": "08-05",
+      "fidesz": 59.23,
+      "opposition": 31.8,
+      "others": 8.97
+    },
+    {
+      "id": "09-01",
+      "fidesz": 48.95,
+      "opposition": 41.17,
+      "others": 9.88
+    },
+    {
+      "id": "09-02",
+      "fidesz": 55.61,
+      "opposition": 40.12,
+      "others": 4.27
+    },
+    {
+      "id": "09-03",
+      "fidesz": 63.51,
+      "opposition": 28.9,
+      "others": 7.59
+    },
+    {
+      "id": "09-04",
+      "fidesz": 61.66,
+      "opposition": 23.7,
+      "others": 14.64
+    },
+    {
+      "id": "09-05",
+      "fidesz": 60.61,
+      "opposition": 31.31,
+      "others": 8.08
+    },
+    {
+      "id": "09-06",
+      "fidesz": 58.19,
+      "opposition": 32.53,
+      "others": 9.28
+    },
+    {
+      "id": "10-01",
+      "fidesz": 52.19,
+      "opposition": 37.61,
+      "others": 10.2
+    },
+    {
+      "id": "10-02",
+      "fidesz": 54.91,
+      "opposition": 37.37,
+      "others": 7.72
+    },
+    {
+      "id": "10-03",
+      "fidesz": 59.06,
+      "opposition": 31.38,
+      "others": 9.56
+    },
+    {
+      "id": "11-01",
+      "fidesz": 46.91,
+      "opposition": 40.42,
+      "others": 12.67
+    },
+    {
+      "id": "11-02",
+      "fidesz": 59.81,
+      "opposition": 34.91,
+      "others": 5.28
+    },
+    {
+      "id": "11-03",
+      "fidesz": 64.14,
+      "opposition": 30.18,
+      "others": 5.68
+    },
+    {
+      "id": "11-04",
+      "fidesz": 51.5,
+      "opposition": 37.1,
+      "others": 11.4
+    },
+    {
+      "id": "12-01",
+      "fidesz": 48.18,
+      "opposition": 42.8,
+      "others": 9.02
+    },
+    {
+      "id": "12-02",
+      "fidesz": 49.96,
+      "opposition": 38.8,
+      "others": 11.24
+    },
+    {
+      "id": "12-03",
+      "fidesz": 55.1,
+      "opposition": 34.89,
+      "others": 10.01
+    },
+    {
+      "id": "13-01",
+      "fidesz": 53.85,
+      "opposition": 36.98,
+      "others": 9.17
+    },
+    {
+      "id": "13-02",
+      "fidesz": 60.08,
+      "opposition": 24.84,
+      "others": 15.08
+    },
+    {
+      "id": "14-01",
+      "fidesz": 45.27,
+      "opposition": 44.16,
+      "others": 10.57
+    },
+    {
+      "id": "14-02",
+      "fidesz": 43.53,
+      "opposition": 48.41,
+      "others": 8.06
+    },
+    {
+      "id": "14-03",
+      "fidesz": 52.09,
+      "opposition": 39.48,
+      "others": 8.43
+    },
+    {
+      "id": "14-04",
+      "fidesz": 53.56,
+      "opposition": 36.6,
+      "others": 9.84
+    },
+    {
+      "id": "14-05",
+      "fidesz": 45.62,
+      "opposition": 44.42,
+      "others": 9.96
+    },
+    {
+      "id": "14-06",
+      "fidesz": 46.08,
+      "opposition": 43.19,
+      "others": 10.73
+    },
+    {
+      "id": "14-07",
+      "fidesz": 56.23,
+      "opposition": 33.1,
+      "others": 10.67
+    },
+    {
+      "id": "14-08",
+      "fidesz": 49.43,
+      "opposition": 38.53,
+      "others": 12.04
+    },
+    {
+      "id": "14-09",
+      "fidesz": 56.41,
+      "opposition": 33.65,
+      "others": 9.94
+    },
+    {
+      "id": "14-10",
+      "fidesz": 45.19,
+      "opposition": 44.04,
+      "others": 10.77
+    },
+    {
+      "id": "14-11",
+      "fidesz": 54.12,
+      "opposition": 36.09,
+      "others": 9.79
+    },
+    {
+      "id": "14-12",
+      "fidesz": 58.76,
+      "opposition": 30.74,
+      "others": 10.5
+    },
+    {
+      "id": "14-13",
+      "fidesz": 60.1,
+      "opposition": 29.85,
+      "others": 10.05
+    },
+    {
+      "id": "14-14",
+      "fidesz": 59.11,
+      "opposition": 29.72,
+      "others": 11.17
+    },
+    {
+      "id": "15-01",
+      "fidesz": 47.63,
+      "opposition": 36.62,
+      "others": 15.75
+    },
+    {
+      "id": "15-02",
+      "fidesz": 57.86,
+      "opposition": 38.05,
+      "others": 4.09
+    },
+    {
+      "id": "15-03",
+      "fidesz": 57.92,
+      "opposition": 36.31,
+      "others": 5.77
+    },
+    {
+      "id": "15-04",
+      "fidesz": 59.94,
+      "opposition": 37.63,
+      "others": 2.43
+    },
+    {
+      "id": "16-01",
+      "fidesz": 44.92,
+      "opposition": 44.1,
+      "others": 10.98
+    },
+    {
+      "id": "16-02",
+      "fidesz": 58.13,
+      "opposition": 33.64,
+      "others": 8.23
+    },
+    {
+      "id": "16-03",
+      "fidesz": 65.31,
+      "opposition": 27.7,
+      "others": 6.99
+    },
+    {
+      "id": "16-04",
+      "fidesz": 68.71,
+      "opposition": 25.52,
+      "others": 5.77
+    },
+    {
+      "id": "16-05",
+      "fidesz": 64.79,
+      "opposition": 25.34,
+      "others": 9.87
+    },
+    {
+      "id": "16-06",
+      "fidesz": 65.69,
+      "opposition": 27.3,
+      "others": 7.01
+    },
+    {
+      "id": "17-01",
+      "fidesz": 55.51,
+      "opposition": 35.94,
+      "others": 8.55
+    },
+    {
+      "id": "17-02",
+      "fidesz": 62.44,
+      "opposition": 28.48,
+      "others": 9.08
+    },
+    {
+      "id": "17-03",
+      "fidesz": 62.98,
+      "opposition": 28.96,
+      "others": 8.06
+    },
+    {
+      "id": "18-01",
+      "fidesz": 49.95,
+      "opposition": 41.26,
+      "others": 8.79
+    },
+    {
+      "id": "18-02",
+      "fidesz": 64.38,
+      "opposition": 26.9,
+      "others": 8.72
+    },
+    {
+      "id": "18-03",
+      "fidesz": 66.4,
+      "opposition": 28.03,
+      "others": 5.57
+    },
+    {
+      "id": "19-01",
+      "fidesz": 50.48,
+      "opposition": 40.41,
+      "others": 9.11
+    },
+    {
+      "id": "19-02",
+      "fidesz": 50.99,
+      "opposition": 38.12,
+      "others": 10.89
+    },
+    {
+      "id": "19-03",
+      "fidesz": 50.7,
+      "opposition": 45.36,
+      "others": 3.94
+    },
+    {
+      "id": "19-04",
+      "fidesz": 62.7,
+      "opposition": 29.83,
+      "others": 7.47
+    },
+    {
+      "id": "20-01",
+      "fidesz": 56.8,
+      "opposition": 32.17,
+      "others": 11.03
+    },
+    {
+      "id": "20-02",
+      "fidesz": 59.84,
+      "opposition": 30.11,
+      "others": 10.05
+    },
+    {
+      "id": "20-03",
+      "fidesz": 52.98,
+      "opposition": 38.28,
+      "others": 8.74
+    }
+  ]
+}

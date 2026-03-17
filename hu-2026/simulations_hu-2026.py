@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import scipy.stats
 import warnings
+from allocate_seats_hungary import HungarianSeatAllocator
 # from matplotlib import pyplot as plt
 
 election_date = '2026-04-12'
@@ -294,7 +295,61 @@ wsw = sh.worksheet('preference')
 d = datetime.datetime.now().isoformat()
 wsw.update(values=[[d]], range_name='E2')
 
-# --- New functionality: Victory Margin Calculation ---
+# --- Seat allocation calculation ---
+print("\nCalculating seat allocations...")
+
+# Initialize the seat allocator once for better performance
+allocator = HungarianSeatAllocator()
+
+# Get party columns - need to identify Fidesz, Tisza, Others, and Mi Hazánk
+# Assuming the columns are named appropriately in the simulations dataframe
+party_columns = simulations_aging_cov.columns.tolist()
+
+# Create a dataframe to store seat allocations for each simulation
+# Hungarian parliament has 199 seats total
+seats_simulations_aging_cov = pd.DataFrame(0, index=range(sample), columns=['Fidesz', 'Tisza', 'MH'], dtype=int)
+
+# For each simulation, calculate seat allocation
+for i in range(sample):
+    # Get the vote shares from this simulation (as percentages)
+    sim_row = simulations_aging_cov.iloc[i]
+    
+    # Extract the relevant parties (column names: Fidesz, Tisza, MH, DK, MKKP)
+    fidesz_pct = sim_row.get('Fidesz', 0) * 100
+    tisza_pct = sim_row.get('Tisza', 0) * 100
+    mi_hazank_pct = sim_row.get('MH', 0) * 100
+    
+    # Calculate "Others" as 100 - Fidesz - Tisza
+    # Note: MH is both part of Others and passed separately to the allocation function
+    others_pct = 100 - fidesz_pct - tisza_pct
+    
+    # Allocate seats using the Hungarian function
+    fidesz_seats, tisza_seats, mi_hazank_seats = allocator.allocate_seats(
+        fidesz_pct, tisza_pct, others_pct, mi_hazank_pct
+    )
+    
+    # Store the results
+    seats_simulations_aging_cov.iloc[i] = [fidesz_seats, tisza_seats, mi_hazank_seats]
+
+# Calculate probability distribution for each party
+# Pr[S=x] for x from 0 to 199 seats
+seat_max = 199
+seats_prob_aging_cov = pd.DataFrame(index=range(0, seat_max + 1), columns=seats_simulations_aging_cov.columns, dtype=float)
+
+for party in seats_simulations_aging_cov.columns:
+    counts = seats_simulations_aging_cov[party].value_counts(sort=False)
+    for x in range(0, seat_max + 1):
+        seats_prob_aging_cov.loc[x, party] = counts.get(x, 0) / sample
+
+# Write to Google Sheets
+wsw = sh.worksheet('seats_aging_cov')
+header = ['Pr[S=x]'] + seats_prob_aging_cov.columns.values.tolist()
+table = [header] + [[x] + seats_prob_aging_cov.loc[x].values.tolist() for x in seats_prob_aging_cov.index]
+wsw.update(values=table, range_name='A1')
+
+print(f"Seat allocation complete. Results written to 'seats_aging_cov' worksheet.")
+
+# --- Victory Margin Calculation ---
 
 print("\nCalculating victory margin probabilities...")
 
@@ -302,125 +357,102 @@ try:
     # Get the worksheet for victory margins
     victory_ws = sh.worksheet('victory_margin_aging_cov')
     
-    # Find columns with "lower" and "upper" headers dynamically
     header_row = victory_ws.get('1:1')[0]
-    lower_col_idx = None
-    upper_col_idx = None
-    
-    for i, header in enumerate(header_row):
-        if header and 'lower' in str(header).lower():
-            lower_col_idx = i
-        if header and 'upper' in str(header).lower():
-            upper_col_idx = i
-    
-    if lower_col_idx is None or upper_col_idx is None:
-        print("❌ Error: Could not find 'lower' and/or 'upper' columns in victory_margin_aging_cov sheet")
+    if not header_row or not header_row[0] or 'victory' not in str(header_row[0]).lower():
+        print("❌ Error: Could not find expected 'Victory > x' header in cell A1 of victory_margin_aging_cov sheet")
         print("Skipping victory margin calculation")
     else:
-        # Helper function to convert column number to letter
-        def num_to_col(num):
-            result = ""
-            while num > 0:
-                num -= 1
-                result = chr(65 + (num % 26)) + result
-                num //= 26
-            return result
+        # Get party names from header row (columns B onwards)
+        # Filter out 'lo', 'hi' and other non-party columns
+        all_headers = [h for h in header_row[1:] if str(h).strip()]
+        # Only keep headers that match simulation columns (actual party names)
+        sheet_parties = [h for h in all_headers if h in simulations_aging_cov.columns]
         
-        lower_col_letter = num_to_col(lower_col_idx + 1)
-        upper_col_letter = num_to_col(upper_col_idx + 1)
-        
-        # Get intervals from lower and upper columns
-        lower_values = victory_ws.get(f'{lower_col_letter}2:{lower_col_letter}50')
-        upper_values = victory_ws.get(f'{upper_col_letter}2:{upper_col_letter}50')
-        
-        # Combine into intervals
-        intervals = []
-        max_rows = max(len(lower_values), len(upper_values))
-        for i in range(max_rows):
-            try:
-                lower_val = float(lower_values[i][0]) if i < len(lower_values) and len(lower_values[i]) > 0 and lower_values[i][0] else None
-                upper_val = float(upper_values[i][0]) if i < len(upper_values) and len(upper_values[i]) > 0 and upper_values[i][0] else None
-                if lower_val is not None and upper_val is not None:
-                    intervals.append((lower_val, upper_val))
-            except (ValueError, TypeError, IndexError):
-                continue
-        
-        print(f"Found {len(intervals)} victory margin intervals")
-        
-        # Get candidate names from the sheet headers (columns C-G typically)
-        # Get headers from C1 to G1 (or wider range if needed)
-        candidate_headers = victory_ws.get('C1:G1')[0]
-        
-        # Create mapping from candidate name to column letter
-        candidate_name_to_col = {}
-        for i, header in enumerate(candidate_headers):
-            if header and header.strip():
-                col_letter = num_to_col(3 + i)  # C is column 3
-                candidate_name_to_col[header] = col_letter
-        
-        print(f"Found candidate columns: {candidate_name_to_col}")
-        
-        # Get candidate names from simulations (these are the actual party names)
-        simulation_candidates = simulations_aging_cov.columns.tolist()
-        print(f"Simulation candidates: {simulation_candidates}")
-        
-        if not candidate_name_to_col or not intervals:
-            print("❌ Error: Could not find candidate columns or intervals")
+        if not sheet_parties:
+            print("❌ Error: No party headers found in row 1 of victory_margin_aging_cov sheet")
+            print(f"   Available simulation parties: {simulations_aging_cov.columns.tolist()}")
+            print(f"   Headers in sheet: {all_headers}")
             print("Skipping victory margin calculation")
         else:
-            # Initialize a DataFrame to store the counts
-            # Use the candidate names from the sheet headers as columns
-            sheet_candidate_names = list(candidate_name_to_col.keys())
-            victory_margin_counts = pd.DataFrame(0, index=range(len(intervals)), columns=sheet_candidate_names)
+            # Read thresholds x from first column (A), starting row 2, until first blank
+            first_col = victory_ws.col_values(1)
+            thresholds = []
+            for v in first_col[1:]:
+                if v is None or str(v).strip() == '':
+                    break
+                try:
+                    thresholds.append(float(str(v).replace(',', '.')))
+                except ValueError:
+                    break
             
-            # Iterate through each simulation run
-            for i in range(sample):
-                # Get the results for the current simulation
-                run = simulations_aging_cov.iloc[i].sort_values(ascending=False)
+            if not thresholds:
+                print("❌ Error: No thresholds found in column A (starting A2) of victory_margin_aging_cov sheet")
+                print("Skipping victory margin calculation")
+            else:
+                # Initialize counts dataframe
+                victory_margin_counts = pd.DataFrame(0, index=thresholds, columns=sheet_parties, dtype=int)
                 
-                # Identify winner and runner-up
-                winner_name = run.index[0]
-                winner_score = run.iloc[0]
-                runner_up_score = run.iloc[1]
+                # For each simulation, calculate victory margin
+                for i in range(sample):
+                    run = simulations_aging_cov.iloc[i].sort_values(ascending=False)
+                    winner_name = run.index[0]
+                    winner_score = run.iloc[0]
+                    runner_up_score = run.iloc[1]
+                    
+                    # Victory margin in percentage points
+                    margin = (winner_score - runner_up_score) * 100
+                    
+                    # Count if winner is in our tracked parties
+                    if winner_name in victory_margin_counts.columns:
+                        for x in thresholds:
+                            if margin >= x:
+                                victory_margin_counts.loc[x, winner_name] += 1
                 
-                # Calculate margin of victory in percentage points
-                margin = (winner_score - runner_up_score) * 100
+                # Calculate probabilities
+                victory_margin_probabilities = victory_margin_counts / sample
                 
-                # Check if the winner matches any candidate name in the sheet
-                # Try exact match first, then partial match
-                matched_candidate = None
-                for sheet_candidate in sheet_candidate_names:
-                    if winner_name == sheet_candidate or winner_name in str(sheet_candidate) or str(sheet_candidate) in winner_name:
-                        matched_candidate = sheet_candidate
-                        break
+                # Write to sheet - only update party columns, not the entire table
+                # Find the column indices for each party in the header row
+                for party in sheet_parties:
+                    # Find which column this party is in (use first occurrence)
+                    party_col_idx = None
+                    for idx, h in enumerate(header_row):
+                        if h == party:
+                            party_col_idx = idx
+                            break  # Use the first occurrence
+                    
+                    if party_col_idx is not None:
+                        # Convert column index to letter (0=A, 1=B, etc.)
+                        def num_to_col(num):
+                            result = ""
+                            while num >= 0:
+                                result = chr(65 + (num % 26)) + result
+                                num = num // 26 - 1
+                            return result
+                        
+                        col_letter = num_to_col(party_col_idx)
+                        # Write only this party's column data (starting from row 2)
+                        # Convert the entire column to a list to avoid Series issues
+                        party_values = victory_margin_probabilities.loc[:, party].values.tolist()
+                        
+                        # Debug output
+                        print(f"  Writing {party} to column {col_letter}")
+                        print(f"  First 3 values: {party_values[:3]}")
+                        
+                        # Handle nested lists - if values are lists, take the first element
+                        if party_values and isinstance(party_values[0], list):
+                            print(f"  Detected nested lists, flattening...")
+                            party_values = [v[0] if isinstance(v, list) else v for v in party_values]
+                        
+                        # Ensure we have simple float values
+                        col_data = [[float(val)] for val in party_values]
+                        range_name = f"{col_letter}2:{col_letter}{1 + len(thresholds)}"
+                        
+                        print(f"  Range: {range_name}, writing {len(col_data)} values")
+                        
+                        victory_ws.update(values=col_data, range_name=range_name)
                 
-                if matched_candidate:
-                    # Find which intervals the margin falls into (cumulative - can match multiple intervals)
-                    for interval_idx, (lo, hi) in enumerate(intervals):
-                        # Handle special case where hi >= 100 means "at least lo"
-                        if hi >= 100:
-                            if margin >= lo:
-                                victory_margin_counts.loc[interval_idx, matched_candidate] += 1
-                        else:
-                            # Normal interval: margin must be >= lo and < hi
-                            if lo <= margin < hi:
-                                victory_margin_counts.loc[interval_idx, matched_candidate] += 1
-            
-            # Calculate probabilities
-            victory_margin_probabilities = victory_margin_counts / sample
-            
-            # Write each candidate's column separately to avoid overwriting
-            print(f"Writing victory margin probabilities to columns: {list(candidate_name_to_col.values())}")
-            try:
-                for candidate_name, col_letter in candidate_name_to_col.items():
-                    if candidate_name in victory_margin_probabilities.columns:
-                        col_data = [[val] for val in victory_margin_probabilities[candidate_name].values]
-                        update_range = f"{col_letter}2:{col_letter}{2 + len(intervals) - 1}"
-                        victory_ws.update(col_data, range_name=update_range)
-                        print(f"  ✓ Wrote {candidate_name} probabilities to column {col_letter}")
-                print("✓ Victory margin probabilities written successfully.")
-            except Exception as e:
-                print(f"❌ Error writing victory margin probabilities: {e}")
+                print(f"✓ Victory margin probabilities written successfully for parties: {sheet_parties}")
 
 except Exception as e:
     print(f"❌ Error during victory margin calculation: {e}")
