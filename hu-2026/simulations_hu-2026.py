@@ -8,6 +8,7 @@ import pandas as pd
 import scipy.stats
 import warnings
 from allocate_seats_hungary import HungarianSeatAllocator
+from allocate_seats_hungary_v2 import HungarianSeatAllocatorV2
 # from matplotlib import pyplot as plt
 
 election_date = '2026-04-12'
@@ -299,7 +300,9 @@ wsw.update(values=[[d]], range_name='E2')
 print("\nCalculating seat allocations...")
 
 # Initialize the seat allocator once for better performance
-allocator = HungarianSeatAllocator()
+# Using v2 allocator which implements the exact Google Sheet formulas
+# and the Mi Hazánk <5% rule
+allocator_v2 = HungarianSeatAllocatorV2()
 
 # Get party columns - need to identify Fidesz, Tisza, Others, and Mi Hazánk
 # Assuming the columns are named appropriately in the simulations dataframe
@@ -319,12 +322,12 @@ for i in range(sample):
     tisza_pct = sim_row.get('Tisza', 0) * 100
     mi_hazank_pct = sim_row.get('MH', 0) * 100
     
-    # Calculate "Others" as 100 - Fidesz - Tisza
-    # Note: MH is both part of Others and passed separately to the allocation function
-    others_pct = 100 - fidesz_pct - tisza_pct
+    # Calculate "Others" as 100 - Fidesz - Tisza - Mi Hazánk
+    others_pct = 100 - fidesz_pct - tisza_pct - mi_hazank_pct
     
-    # Allocate seats using the Hungarian function
-    fidesz_seats, tisza_seats, mi_hazank_seats = allocator.allocate_seats(
+    # Allocate seats using the Hungarian v2 function
+    # This implements the Mi Hazánk <5% rule: if MH < 5%, it gets 0 list seats
+    fidesz_seats, tisza_seats, mi_hazank_seats = allocator_v2.allocate_seats(
         fidesz_pct, tisza_pct, others_pct, mi_hazank_pct
     )
     
