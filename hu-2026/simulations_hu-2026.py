@@ -352,6 +352,66 @@ wsw.update(values=table, range_name='A1')
 
 print(f"Seat allocation complete. Results written to 'seats_aging_cov' worksheet.")
 
+# --- Seat Rank Calculation (Probability of Winning Most Seats) ---
+
+print("\nCalculating probability of seat rankings (rank 1, 2, 3)...")
+
+# For each simulation, determine the ranking of parties by seats
+# In case of a tie, Tisza wins (if Tisza is tied), otherwise random
+seats_rank_counts = pd.DataFrame(0, index=seats_simulations_aging_cov.columns, columns=['Rank 1', 'Rank 2', 'Rank 3'], dtype=int)
+
+for i in range(sample):
+    sim_seats = seats_simulations_aging_cov.iloc[i]
+    
+    # Sort parties by seats (descending)
+    sorted_parties = sim_seats.sort_values(ascending=False)
+    
+    # Handle ties with Tisza preference
+    # Get unique seat values
+    unique_seats = sorted_parties.unique()
+    
+    # Assign ranks
+    rank_assignment = []
+    for seat_value in unique_seats:
+        tied_parties = sorted_parties[sorted_parties == seat_value].index.tolist()
+        
+        if len(tied_parties) == 1:
+            rank_assignment.append(tied_parties[0])
+        else:
+            # Tie - Tisza gets priority if present
+            if 'Tisza' in tied_parties:
+                rank_assignment.append('Tisza')
+                tied_parties.remove('Tisza')
+            # Add remaining tied parties in original order
+            rank_assignment.extend(tied_parties)
+    
+    # Count ranks (only top 3)
+    for rank_idx in range(min(3, len(rank_assignment))):
+        party = rank_assignment[rank_idx]
+        rank_col = f'Rank {rank_idx + 1}'
+        seats_rank_counts.loc[party, rank_col] += 1
+
+# Calculate probabilities
+seats_rank_prob = seats_rank_counts / sample
+
+# Write to Google Sheets
+wsw = sh.worksheet('seats_rank')
+# Format: Party name in column A, probabilities in columns B, C, D
+table = [['Party', 'Pr[Rank=1]', 'Pr[Rank=2]', 'Pr[Rank=3]']]
+for party in seats_rank_prob.index:
+    table.append([
+        party, 
+        seats_rank_prob.loc[party, 'Rank 1'],
+        seats_rank_prob.loc[party, 'Rank 2'],
+        seats_rank_prob.loc[party, 'Rank 3']
+    ])
+wsw.update(values=table, range_name='A1')
+
+print(f"Seat rank probabilities written to 'seats_rank' worksheet.")
+print(f"  Fidesz - Rank 1: {seats_rank_prob.loc['Fidesz', 'Rank 1']:.4f}, Rank 2: {seats_rank_prob.loc['Fidesz', 'Rank 2']:.4f}, Rank 3: {seats_rank_prob.loc['Fidesz', 'Rank 3']:.4f}")
+print(f"  Tisza  - Rank 1: {seats_rank_prob.loc['Tisza', 'Rank 1']:.4f}, Rank 2: {seats_rank_prob.loc['Tisza', 'Rank 2']:.4f}, Rank 3: {seats_rank_prob.loc['Tisza', 'Rank 3']:.4f}")
+print(f"  MH     - Rank 1: {seats_rank_prob.loc['MH', 'Rank 1']:.4f}, Rank 2: {seats_rank_prob.loc['MH', 'Rank 2']:.4f}, Rank 3: {seats_rank_prob.loc['MH', 'Rank 3']:.4f}")
+
 # --- Victory Margin Calculation ---
 
 print("\nCalculating victory margin probabilities...")
