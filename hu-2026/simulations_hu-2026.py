@@ -389,7 +389,13 @@ for i in range(sample):
     for rank_idx in range(min(3, len(rank_assignment))):
         party = rank_assignment[rank_idx]
         rank_col = f'Rank {rank_idx + 1}'
-        seats_rank_counts.loc[party, rank_col] += 1
+        
+        # For rank 3, only count MH if they have >0 seats
+        if rank_idx == 2 and party == 'MH':
+            if sim_seats[party] > 0:
+                seats_rank_counts.loc[party, rank_col] += 1
+        else:
+            seats_rank_counts.loc[party, rank_col] += 1
 
 # Calculate probabilities
 seats_rank_prob = seats_rank_counts / sample
