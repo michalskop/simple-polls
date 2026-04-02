@@ -358,44 +358,66 @@ print("\nCalculating probability of seat rankings (rank 1, 2, 3)...")
 
 # For each simulation, determine the ranking of parties by seats
 # In case of a tie, Tisza wins (if Tisza is tied), otherwise random
-seats_rank_counts = pd.DataFrame(0, index=seats_simulations_aging_cov.columns, columns=['Rank 1', 'Rank 2', 'Rank 3'], dtype=int)
+# Special case: when MH has 0 seats, rank by vote share compared to DK and MKKP
+# Include all parties that might be ranked (Fidesz, Tisza, MH, DK, MKKP)
+all_parties = ['Fidesz', 'Tisza', 'MH', 'DK', 'MKKP']
+seats_rank_counts = pd.DataFrame(0, index=all_parties, columns=['Rank 1', 'Rank 2', 'Rank 3'], dtype=int)
 
 for i in range(sample):
     sim_seats = seats_simulations_aging_cov.iloc[i]
+    sim_votes = simulations_aging_cov.iloc[i]
     
-    # Sort parties by seats (descending)
-    sorted_parties = sim_seats.sort_values(ascending=False)
+    # Check if MH has 0 seats
+    mh_has_zero_seats = sim_seats.get('MH', 0) == 0
     
-    # Handle ties with Tisza preference
-    # Get unique seat values
-    unique_seats = sorted_parties.unique()
-    
-    # Assign ranks
-    rank_assignment = []
-    for seat_value in unique_seats:
-        tied_parties = sorted_parties[sorted_parties == seat_value].index.tolist()
+    if mh_has_zero_seats:
+        # For MH with 0 seats, rank by vote percentage compared to DK and MKKP
+        # First, rank Fidesz and Tisza by seats
+        parties_with_seats = sim_seats[sim_seats > 0].sort_values(ascending=False)
+        rank_assignment = parties_with_seats.index.tolist()
         
-        if len(tied_parties) == 1:
-            rank_assignment.append(tied_parties[0])
-        else:
-            # Tie - Tisza gets priority if present
-            if 'Tisza' in tied_parties:
-                rank_assignment.append('Tisza')
-                tied_parties.remove('Tisza')
-            # Add remaining tied parties in original order
-            rank_assignment.extend(tied_parties)
+        # Handle Tisza preference for ties among parties with seats
+        if len(parties_with_seats) >= 2:
+            if parties_with_seats.iloc[0] == parties_with_seats.iloc[1]:
+                if 'Tisza' in [parties_with_seats.index[0], parties_with_seats.index[1]]:
+                    if parties_with_seats.index[1] == 'Tisza':
+                        rank_assignment[0], rank_assignment[1] = rank_assignment[1], rank_assignment[0]
+        
+        # Now rank MH, DK, MKKP by vote percentage
+        zero_seat_parties = ['MH', 'DK', 'MKKP']
+        zero_seat_votes = {p: sim_votes.get(p, 0) for p in zero_seat_parties if p in sim_votes.index}
+        sorted_zero_seat = sorted(zero_seat_votes.items(), key=lambda x: x[1], reverse=True)
+        
+        # Add zero-seat parties in vote order
+        for party, _ in sorted_zero_seat:
+            rank_assignment.append(party)
+    else:
+        # Standard ranking by seats
+        sorted_parties = sim_seats.sort_values(ascending=False)
+        
+        # Handle ties with Tisza preference
+        unique_seats = sorted_parties.unique()
+        
+        # Assign ranks
+        rank_assignment = []
+        for seat_value in unique_seats:
+            tied_parties = sorted_parties[sorted_parties == seat_value].index.tolist()
+            
+            if len(tied_parties) == 1:
+                rank_assignment.append(tied_parties[0])
+            else:
+                # Tie - Tisza gets priority if present
+                if 'Tisza' in tied_parties:
+                    rank_assignment.append('Tisza')
+                    tied_parties.remove('Tisza')
+                # Add remaining tied parties in original order
+                rank_assignment.extend(tied_parties)
     
     # Count ranks (only top 3)
     for rank_idx in range(min(3, len(rank_assignment))):
         party = rank_assignment[rank_idx]
         rank_col = f'Rank {rank_idx + 1}'
-        
-        # For rank 3, only count MH if they have >0 seats
-        if rank_idx == 2 and party == 'MH':
-            if sim_seats[party] > 0:
-                seats_rank_counts.loc[party, rank_col] += 1
-        else:
-            seats_rank_counts.loc[party, rank_col] += 1
+        seats_rank_counts.loc[party, rank_col] += 1
 
 # Calculate probabilities
 seats_rank_prob = seats_rank_counts / sample
