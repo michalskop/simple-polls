@@ -183,7 +183,7 @@ except Exception as e:
     import traceback
     traceback.print_exc()
 
-print(f"\nSummary:")
+print(f"\nSummary (seats_rank):")
 print(f"- Processed {len(polymarket_data)} parties")
 print(f"- Data written to seats_rank sheet in columns G-J")
 print(f"- Parties: {list(party_name_mapping.values())}")
@@ -191,3 +191,313 @@ for party_csv, party_sheet in party_name_mapping.items():
     if party_csv in polymarket_data and polymarket_data[party_csv] is not None:
         data = polymarket_data[party_csv]
         print(f"  {party_sheet}: Price={data['price']:.4f}, Shares@price={data['shares_at_price']:.2f}, @+1c={data['shares_at_price_plus_1c']:.2f}, @+2c={data['shares_at_price_plus_2c']:.2f}")
+
+# ============================================================
+# POPULAR VOTE DATA
+# ============================================================
+
+print("\n" + "="*60)
+print("PROCESSING POPULAR VOTE DATA")
+print("="*60)
+
+def process_popular_vote_csv(csv_path, file_label):
+    """Process a popular vote CSV file and return data for YES and NO tokens."""
+    df_tokens = pd.read_csv(csv_path)
+    print(f"\nLoaded {file_label}:")
+    print(df_tokens)
+    
+    yes_data = []
+    no_data = []
+    
+    for _, row in df_tokens.iterrows():
+        name = row['name']
+        yes_token_id = row['yes_token_id']
+        no_token_id = row['no_token_id']
+        
+        print(f"\nFetching data for {name}...")
+        
+        # Get YES token data
+        try:
+            yes_orderbook = client.get_order_book(yes_token_id)
+            yes_bid, yes_ask = get_extremes(yes_orderbook)
+            
+            # Get shares available at different price levels
+            yes_shares_at_price = get_shares_at_price(yes_orderbook, yes_ask)
+            yes_shares_at_price_plus_1c = get_shares_at_price(yes_orderbook, yes_ask + 0.01)
+            yes_shares_at_price_plus_2c = get_shares_at_price(yes_orderbook, yes_ask + 0.02)
+            
+            print(f"  YES: {yes_ask:.4f}")
+            print(f"    Shares at price: {yes_shares_at_price:.2f}")
+            print(f"    Shares at price+1c: {yes_shares_at_price_plus_1c:.2f}")
+            print(f"    Shares at price+2c: {yes_shares_at_price_plus_2c:.2f}")
+            
+            # Store YES data
+            yes_data.append({
+                'file': file_label,
+                'name': name,
+                'type': 'yes',
+                'price': yes_ask,
+                'shares_at_price': yes_shares_at_price,
+                'shares_at_price_plus_1c': yes_shares_at_price_plus_1c,
+                'shares_at_price_plus_2c': yes_shares_at_price_plus_2c
+            })
+            
+        except Exception as e:
+            print(f"Error fetching YES data for {name}: {e}")
+            yes_data.append({
+                'file': file_label,
+                'name': name,
+                'type': 'yes',
+                'price': None,
+                'shares_at_price': None,
+                'shares_at_price_plus_1c': None,
+                'shares_at_price_plus_2c': None
+            })
+        
+        time.sleep(0.5)
+        
+        # Get NO token data
+        try:
+            no_orderbook = client.get_order_book(no_token_id)
+            no_bid, no_ask = get_extremes(no_orderbook)
+            
+            # Get shares available at different price levels
+            no_shares_at_price = get_shares_at_price(no_orderbook, no_ask)
+            no_shares_at_price_plus_1c = get_shares_at_price(no_orderbook, no_ask + 0.01)
+            no_shares_at_price_plus_2c = get_shares_at_price(no_orderbook, no_ask + 0.02)
+            
+            print(f"  NO: {no_ask:.4f}")
+            print(f"    Shares at price: {no_shares_at_price:.2f}")
+            print(f"    Shares at price+1c: {no_shares_at_price_plus_1c:.2f}")
+            print(f"    Shares at price+2c: {no_shares_at_price_plus_2c:.2f}")
+            
+            # Store NO data
+            no_data.append({
+                'file': file_label,
+                'name': name,
+                'type': 'no',
+                'price': no_ask,
+                'shares_at_price': no_shares_at_price,
+                'shares_at_price_plus_1c': no_shares_at_price_plus_1c,
+                'shares_at_price_plus_2c': no_shares_at_price_plus_2c
+            })
+            
+        except Exception as e:
+            print(f"Error fetching NO data for {name}: {e}")
+            no_data.append({
+                'file': file_label,
+                'name': name,
+                'type': 'no',
+                'price': None,
+                'shares_at_price': None,
+                'shares_at_price_plus_1c': None,
+                'shares_at_price_plus_2c': None
+            })
+        
+        time.sleep(0.5)
+    
+    return yes_data, no_data
+
+# Process both popular vote CSV files
+print("\n" + "-"*60)
+print("FIDESZ-KDNP POPULAR VOTE")
+print("-"*60)
+fidesz_yes, fidesz_no = process_popular_vote_csv(
+    "hu-2026/hungary-election-fidesz-kdnp-of-popular-vote.csv",
+    "hungary-election-fidesz-kdnp-of-popular-vote"
+)
+
+print("\n" + "-"*60)
+print("TISZA POPULAR VOTE")
+print("-"*60)
+tisza_yes, tisza_no = process_popular_vote_csv(
+    "hu-2026/hungary-election-tisza-of-popular-vote.csv",
+    "hungary-election-tisza-of-popular-vote"
+)
+
+# Combine all data with proper structure
+empty_row = {
+    'file': '',
+    'name': '',
+    'type': '',
+    'price': '',
+    'shares_at_price': '',
+    'shares_at_price_plus_1c': '',
+    'shares_at_price_plus_2c': ''
+}
+
+all_popular_vote_data = fidesz_yes + [empty_row] + fidesz_no + [empty_row] + tisza_yes + [empty_row] + tisza_no
+
+print(f"\nTotal popular vote data collected:")
+print(f"  Fidesz YES: {len(fidesz_yes)} rows")
+print(f"  Fidesz NO: {len(fidesz_no)} rows")
+print(f"  TISZA YES: {len(tisza_yes)} rows")
+print(f"  TISZA NO: {len(tisza_no)} rows")
+print(f"  Total (with empty rows): {len(all_popular_vote_data)} rows")
+
+# Prepare data for writing to Google Sheets
+print("\nPreparing popular vote data for Google Sheets...")
+
+# Build the table
+popular_vote_table = []
+
+# Header row
+popular_vote_table.append(['file', 'name', 'Polymarket', 'Shares@price', 'Shares@price+1c', 'Shares@price+2c'])
+
+# Data rows
+for item in all_popular_vote_data:
+    popular_vote_table.append([
+        item['file'],
+        item['name'],
+        item['price'] if item['price'] is not None else '',
+        item['shares_at_price'] if item['shares_at_price'] is not None else '',
+        item['shares_at_price_plus_1c'] if item['shares_at_price_plus_1c'] is not None else '',
+        item['shares_at_price_plus_2c'] if item['shares_at_price_plus_2c'] is not None else ''
+    ])
+
+# Write to pravděpodobnosti_aktuální_aging_cov sheet
+print("\nWriting popular vote data to Google Sheets...")
+
+try:
+    prob_sheet = sh.worksheet("pravděpodobnosti_aktuální_aging_cov")
+    
+    # Write timestamp at P2
+    prob_sheet.update(values=[[current_time]], range_name='P2')
+    print(f"✓ Timestamp written to P2: {current_time}")
+    
+    # Calculate the range - starting at Q19
+    end_row = 18 + len(popular_vote_table)
+    range_name = f'Q19:V{end_row}'
+    
+    prob_sheet.update(values=popular_vote_table, range_name=range_name)
+    
+    print(f"✓ Popular vote data written successfully to {range_name}")
+    print(f"  Total rows: {len(popular_vote_table)} (including header)")
+    
+except Exception as e:
+    print(f"❌ Error writing popular vote data to Google Sheets: {e}")
+    print("Please check your Google Sheets permissions and try again")
+    import traceback
+    traceback.print_exc()
+
+print(f"\n{'='*60}")
+print("SUMMARY (popular vote)")
+print(f"{'='*60}")
+print(f"Data written to pravděpodobnosti_aktuální_aging_cov sheet in columns Q-V")
+print(f"Structure:")
+print(f"  - Fidesz YES rows ({len(fidesz_yes)})")
+print(f"  - Empty row")
+print(f"  - Fidesz NO rows ({len(fidesz_no)})")
+print(f"  - Empty row")
+print(f"  - TISZA YES rows ({len(tisza_yes)})")
+print(f"  - Empty row")
+print(f"  - TISZA NO rows ({len(tisza_no)})")
+
+# ============================================================
+# SEAT DISTRIBUTION DATA
+# ============================================================
+
+print("\n" + "="*60)
+print("PROCESSING SEAT DISTRIBUTION DATA")
+print("="*60)
+
+# List of CSV files to process for seat distribution
+seat_csv_files = [
+    ("hu-2026/hungary-election-fidesz-kdnp-wins-seats.csv", "hungary-election-fidesz-kdnp-wins-seats"),
+    ("hu-2026/hungary-election-tisza-wins-at-least-seats.csv", "hungary-election-tisza-wins-at-least-seats"),
+    ("hu-2026/hungary-election-tisza-wins-a-constitutional-majority.csv", "hungary-election-tisza-wins-a-constitutional-majority"),
+    ("hu-2026/of-seats-won-by-fidesz-kdnp-in-hungary-parliamentary-election.csv", "of-seats-won-by-fidesz-kdnp-in-hungary-parliamentary-election"),
+    ("hu-2026/of-seats-won-by-tisza-in-hungary-parliamentary-election.csv", "of-seats-won-by-tisza-in-hungary-parliamentary-election")
+]
+
+all_seat_data = []
+
+for csv_path, file_label in seat_csv_files:
+    print("\n" + "-"*60)
+    print(f"Processing: {file_label}")
+    print("-"*60)
+    
+    yes_data, no_data = process_popular_vote_csv(csv_path, file_label)
+    
+    # Add YES rows
+    all_seat_data.extend(yes_data)
+    # Add empty row
+    all_seat_data.append(empty_row)
+    # Add NO rows
+    all_seat_data.extend(no_data)
+    # Add empty row separator between files
+    all_seat_data.append(empty_row)
+
+print(f"\nTotal seat distribution data collected: {len(all_seat_data)} rows")
+
+# Prepare data for writing to Google Sheets
+print("\nPreparing seat distribution data for Google Sheets...")
+
+# Build the table
+seat_table = []
+
+# Header row
+seat_table.append(['file', 'name', 'Polymarket', 'Shares@price', 'Shares@price+1c', 'Shares@price+2c'])
+
+# Helper function to sanitize float values
+def sanitize_value(val):
+    """Convert inf/nan to empty string, ensure all values are JSON-safe."""
+    import math
+    if val is None or val == '':
+        return ''
+    if isinstance(val, float):
+        if math.isnan(val) or math.isinf(val):
+            return ''
+        # Convert float to string if it's very large to avoid JSON issues
+        return float(val)
+    if isinstance(val, int):
+        # Very large integers should be converted to string
+        if abs(val) > 1e15:
+            return str(val)
+        return val
+    return str(val)
+
+# Data rows
+for item in all_seat_data:
+    seat_table.append([
+        sanitize_value(item['file']),
+        sanitize_value(item['name']),
+        sanitize_value(item['price']),
+        sanitize_value(item['shares_at_price']),
+        sanitize_value(item['shares_at_price_plus_1c']),
+        sanitize_value(item['shares_at_price_plus_2c'])
+    ])
+
+# Write to seats_aging_cov sheet
+print("\nWriting seat distribution data to Google Sheets...")
+
+try:
+    seats_cov_sheet = sh.worksheet("seats_aging_cov")
+    
+    # Calculate the range - starting at M40
+    end_row = 39 + len(seat_table)
+    range_name = f'M40:R{end_row}'
+    
+    # Debug: Check for problematic values
+    import math
+    for i, row in enumerate(seat_table):
+        for j, val in enumerate(row):
+            if isinstance(val, float) and (math.isnan(val) or math.isinf(val)):
+                print(f"WARNING: Found invalid float at row {i}, col {j}: {val}")
+    
+    seats_cov_sheet.update(values=seat_table, range_name=range_name)
+    
+    print(f"✓ Seat distribution data written successfully to {range_name}")
+    print(f"  Total rows: {len(seat_table)} (including header)")
+    
+except Exception as e:
+    print(f"❌ Error writing seat distribution data to Google Sheets: {e}")
+    print("Please check your Google Sheets permissions and try again")
+    import traceback
+    traceback.print_exc()
+
+print(f"\n{'='*60}")
+print("SUMMARY (seat distribution)")
+print(f"{'='*60}")
+print(f"Data written to seats_aging_cov sheet in columns M-R starting at row 40")
+print(f"Processed {len(seat_csv_files)} CSV files")
