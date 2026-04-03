@@ -440,6 +440,55 @@ print(f"  Fidesz - Rank 1: {seats_rank_prob.loc['Fidesz', 'Rank 1']:.4f}, Rank 2
 print(f"  Tisza  - Rank 1: {seats_rank_prob.loc['Tisza', 'Rank 1']:.4f}, Rank 2: {seats_rank_prob.loc['Tisza', 'Rank 2']:.4f}, Rank 3: {seats_rank_prob.loc['Tisza', 'Rank 3']:.4f}")
 print(f"  MH     - Rank 1: {seats_rank_prob.loc['MH', 'Rank 1']:.4f}, Rank 2: {seats_rank_prob.loc['MH', 'Rank 2']:.4f}, Rank 3: {seats_rank_prob.loc['MH', 'Rank 3']:.4f}")
 
+# --- Margin of Victory for Tisza (Tisza % - Fidesz %) ---
+
+print("\nCalculating margin of victory for Tisza (Tisza % - Fidesz %)...")
+
+# Define margin thresholds from -10 to 40
+margin_thresholds = list(range(-10, 41))
+
+# Initialize counts
+margin_counts = pd.Series(0, index=margin_thresholds, dtype=int)
+
+# Calculate margin for each simulation
+for i in range(sample):
+    sim = simulations_aging_cov.iloc[i]
+    tisza_pct = sim['Tisza'] * 100
+    fidesz_pct = sim['Fidesz'] * 100
+    margin = tisza_pct - fidesz_pct
+    
+    # Count for each threshold (Margin < x)
+    for threshold in margin_thresholds:
+        if margin < threshold:
+            margin_counts[threshold] += 1
+
+# Calculate probabilities
+margin_probabilities = margin_counts / sample
+
+# Write to Google Sheets
+try:
+    margin_ws = sh.worksheet('margin')
+    
+    # Prepare table: Column A = "Margin < x", Column B = probability
+    table = [['Margin < x', 'Probability']]
+    for threshold in margin_thresholds:
+        table.append([threshold, margin_probabilities[threshold]])
+    
+    margin_ws.update(values=table, range_name='A1')
+    
+    print(f"✓ Margin of victory probabilities written to 'Margin' worksheet.")
+    print(f"  Sample values:")
+    print(f"    Pr[Margin < -5]: {margin_probabilities[-5]:.4f}")
+    print(f"    Pr[Margin < 0]: {margin_probabilities[0]:.4f}")
+    print(f"    Pr[Margin < 5]: {margin_probabilities[5]:.4f}")
+    print(f"    Pr[Margin < 10]: {margin_probabilities[10]:.4f}")
+    print(f"    Pr[Margin < 20]: {margin_probabilities[20]:.4f}")
+    
+except Exception as e:
+    print(f"❌ Error writing margin of victory data: {e}")
+    import traceback
+    traceback.print_exc()
+
 # --- Victory Margin Calculation ---
 
 print("\nCalculating victory margin probabilities...")

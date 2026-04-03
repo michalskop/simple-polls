@@ -29,11 +29,8 @@ df_tokens = pd.read_csv(csv_path)
 print("Loaded token data:")
 print(df_tokens.head())
 
-# Filter to only Fidesz-KDNP and TISZA
-parties_of_interest = ['Fidesz-KDNP', 'TISZA']
-df_tokens = df_tokens[df_tokens['name'].isin(parties_of_interest)]
-
-print(f"\nFiltered to parties of interest: {parties_of_interest}")
+# Process all parties with their rank numbers (no filtering)
+print(f"\nProcessing all {len(df_tokens)} parties with rank numbers")
 print(df_tokens)
 
 # Google Sheet configuration
@@ -56,122 +53,157 @@ def get_shares_at_price(orderbook, target_price):
             total_shares += float(ask.size)
     return total_shares
 
-# Collect orderbook data for rank 1 (winning most seats)
-print("\nFetching orderbook data for rank 1 (most seats)...")
-polymarket_data = {}
+# Collect orderbook data for all parties with rank numbers
+# Organize by rank: all YES for rank 1, all NO for rank 1, empty row, all YES for rank 2, all NO for rank 2, etc.
+print("\nFetching orderbook data for all parties with rank numbers...")
+
+# Group data by rank, separating YES and NO
+rank_yes_data = {'1': [], '2': [], '3': []}
+rank_no_data = {'1': [], '2': [], '3': []}
 
 for _, row in df_tokens.iterrows():
-    party = row['name']
+    party_name = row['name']
     yes_token_id = row['yes_token_id']
+    no_token_id = row['no_token_id']
     
-    print(f"Fetching data for {party}...")
+    # Extract rank from party name (e.g., "TISZA 1" -> "1")
+    rank = party_name.split()[-1]
     
-    # Get YES token data (probability of winning most seats)
+    print(f"\nFetching data for {party_name}...")
+    
+    # Get YES token data
     try:
         yes_orderbook = client.get_order_book(yes_token_id)
         yes_bid, yes_ask = get_extremes(yes_orderbook)
         
-        # Get shares available at different price levels
-        shares_at_price = get_shares_at_price(yes_orderbook, yes_ask)
-        shares_at_price_plus_1c = get_shares_at_price(yes_orderbook, yes_ask + 0.01)
-        shares_at_price_plus_2c = get_shares_at_price(yes_orderbook, yes_ask + 0.02)
+        yes_shares_at_price = get_shares_at_price(yes_orderbook, yes_ask)
+        yes_shares_at_price_plus_1c = get_shares_at_price(yes_orderbook, yes_ask + 0.01)
+        yes_shares_at_price_plus_2c = get_shares_at_price(yes_orderbook, yes_ask + 0.02)
         
-        # Store the data
-        polymarket_data[party] = {
+        print(f"  YES: {yes_ask:.4f}")
+        print(f"    Shares at price: {yes_shares_at_price:.2f}")
+        print(f"    Shares at price+1c: {yes_shares_at_price_plus_1c:.2f}")
+        print(f"    Shares at price+2c: {yes_shares_at_price_plus_2c:.2f}")
+        
+        rank_yes_data[rank].append({
+            'name': f"{party_name} YES",
             'price': yes_ask,
-            'shares_at_price': shares_at_price,
-            'shares_at_price_plus_1c': shares_at_price_plus_1c,
-            'shares_at_price_plus_2c': shares_at_price_plus_2c
-        }
-        
-        print(f"  {party}: {yes_ask:.4f}")
-        print(f"    Shares at price: {shares_at_price:.2f}")
-        print(f"    Shares at price+1c: {shares_at_price_plus_1c:.2f}")
-        print(f"    Shares at price+2c: {shares_at_price_plus_2c:.2f}")
+            'shares_at_price': yes_shares_at_price,
+            'shares_at_price_plus_1c': yes_shares_at_price_plus_1c,
+            'shares_at_price_plus_2c': yes_shares_at_price_plus_2c
+        })
         
     except Exception as e:
-        print(f"Error fetching data for {party}: {e}")
-        polymarket_data[party] = None
+        print(f"Error fetching YES data for {party_name}: {e}")
+        rank_yes_data[rank].append({
+            'name': f"{party_name} YES",
+            'price': None,
+            'shares_at_price': None,
+            'shares_at_price_plus_1c': None,
+            'shares_at_price_plus_2c': None
+        })
     
-    # Wait a bit to be respectful to the API
+    time.sleep(0.5)
+    
+    # Get NO token data
+    try:
+        no_orderbook = client.get_order_book(no_token_id)
+        no_bid, no_ask = get_extremes(no_orderbook)
+        
+        no_shares_at_price = get_shares_at_price(no_orderbook, no_ask)
+        no_shares_at_price_plus_1c = get_shares_at_price(no_orderbook, no_ask + 0.01)
+        no_shares_at_price_plus_2c = get_shares_at_price(no_orderbook, no_ask + 0.02)
+        
+        print(f"  NO: {no_ask:.4f}")
+        print(f"    Shares at price: {no_shares_at_price:.2f}")
+        print(f"    Shares at price+1c: {no_shares_at_price_plus_1c:.2f}")
+        print(f"    Shares at price+2c: {no_shares_at_price_plus_2c:.2f}")
+        
+        rank_no_data[rank].append({
+            'name': f"{party_name} NO",
+            'price': no_ask,
+            'shares_at_price': no_shares_at_price,
+            'shares_at_price_plus_1c': no_shares_at_price_plus_1c,
+            'shares_at_price_plus_2c': no_shares_at_price_plus_2c
+        })
+        
+    except Exception as e:
+        print(f"Error fetching NO data for {party_name}: {e}")
+        rank_no_data[rank].append({
+            'name': f"{party_name} NO",
+            'price': None,
+            'shares_at_price': None,
+            'shares_at_price_plus_1c': None,
+            'shares_at_price_plus_2c': None
+        })
+    
     time.sleep(0.5)
 
-print(f"\nCollected data for {len(polymarket_data)} parties")
+# Combine all data: all YES for rank 1, all NO for rank 1, empty row, all YES for rank 2, all NO for rank 2, etc.
+polymarket_data = []
+empty_row = {
+    'name': '',
+    'price': '',
+    'shares_at_price': '',
+    'shares_at_price_plus_1c': '',
+    'shares_at_price_plus_2c': ''
+}
+
+for rank in ['1', '2', '3']:
+    # Add all YES tokens for this rank
+    polymarket_data.extend(rank_yes_data[rank])
+    # Add empty row between YES and NO
+    polymarket_data.append(empty_row)
+    # Add all NO tokens for this rank
+    polymarket_data.extend(rank_no_data[rank])
+    # Add empty row separator (except after the last group)
+    if rank != '3':
+        polymarket_data.append(empty_row)
+
+print(f"\nCollected data for {len([d for d in polymarket_data if d['name']])} party-rank combinations (YES and NO)")
 
 # Prepare data for writing to Google Sheets
-# We'll write starting at G1
+# We'll write starting at G11
 # Format:
-# G1: "Polymarket"  H1: "Shares@price"  I1: "Shares@price+1c"  J1: "Shares@price+2c"
-# G2: <Fidesz price>  H2: <shares>  I2: <shares>  J2: <shares>
-# G3: <Tisza price>   H3: <shares>  I3: <shares>  J3: <shares>
-# G4: <MH price (empty)>
-# G5: Timestamp
+# G11: "Party"  H11: "Polymarket"  I11: "Shares@price"  J11: "Shares@price+1c"  K11: "Shares@price+2c"
+# G12+: data rows with party names and their probabilities
 
 print("\nPreparing data for Google Sheets...")
 
-# Map party names to match what's in the seats_rank sheet
-# Fidesz-KDNP in CSV should match "Fidesz" in the sheet
-# TISZA in CSV should match "Tisza" in the sheet
-party_name_mapping = {
-    'Fidesz-KDNP': 'Fidesz',
-    'TISZA': 'Tisza'
-}
-
 # Get current timestamp
 current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+# Build the table
+table = []
+
+# Header row
+table.append(['Party', 'Polymarket', 'Shares@price', 'Shares@price+1c', 'Shares@price+2c'])
+
+# Data rows
+for item in polymarket_data:
+    table.append([
+        item['name'],
+        item['price'] if item['price'] is not None else '',
+        item['shares_at_price'] if item['shares_at_price'] is not None else '',
+        item['shares_at_price_plus_1c'] if item['shares_at_price_plus_1c'] is not None else '',
+        item['shares_at_price_plus_2c'] if item['shares_at_price_plus_2c'] is not None else ''
+    ])
 
 # Write to Google Sheets
 print("\nWriting to Google Sheets...")
 
 try:
-    # First, read the existing party order from column A to match rows
-    existing_parties = sheet.col_values(1)  # Column A
+    # Calculate the range - starting at G11
+    end_row = 10 + len(table)
+    range_name = f'G11:K{end_row}'
     
-    # Find the row indices for each party (starting from row 2, after header)
-    party_row_map = {}
-    for i, party in enumerate(existing_parties):
-        if party in ['Fidesz', 'Tisza', 'MH']:
-            party_row_map[party] = i + 1  # 1-indexed
+    sheet.update(values=table, range_name=range_name)
     
-    print(f"Found party rows: {party_row_map}")
+    print(f"✓ All data written successfully to {range_name}")
+    print(f"  Total rows: {len(table)} (including header)")
     
-    # Write headers in row 1
-    headers = [['Polymarket'], ['Shares@price'], ['Shares@price+1c'], ['Shares@price+2c']]
-    sheet.update([['Polymarket']], range_name='G1')
-    sheet.update([['Shares@price']], range_name='H1')
-    sheet.update([['Shares@price+1c']], range_name='I1')
-    sheet.update([['Shares@price+2c']], range_name='J1')
-    print("✓ Headers written to G1:J1")
-    
-    # Write data for each party in columns G, H, I, J, matching the row positions
-    for party_csv, party_sheet in party_name_mapping.items():
-        if party_sheet in party_row_map and party_csv in polymarket_data and polymarket_data[party_csv] is not None:
-            row = party_row_map[party_sheet]
-            data = polymarket_data[party_csv]
-            
-            # Write price in column G
-            sheet.update([[data['price']]], range_name=f'G{row}')
-            
-            # Write shares at price in column H
-            sheet.update([[data['shares_at_price']]], range_name=f'H{row}')
-            
-            # Write shares at price+1c in column I
-            sheet.update([[data['shares_at_price_plus_1c']]], range_name=f'I{row}')
-            
-            # Write shares at price+2c in column J
-            sheet.update([[data['shares_at_price_plus_2c']]], range_name=f'J{row}')
-            
-            print(f"✓ {party_sheet} data written to row {row}:")
-            print(f"    Price: {data['price']:.4f}, Shares: {data['shares_at_price']:.2f}, +1c: {data['shares_at_price_plus_1c']:.2f}, +2c: {data['shares_at_price_plus_2c']:.2f}")
-    
-    # Write empty values for MH if it exists
-    if 'MH' in party_row_map:
-        row = party_row_map['MH']
-        sheet.update([['', '', '', '']], range_name=f'G{row}:J{row}')
-        print(f"✓ MH (empty) written to row {row}")
-    
-    # Write timestamp below the last party
-    timestamp_row = max(party_row_map.values()) + 1 if party_row_map else 5
+    # Write timestamp below the table
+    timestamp_row = end_row + 1
     sheet.update([[current_time]], range_name=f'G{timestamp_row}')
     print(f"✓ Timestamp written to G{timestamp_row}: {current_time}")
     
@@ -184,13 +216,12 @@ except Exception as e:
     traceback.print_exc()
 
 print(f"\nSummary (seats_rank):")
-print(f"- Processed {len(polymarket_data)} parties")
-print(f"- Data written to seats_rank sheet in columns G-J")
-print(f"- Parties: {list(party_name_mapping.values())}")
-for party_csv, party_sheet in party_name_mapping.items():
-    if party_csv in polymarket_data and polymarket_data[party_csv] is not None:
-        data = polymarket_data[party_csv]
-        print(f"  {party_sheet}: Price={data['price']:.4f}, Shares@price={data['shares_at_price']:.2f}, @+1c={data['shares_at_price_plus_1c']:.2f}, @+2c={data['shares_at_price_plus_2c']:.2f}")
+print(f"- Processed {len([d for d in polymarket_data if d['name']])} party-rank combinations")
+print(f"- Data written to seats_rank sheet in columns G-K starting at row 11")
+print(f"- Parties with ranks:")
+for item in polymarket_data:
+    if item['name'] and item['price'] is not None and item['price'] != '':
+        print(f"  {item['name']}: Price={item['price']:.4f}, Shares@price={item['shares_at_price']:.2f}, @+1c={item['shares_at_price_plus_1c']:.2f}, @+2c={item['shares_at_price_plus_2c']:.2f}")
 
 # ============================================================
 # POPULAR VOTE DATA
@@ -315,6 +346,14 @@ tisza_yes, tisza_no = process_popular_vote_csv(
     "hungary-election-tisza-of-popular-vote"
 )
 
+print("\n" + "-"*60)
+print("PARTIES ENTERING PARLIAMENT")
+print("-"*60)
+parties_yes, parties_no = process_popular_vote_csv(
+    "hu-2026/hungary-parliamentary-election-which-parties-enter-parliament.csv",
+    "hungary-parliamentary-election-which-parties-enter-parliament"
+)
+
 # Combine all data with proper structure
 empty_row = {
     'file': '',
@@ -326,13 +365,15 @@ empty_row = {
     'shares_at_price_plus_2c': ''
 }
 
-all_popular_vote_data = fidesz_yes + [empty_row] + fidesz_no + [empty_row] + tisza_yes + [empty_row] + tisza_no
+all_popular_vote_data = fidesz_yes + [empty_row] + fidesz_no + [empty_row] + tisza_yes + [empty_row] + tisza_no + [empty_row] + parties_yes + [empty_row] + parties_no
 
 print(f"\nTotal popular vote data collected:")
 print(f"  Fidesz YES: {len(fidesz_yes)} rows")
 print(f"  Fidesz NO: {len(fidesz_no)} rows")
 print(f"  TISZA YES: {len(tisza_yes)} rows")
 print(f"  TISZA NO: {len(tisza_no)} rows")
+print(f"  Parties entering parliament YES: {len(parties_yes)} rows")
+print(f"  Parties entering parliament NO: {len(parties_no)} rows")
 print(f"  Total (with empty rows): {len(all_popular_vote_data)} rows")
 
 # Prepare data for writing to Google Sheets
@@ -392,6 +433,10 @@ print(f"  - Empty row")
 print(f"  - TISZA YES rows ({len(tisza_yes)})")
 print(f"  - Empty row")
 print(f"  - TISZA NO rows ({len(tisza_no)})")
+print(f"  - Empty row")
+print(f"  - Parties entering parliament YES rows ({len(parties_yes)})")
+print(f"  - Empty row")
+print(f"  - Parties entering parliament NO rows ({len(parties_no)})")
 
 # ============================================================
 # SEAT DISTRIBUTION DATA
@@ -501,3 +546,91 @@ print("SUMMARY (seat distribution)")
 print(f"{'='*60}")
 print(f"Data written to seats_aging_cov sheet in columns M-R starting at row 40")
 print(f"Processed {len(seat_csv_files)} CSV files")
+
+# ============================================================
+# MARGIN OF VICTORY DATA
+# ============================================================
+
+print("\n" + "="*60)
+print("PROCESSING MARGIN OF VICTORY DATA")
+print("="*60)
+
+# List of CSV files to process for margin of victory
+margin_csv_files = [
+    ("hu-2026/hungary-parliamentary-election-popular-vote-margin-of-victory.csv", "hungary-parliamentary-election-popular-vote-margin-of-victory"),
+    ("hu-2026/hungary-election-popular-vote-margin-of-victory-higher-strikes-for-tisza.csv", "hungary-election-popular-vote-margin-of-victory-higher-strikes-for-tisza")
+]
+
+all_margin_data = []
+
+for csv_path, file_label in margin_csv_files:
+    print("\n" + "-"*60)
+    print(f"Processing: {file_label}")
+    print("-"*60)
+    
+    yes_data, no_data = process_popular_vote_csv(csv_path, file_label)
+    
+    # Add YES rows
+    all_margin_data.extend(yes_data)
+    # Add empty row
+    all_margin_data.append(empty_row)
+    # Add NO rows
+    all_margin_data.extend(no_data)
+    # Add empty row separator between files
+    all_margin_data.append(empty_row)
+
+print(f"\nTotal margin of victory data collected: {len(all_margin_data)} rows")
+
+# Prepare data for writing to Google Sheets
+print("\nPreparing margin of victory data for Google Sheets...")
+
+# Build the table
+margin_table = []
+
+# Header row
+margin_table.append(['file', 'name', 'Polymarket', 'Shares@price', 'Shares@price+1c', 'Shares@price+2c'])
+
+# Data rows
+for item in all_margin_data:
+    margin_table.append([
+        sanitize_value(item['file']),
+        sanitize_value(item['name']),
+        sanitize_value(item['price']),
+        sanitize_value(item['shares_at_price']),
+        sanitize_value(item['shares_at_price_plus_1c']),
+        sanitize_value(item['shares_at_price_plus_2c'])
+    ])
+
+# Write to margin sheet
+print("\nWriting margin of victory data to Google Sheets...")
+
+try:
+    margin_sheet = sh.worksheet("margin")
+    
+    # Calculate the range - starting at K21
+    end_row = 20 + len(margin_table)
+    range_name = f'K21:P{end_row}'
+    
+    # Debug: Check for problematic values
+    import math
+    for i, row in enumerate(margin_table):
+        for j, val in enumerate(row):
+            if isinstance(val, float) and (math.isnan(val) or math.isinf(val)):
+                print(f"WARNING: Found invalid float at row {i}, col {j}: {val}")
+    
+    margin_sheet.update(values=margin_table, range_name=range_name)
+    
+    print(f"✓ Margin of victory data written successfully to {range_name}")
+    print(f"  Total rows: {len(margin_table)} (including header)")
+    
+except Exception as e:
+    print(f"❌ Error writing margin of victory data to Google Sheets: {e}")
+    print("Please check your Google Sheets permissions and try again")
+    import traceback
+    traceback.print_exc()
+
+print(f"\n{'='*60}")
+print("SUMMARY (margin of victory)")
+print(f"{'='*60}")
+print(f"Data written to margin sheet in columns K-P starting at row 21")
+print(f"Processed {len(margin_csv_files)} CSV files")
