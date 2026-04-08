@@ -12,19 +12,19 @@ import re
 import time
 
 # Parameters for the elections
-election_code = "si-2026"
-election_flag = "🇸🇮"
-election_date = "2026-03-22"
+election_code = "pe-2026"
+election_flag = "🇵🇪"
+election_date = "2026-04-12"
 source_election_code = "pt-2026" # to copy from
 wikipedia_link = "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2026_Slovenian_parliamentary_election"
 
-candidates = ['GS', 'SDS', 'NSi/SLS/FOKUS', 'SD', 'Levica/Vesna', 'RES', 'PIR', 'SNS', 'DEM', 'PVP']
-candidates_colors = ['#00569d', '#FCDC00', '#009AC7', '#E3000F', '#ff4d4d', '#7C5199', '#000000', '#221F1F', '#444444', '#6e288f']
-candidates_values = [22.5, 27.8, 7.7, 9, 7.6, 4.4, 2.6, 2.1, 8.8, 3.6]
-candidates_needs = [4] * len(candidates)
+candidates = ['Fujimori', 'Aliaga', 'Chau', 'Sánchez', 'Álvarez', 'Nieto', 'Acuña', 'Belmont', 'Forsyth', 'Lescano', 'Luna']
+candidates_colors = ['#E9511B', '#07769F', '#FF300C', '#6BDF0C', '#FFC700', '#FFD300', '#999999', '#006400', '#20488E', '#0267AF', '#E09540']
+candidates_values = [16.2, 13, 8.3, 5.2, 11.8, 6.4, 4.5, 5.9, 2.4, 2.0, 2.6]
+candidates_needs = [0] * len(candidates)
 
 # SHEET KEY
-sheetkey = "1BQ9xPjRZQNG9PDA_A9Z5ArfTnRhO9GKr1f5rCSatyhI"
+sheetkey = "1vy06C-n7gHndbYV8yEl1BADRPjtolBEbLRG_7d0Cdkg"
 
 # Create html colors by AI:
 # light green in html: #3AAD2E
