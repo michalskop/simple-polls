@@ -1,0 +1,64 @@
+name: Update Polymarket PE 2026
+
+on:
+  workflow_dispatch: # Allows manual triggering
+  schedule:
+    - cron: '1 */3 * * *' # Runs every 3 hours at minute 0
+
+jobs:
+  update-polymarket:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - uses: actions/cache@v3
+        name: Configure pip caching
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('pe-2026/requirements_simulations.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Python dependencies
+        run: |
+          pip install -r pe-2026/requirements_simulations.txt
+
+      - name: Create gspread config directory
+        run: mkdir -p /home/runner/.config/gspread
+
+      - name: Populate gspread credentials
+        run: |
+          echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > /home/runner/.config/gspread/service_account.json
+
+      - name: Create .env file for Polymarket credentials
+        run: |
+          echo "POLYMARKET_PRIVATE_KEY=${{ secrets.POLYMARKET_PRIVATE_KEY_4 }}" > .env
+          echo "POLYMARKET_PROXY_ADDRESS=${{ secrets.POLYMARKET_PROXY_ADDRESS_4 }}" >> .env
+
+      - name: Update Polymarket odds
+        env:
+          POLYMARKET_PRIVATE_KEY: ${{ secrets.POLYMARKET_PRIVATE_KEY_4 }}
+          POLYMARKET_PROXY_ADDRESS: ${{ secrets.POLYMARKET_PROXY_ADDRESS_4 }}
+        run: python pe-2026/add_polymarket.py
+
+      - name: Clean up credentials
+        run: |
+          rm /home/runner/.config/gspread/service_account.json
+          rm .env
+
+      - name: Commit and push if it changed
+        run: |-
+          git config user.name "Automated Polymarket Update"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          timestamp=$(date -u)
+          git commit -m "Automated Polymarket update: ${timestamp}" || echo "No changes to commit"
+          if [ $? -eq 0 ]; then
+            git push
+          fi
