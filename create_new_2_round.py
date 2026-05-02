@@ -12,7 +12,7 @@ import time
 election_code = "co-2026-2"
 election_flag = "🇨🇴"
 election_date = "2026-06-21"
-source_election_code = "pt-2026-2"  # to copy from (for calculator and workflow)
+source_election_code = "co-2026-2"  # to copy from (for calculator and workflow)
 wikipedia_link = "https://es.wikipedia.org/wiki/Elecciones_presidenciales_de_Colombia_de_2026"
 
 # Races/matches for the second round
