@@ -9,11 +9,11 @@ import re
 import time
 
 # Parameters for the elections - SECOND ROUND
-election_code = "pe-2026-2"
-election_flag = "🇵🇪"
-election_date = "2026-06-07"
+election_code = "us-tx-rep-2026-2"
+election_flag = "🏴󠁵󠁳󠁴󠁸󠁿"
+election_date = "2026-05-26"
 source_election_code = "co-2026-2"  # to copy from (for calculator and workflow)
-wikipedia_link = "https://es.wikipedia.org/wiki/Elecciones_generales_de_Per%C3%BA_de_2026"
+wikipedia_link = "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Texas#Runoff"
 
 # Races/matches for the second round
 # Each race is a head-to-head match between 2 candidates
@@ -21,22 +21,13 @@ wikipedia_link = "https://es.wikipedia.org/wiki/Elecciones_generales_de_Per%C3%B
 # https://docs.google.com/spreadsheets/d/1hhRprFQjeQAFp435YUFBjqKCzxFp1q85J7TWAaWZ2JE/edit?gid=1448265129#gid=1448265129
 races = [
     {
-        'name': 'Fujimori vs. Sánchez',
-        'candidate1': 'Fujimori',
-        'candidate2': 'Sánchez',
+        'name': 'Cornyn vs. Paxton',
+        'candidate1': 'Cornyn',
+        'candidate2': 'Paxton',
         'gain1': 38,  # percentage for candidate 1
         'gain2': 38,  # percentage for candidate 2
-        'color1': '#FE5000',
-        'color2': '#5cbf0a'
-    },
-    {
-        'name': 'Fujimori vs. López Aliaga',
-        'candidate1': 'Fujimori',
-        'candidate2': 'López Aliaga',
-        'gain1': 38,  # percentage for candidate 1
-        'gain2': 38,  # percentage for candidate 2
-        'color1': '#FE5000',
-        'color2': '#0D76A0'
+        'color1': '#222222',
+        'color2': '#666666'
     }
     # Add more races as needed
 ]
@@ -61,7 +52,7 @@ default_params = {
 }
 
 # SHEET KEY - create the sheet manually first and paste the key here
-sheetkey = "1dO2ADAy7zaZhEhlDTXJCUhTI3Dif0QhlNiaoNeuYYmQ"
+sheetkey = "10zEpAwlVaqhyrcmOEGJyzlegE10pAL2As65fkRjNlB8"
 
 path = "./"
 
