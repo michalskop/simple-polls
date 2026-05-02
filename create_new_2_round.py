@@ -244,10 +244,10 @@ except:
   print("Transfer ownership failed.")
 
 # CREATE THE WORKFLOW FILE
-workflow_source_path = path + '.github/workflows-2026-02/' + 'multicalculator-' + source_election_code + '.yml'
+# Try workflows/ directory first, then workflows-2026-02/ as fallback
+workflow_source_path = path + '.github/workflows/' + 'multicalculator-' + source_election_code + '.yml'
 if not os.path.exists(workflow_source_path):
-    # Try alternative path
-    workflow_source_path = path + '.github/workflows/' + 'multicalculator-' + source_election_code + '.yml'
+    workflow_source_path = path + '.github/workflows-2026-02/' + 'multicalculator-' + source_election_code + '.yml'
 
 with open(workflow_source_path) as f:
   content = f.read()
@@ -260,8 +260,8 @@ election_code_pretty_noflag_space = election_code.upper().replace(re.findall(r'\
 source_election_code_pretty_noflag_space = source_election_code.upper().replace(re.findall(r'\d+', source_election_code)[0], re.findall(r'\d+', source_election_code)[0]).replace('-', ' ')
 content = content.replace(source_election_code_pretty_noflag_space, election_code_pretty_noflag_space)
 
-# save to workflows-2026-02 directory
-workflow_dir = path + '.github/workflows-2026-02/'
+# save to workflows/ directory
+workflow_dir = path + '.github/workflows/'
 if not os.path.exists(workflow_dir):
     os.makedirs(workflow_dir)
     
