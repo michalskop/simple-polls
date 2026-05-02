@@ -196,12 +196,18 @@ time.sleep(1)
 worksheet = get_or_create_worksheet(sh, "parametry 2", rows=20, cols=5)
 time.sleep(1)
 worksheet.freeze(rows=1)
+# Always update header to ensure it exists for the calculator
 worksheet.update(range_name='A1', values=[['additional limits']])
 time.sleep(1)
+# Clear any existing data first (in case sheet already existed)
 if additional_limits:
     for i, limit in enumerate(additional_limits):
         worksheet.update(range_name='A' + str(i + 2), values=[[limit]])
         time.sleep(1)
+else:
+    # If no additional limits, ensure row 2 is empty (clear it if sheet existed)
+    worksheet.update(range_name='A2', values=[['']])
+    time.sleep(1)
 
 # Sheet 4: poradi (rankings/winning probabilities)
 worksheet = get_or_create_worksheet(sh, "poradi", rows=(len(races) + 10), cols=5)

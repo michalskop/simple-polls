@@ -36,7 +36,11 @@ dfpreference = pd.DataFrame(ws.get_all_records())
 # get additional limits
 ws = sh.worksheet('parametry 2')
 dflimits = pd.DataFrame(ws.get_all_records())
-additional_limits = list(dflimits['additional limits'])
+# Filter out empty values and convert to list, handle empty case
+if 'additional limits' in dflimits.columns:
+    additional_limits = [x for x in dflimits['additional limits'] if x != '' and x != 0]
+else:
+    additional_limits = []
 
 # get number of races:
 nraces = 0
@@ -146,7 +150,12 @@ for nr in range(0, nraces): # last row returns an error
     interval_statistics_aging[j] = pd.DataFrame(columns=dfpreferencern['name'].to_list())
     interval[j] = pd.DataFrame(columns=['Pr[duel zisk > x %]'])
     # for i in np.concatenate((np.arange(0, interval_max + 0.5, 0.5), np.array([26.33, 22.79, 17.11, 9.13, 8.51]))):
-    for i in np.concatenate((np.arange(interval_min, interval_max + step, step), np.array(additional_limits))):
+    # Only concatenate additional_limits if they exist
+    if additional_limits:
+        interval_points = np.concatenate((np.arange(interval_min, interval_max + step, step), np.array(additional_limits)))
+    else:
+        interval_points = np.arange(interval_min, interval_max + step, step)
+    for i in interval_points:
       # interval[j] = interval[j].append([{'Pr[duel zisk > x %]': i}], ignore_index=True)
       interval_j_new = pd.DataFrame({'Pr[duel zisk > x %]': [i]})
       interval[j] = pd.concat([interval[j], interval_j_new], ignore_index=True)
