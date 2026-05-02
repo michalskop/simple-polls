@@ -1,0 +1,75 @@
+name: Run MultiCalculator PT 2nd round 2026
+
+on:
+  # push:
+  #   branches:
+  #     - main
+  workflow_dispatch:
+  # schedule:
+  #   - cron: '20 * * * *'
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - uses: actions/cache@v3
+        name: Configure pip caching
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements-calculator.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Install Python dependencies
+        run: |
+          pip install -r co-2026-2/requirements-calculator.txt
+
+      # Creates the directory where gspread looks for credentials by default
+      - name: Create gspread config directory
+        run: mkdir -p /home/runner/.config/gspread
+        # Alternative: mkdir -p ~/.config/gspread (uses shell expansion)
+
+      - name: Populate gspread credentials
+        run: |
+          echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > /home/runner/.config/gspread/service_account.json
+
+      # - name: debug 1
+      #   run: |-
+      #     pwd
+      #     ls /home/runner/
+      #     ls /home/runner/.config/gspread/
+      
+      - name: Run simulations
+        run: python co-2026-2/calculator.py
+
+      - name: Update Polymarket 2026 elections
+        env:
+          POLYMARKET_PRIVATE_KEY: ${{ secrets.POLYMARKET_PRIVATE_KEY_4 }}
+          POLYMARKET_PROXY_ADDRESS: ${{ secrets.POLYMARKET_PROXY_ADDRESS_4 }}
+        run: python co-2026-2/add_polymarket.py
+ 
+      # Optional: Safer cleanup, only remove the specific file
+      - name: Clean up gspread credentials
+        run: rm /home/runner/.config/gspread/service_account.json
+
+      # Committing back changes - Requires write permissions for the GITHUB_TOKEN
+      - name: Commit and push if it changed
+        run: |-
+          git config user.name "Automated Runner" # Slightly more descriptive
+          git config user.email "actions@users.noreply.github.com"
+          # Maybe be more specific if you know what files the script changes?
+          # Example: git add co-2026-2/output_data/* or path/to/specific/file.csv
+          git add -A
+          timestamp=$(date -u)
+          # Commit only if there are changes staged
+          git commit -m "Automated data update: ${timestamp}" || echo "No changes to commit"
+          # Push only if the commit succeeded (i.e., there were changes)
+          if [ $? -eq 0 ]; then
+            git push
+          fi
+  

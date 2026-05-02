@@ -12,19 +12,19 @@ import re
 import time
 
 # Parameters for the elections
-election_code = "pe-2026"
-election_flag = "🇵🇪"
-election_date = "2026-04-12"
+election_code = "co-2026"
+election_flag = "🇨🇴"
+election_date = "2026-05-31"
 source_election_code = "pt-2026" # to copy from
-wikipedia_link = "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2026_Slovenian_parliamentary_election"
+wikipedia_link = "https://es.wikipedia.org/wiki/Elecciones_presidenciales_de_Colombia_de_2026"
 
-candidates = ['Fujimori', 'Aliaga', 'Chau', 'Sánchez', 'Álvarez', 'Nieto', 'Acuña', 'Belmont', 'Forsyth', 'Lescano', 'Luna']
-candidates_colors = ['#E9511B', '#07769F', '#FF300C', '#6BDF0C', '#FFC700', '#FFD300', '#999999', '#006400', '#20488E', '#0267AF', '#E09540']
-candidates_values = [16.2, 13, 8.3, 5.2, 11.8, 6.4, 4.5, 5.9, 2.4, 2.0, 2.6]
+candidates = ['Cepeda', 'De La Espriella', 'Valencia','Fajardo',  'López', 'Botero']
+candidates_colors = ['#A52E94', '#000066', '#63B9E9', '#442F7E', '#63B9E9', '#000000']
+candidates_values = [37.7, 26.2, 21.9, 3.3, 2.2, 1]
 candidates_needs = [0] * len(candidates)
 
 # SHEET KEY
-sheetkey = "1vy06C-n7gHndbYV8yEl1BADRPjtolBEbLRG_7d0Cdkg"
+sheetkey = "1nvkkYDcN6JPseWOeNVpJG4EDHRQ1AgrwtHiTxdoX0NM"
 
 # Create html colors by AI:
 # light green in html: #3AAD2E
