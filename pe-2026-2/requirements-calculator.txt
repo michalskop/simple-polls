@@ -1,0 +1,19 @@
+      
+# requirements.txt
+
+# Core data manipulation and numerical operations
+pandas>=1.0.0
+numpy>=1.18.0
+
+# Scientific computing library (used for LinAlgError, stats functions if added later)
+scipy>=1.4.0
+
+# For interacting with Google Sheets
+gspread>=5.0.0
+
+# For interacting with Polymarket
+py_clob_client>=0.1.0
+python-dotenv>=0.19.0
+
+# For interacting with Google Sheets
+oauth2client>=2.0.2

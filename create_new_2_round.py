@@ -9,11 +9,11 @@ import re
 import time
 
 # Parameters for the elections - SECOND ROUND
-election_code = "co-2026-2"
-election_flag = "🇨🇴"
-election_date = "2026-06-21"
+election_code = "pe-2026-2"
+election_flag = "🇵🇪"
+election_date = "2026-06-07"
 source_election_code = "co-2026-2"  # to copy from (for calculator and workflow)
-wikipedia_link = "https://es.wikipedia.org/wiki/Elecciones_presidenciales_de_Colombia_de_2026"
+wikipedia_link = "https://es.wikipedia.org/wiki/Elecciones_generales_de_Per%C3%BA_de_2026"
 
 # Races/matches for the second round
 # Each race is a head-to-head match between 2 candidates
@@ -21,31 +21,22 @@ wikipedia_link = "https://es.wikipedia.org/wiki/Elecciones_presidenciales_de_Col
 # https://docs.google.com/spreadsheets/d/1hhRprFQjeQAFp435YUFBjqKCzxFp1q85J7TWAaWZ2JE/edit?gid=1448265129#gid=1448265129
 races = [
     {
-        'name': 'Cepeda vs. De La Espriella',
-        'candidate1': 'Cepeda',
-        'candidate2': 'De La Espriella',
-        'gain1': 40.6,  # percentage for candidate 1
-        'gain2': 40.5,  # percentage for candidate 2
-        'color1': '#A52E94',
-        'color2': '#000066'
+        'name': 'Fujimori vs. Sánchez',
+        'candidate1': 'Fujimori',
+        'candidate2': 'Sánchez',
+        'gain1': 38,  # percentage for candidate 1
+        'gain2': 38,  # percentage for candidate 2
+        'color1': '#FE5000',
+        'color2': '#5cbf0a'
     },
     {
-        'name': 'Cepeda vs. Valencia',
-        'candidate1': 'Cepeda',
-        'candidate2': 'Valencia',
-        'gain1': 45,  # percentage for candidate 1
-        'gain2': 45,  # percentage for candidate 2
-        'color1': '#A52E94',
-        'color2': '#63B9E9'
-    },
-    {
-        'name': 'De La Espriella vs. Valencia',
-        'candidate1': 'De La Espriella',
-        'candidate2': 'Valencia',
-        'gain1': 45,  # percentage for candidate 1
-        'gain2': 45,  # percentage for candidate 2
-        'color1': '#000066',
-        'color2': '#63B9E9'
+        'name': 'Fujimori vs. López Aliaga',
+        'candidate1': 'Fujimori',
+        'candidate2': 'López Aliaga',
+        'gain1': 38,  # percentage for candidate 1
+        'gain2': 38,  # percentage for candidate 2
+        'color1': '#FE5000',
+        'color2': '#0D76A0'
     }
     # Add more races as needed
 ]
@@ -63,14 +54,14 @@ default_params = {
     're_coef': 1,  # Random error coefficient
     'aging_coef': 1.15,  # Aging coefficient: aging_coeff = pow(diff, aging_coef) / diff
     'sample': 10000,  # Number of simulations to run
-    'interval_min': 0,  # Lowest gain percentage to calculate probability for
-    'interval_max': 100,  # Highest gain percentage to calculate probability for
+    'interval_min': 30,  # Lowest gain percentage to calculate probability for
+    'interval_max': 70,  # Highest gain percentage to calculate probability for
     'step': 0.5,  # Step size for probability calculations
     'volatilita': 1  # Added volatility parameter
 }
 
 # SHEET KEY - create the sheet manually first and paste the key here
-sheetkey = "1_z4CFUxqRzomGVHXmS-2MfDzN-xQX-NGmLkhT44-7zg"
+sheetkey = "1dO2ADAy7zaZhEhlDTXJCUhTI3Dif0QhlNiaoNeuYYmQ"
 
 path = "./"
 
