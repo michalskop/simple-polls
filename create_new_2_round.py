@@ -252,7 +252,18 @@ with open(workflow_source_path) as f:
 # replace the election code
 content = content.replace(source_election_code, election_code)
 
-# replace the pretty name
+# replace the pretty name in the workflow name (first line)
+# Extract country codes (e.g., "CO" from "co-2026-2", "PE" from "pe-2026-2")
+source_country_code = source_election_code.split('-')[0].upper()
+target_country_code = election_code.split('-')[0].upper()
+# Replace the country code in the workflow name
+content = re.sub(
+    r'(name:\s+Run MultiCalculator\s+)' + source_country_code + r'(\s+2nd round)',
+    r'\1' + target_country_code + r'\2',
+    content
+)
+
+# replace the pretty name in other places if needed
 election_code_pretty_noflag_space = election_code.upper().replace(re.findall(r'\d+', election_code)[0], re.findall(r'\d+', election_code)[0]).replace('-', ' ')
 source_election_code_pretty_noflag_space = source_election_code.upper().replace(re.findall(r'\d+', source_election_code)[0], re.findall(r'\d+', source_election_code)[0]).replace('-', ' ')
 content = content.replace(source_election_code_pretty_noflag_space, election_code_pretty_noflag_space)
